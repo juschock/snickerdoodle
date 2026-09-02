@@ -1,4 +1,4 @@
-# Environment contract — 1.1.0-rc.1
+# Environment contract — 1.1.0-rc.2
 
 No values belong in this artifact. Missing, malformed, mode-mismatched, or partially enabled commercial/payment configuration leaves checkout or webhook processing unavailable.
 

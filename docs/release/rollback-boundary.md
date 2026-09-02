@@ -1,4 +1,4 @@
-# Rollback boundary — 1.1.0-rc.1
+# Rollback boundary — 1.1.0-rc.2
 
 1. Disable `SNICKERDOODLE_PAYMENTS_ENABLED` first to stop new Checkout Sessions; keep verified webhook settlement enabled when safe so existing obligations reconcile.
 2. Preserve event receipts, reconciliation alerts, orders, and support obligations. Never roll a paid database backward to erase provider truth.

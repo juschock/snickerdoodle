@@ -1,4 +1,4 @@
-# Route and access inventory — 1.1.0-rc.1
+# Route and access inventory — 1.1.0-rc.2
 
 All routes are under `/snickerdoodle` in the production build. The bare `/` is a security-header-preserving proxy redirect.
 

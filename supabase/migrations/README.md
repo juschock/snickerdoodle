@@ -78,6 +78,14 @@ release, payment, deployment, G5, publication, or other external authority.
 
 ## Sprint 01/02 payment successors, not applied remotely
 
+`20260901160000_reconcile_provider_only_legacy_fulfillment.sql` is the SN08A provider-predecessor bridge. It is
+ordered immediately before the five accepted RC migrations so a clean chain is unchanged while the known hosted
+`close_paid_fulfillment_and_backfill_queue` layer is first normalized. It revokes and retires the provider-only
+owner-close RPC, empty receipt machinery, one-use backfill, and historical singleton-capacity provenance only after
+lossless checks. Any nonempty receipt, partial inventory, incompatible queue state, or incoherent historical paid
+graph blocks the transaction. It has disposable-local clean/hosted-predecessor convergence evidence only and has
+not been applied remotely.
+
 `20260901163504_enable_multi_customer_payment_concurrency.sql` removes the accidental package-wide active-order
 index and transforms the historical singleton row into one `stripe_checkout_reservations` row per Checkout intent.
 It retains exact Session, PaymentIntent, event, amount, currency, email, order, and reconciliation bindings while

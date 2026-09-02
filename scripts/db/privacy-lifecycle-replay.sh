@@ -154,8 +154,8 @@ where id = '65000000-0000-4000-8000-000000000001';
 SQL
   fi
 done
-if [[ "$migration_count" != '20' ]]; then
-  echo "Expected 20 migrations, replayed $migration_count" >&2
+if [[ "$migration_count" != '21' ]]; then
+  echo "Expected 21 migrations, replayed $migration_count" >&2
   exit 65
 fi
 

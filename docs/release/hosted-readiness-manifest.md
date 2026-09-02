@@ -1,9 +1,9 @@
-# Hosted readiness manifest — 1.1.0-rc.1
+# Hosted readiness manifest — 1.1.0-rc.2
 
 ## Locally proven
 
 - Node 22 lockfile build, closed/open-copy builds, route/browser matrices, and no-secret/dependency scans.
-- Full 20-migration PostgreSQL 17 replay; per-intent 2/10/100 concurrency; payment atomicity/replay/refund/dispute; queue, AAL2, assignment, privacy, and destructive recovery corpora.
+- Full 21-migration PostgreSQL 17 replay, including the provider-only legacy retirement; per-intent 2/10/100 concurrency; payment atomicity/replay/refund/dispute; queue, AAL2, assignment, privacy, and destructive recovery corpora.
 - Checkout remains server-controlled and the redirect is never payment truth. Closed mode returns 503 for checkout/webhook.
 - Database dump custody, destructive local restore, privacy-tombstone replay, derived queue rebuild, and synthetic blob inventory/reconciliation.
 
@@ -17,7 +17,7 @@
 
 ## Provider mutation required
 
-Supabase migration/application, Auth identities/TOTP, Storage/backup configuration, Stripe key/webhook/catalog configuration, Vercel preview/promotion/rollback, mail setup, and any analytics configuration. None is performed or credited by SN07.
+Supabase migration/application, Auth identities/TOTP, Storage/backup configuration, Stripe key/webhook/catalog configuration, Vercel preview/promotion/rollback, mail setup, and any analytics configuration. None is performed or credited by SN07 or SN08A.
 
 ## Legal/operations approval required
 

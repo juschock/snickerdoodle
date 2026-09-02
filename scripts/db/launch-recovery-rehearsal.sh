@@ -57,7 +57,7 @@ while read -r expected relative; do
     echo "Accepted migration changed: $relative ($actual)" >&2
     exit 65
   fi
-done <"$repo_root/docs/customer-readiness/sn-sprint-06-baseline-migration-shas.txt"
+done <"$repo_root/docs/customer-readiness/sn-sprint-08a-migration-shas.txt"
 
 setup_cluster_roles() {
   local port="$1"
@@ -236,7 +236,7 @@ setup_cluster_roles "$source_port"
 setup_cluster_roles "$target_port"
 
 setup_database_prerequisites "$source_url"
-replay_migrations "$source_url" 20
+replay_migrations "$source_url" 21
 "$pg_bin/psql" -X -q "$source_url" -v ON_ERROR_STOP=1 \
   -f "$repo_root/scripts/db/privacy-lifecycle-acceptance.sql"
 source_inventory="$(inventory "$source_url")"
@@ -348,12 +348,12 @@ PSQL_BIN="$pg_bin/psql" PAYMENT_DB_URL="$target_url" \
 verify_ms=$(($(now_ms) - verify_start))
 current_final_fingerprint="$(inventory "$target_url")"
 
-# Create a known prior accepted (19-migration) database snapshot, then restore
+# Create a known prior accepted (20-migration) database snapshot, then restore
 # it into the same destructive target, migrate forward, and replay the newer
 # durable privacy tombstone before any reopen decision.
 "$pg_bin/createdb" -h 127.0.0.1 -p "$source_port" -U postgres prior
 setup_database_prerequisites "$prior_url"
-replay_migrations "$prior_url" 19
+replay_migrations "$prior_url" 20
 "$pg_bin/psql" -X -q "$prior_url" -v ON_ERROR_STOP=1 \
   -f "$repo_root/scripts/db/sn06-prior-snapshot-fixture.sql"
 "$pg_bin/pg_dump" --format=custom --file="$prior_dump" "$prior_url"
@@ -382,8 +382,8 @@ fi
 prior_forward_ms=$(($(now_ms) - prior_restore_start))
 
 if [[ "$("$pg_bin/psql" -X -qAt "$target_url" -c \
-  'select count(*) from supabase_migrations.schema_migrations')" != '20' ]]; then
-  echo 'Restored migration ledger is not at 20' >&2
+  'select count(*) from supabase_migrations.schema_migrations')" != '21' ]]; then
+  echo 'Restored migration ledger is not at 21' >&2
   exit 1
 fi
 final_db_fingerprint="$(inventory "$target_url")"
@@ -395,7 +395,7 @@ if git -C "$repo_root" ls-files --error-unmatch "$current_dump" >/dev/null 2>&1;
   exit 1
 fi
 
-echo "SNICK_SN06_RECOVERY_PASS postgres=17 migrations=20"
+echo "SNICK_SN06_RECOVERY_PASS postgres=17 migrations=21"
 echo "SNICK_SN07_WHOLE_PRODUCT_RC_PASS journeys=success_failure_refund_dispute_privacy_auth_recovery concurrency=2_10_100"
 echo "SN06_BACKUP_SHA256=$backup_hash"
 echo "SN06_BACKUP_MODE=600"

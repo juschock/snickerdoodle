@@ -34,4 +34,4 @@ Every resource ID originates from the resolver's stored scope or the verified co
 
 Export payloads live only in `private.privacy_export_artifacts`, are bounded to 1 MiB, require authorized retrieval, and are purged after their explicit expiry. Request/action/audit records contain IDs, actor/action/time, decision, counts, and changed-field codes—never the submitted email, export payload, raw briefs, provider payloads, tokens, or secrets.
 
-The executable specification is `scripts/db/privacy-lifecycle-acceptance.sql`; the clean 20-migration runner is `scripts/db/privacy-lifecycle-replay.sh`.
+The executable specification is `scripts/db/privacy-lifecycle-acceptance.sql`; the clean 21-migration runner is `scripts/db/privacy-lifecycle-replay.sh`.

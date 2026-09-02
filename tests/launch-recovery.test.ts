@@ -56,7 +56,7 @@ describe('SN06 backup, restore, and launch recovery', () => {
   });
 
   it('migrates a prior snapshot forward and reapplies newer privacy tombstones', () => {
-    expect(rehearsal).toContain('replay_migrations "$prior_url" 19');
+    expect(rehearsal).toContain('replay_migrations "$prior_url" 20');
     expect(rehearsal).toContain('implement_privacy_lifecycle_and_retention.sql');
     expect(rehearsal).toContain('sn06-replay-privacy-tombstone.sql');
     expect(tombstone).toContain('resurrected@sn06.example.invalid');
