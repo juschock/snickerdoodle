@@ -28,7 +28,7 @@ describe('durable intake and payment receipt boundary', () => {
     expect(checkout.indexOf("supabase.rpc('bind_stripe_checkout_capacity'"))
       .toBeLessThan(checkout.indexOf('return noStoreJson({ url: session.url })'));
     expect(webhook.indexOf('constructEvent'))
-      .toBeLessThan(webhook.indexOf("supabase.rpc('finalize_stripe_checkout'"));
+      .toBeLessThan(webhook.indexOf("supabase.rpc('process_stripe_payment_event'"));
   });
 
   it('keeps the operational queue metadata-only and owner-session scoped', () => {

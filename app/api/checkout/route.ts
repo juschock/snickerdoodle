@@ -336,6 +336,7 @@ export async function POST(request: Request) {
 
     const session = await getStripe().checkout.sessions.create({
       mode: 'payment',
+      customer_creation: 'always',
       customer_email: brief.deliveryEmail,
       client_reference_id: intentId,
       integration_identifier: stripeIntegrationIdentifier(intentId, config.securitySecret),

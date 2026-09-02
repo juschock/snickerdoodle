@@ -106,42 +106,48 @@ describe('payment launch-safety successor migration', () => {
 
   it('acknowledges refund, dispute, and expiry only after durable reconciliation state', () => {
     const webhook = readFileSync('app/api/stripe/webhook/route.ts', 'utf8');
+    const stateMachine = readFileSync('lib/payment-state-machine.ts', 'utf8');
+    const atomicSuccessor = readFileSync(
+      'supabase/migrations/20260902044710_prove_payment_state_machine.sql',
+      'utf8'
+    );
     const successor = readFileSync(
       'supabase/migrations/20260830202804_harden_checkout_reconciliation_and_owner_aal2.sql',
       'utf8'
     );
 
-    for (const [eventType, alertCode] of [
-      ['charge.refunded', 'refund_attention_required'],
-      ['charge.dispute.created', 'dispute_opened_attention_required'],
-      ['charge.dispute.closed', 'dispute_closed_attention_required']
+    for (const eventType of [
+      'charge.refunded',
+      'charge.dispute.created',
+      'charge.dispute.closed:won',
+      'charge.dispute.closed:lost'
     ]) {
-      expect(webhook).toContain(`['${eventType}', '${alertCode}']`);
+      expect(stateMachine).toContain(`event: '${eventType}'`);
     }
-    expect(webhook.indexOf('begin_stripe_webhook_attempt'))
-      .toBeLessThan(webhook.indexOf('MANUAL_RECONCILIATION_EVENTS.get'));
-    expect(webhook).toContain(
-      "['checkout.session.expired', 'checkout_expired_attention_required']"
-    );
-    expect(webhook).toContain("'record_stripe_operational_event'");
+    expect(webhook).toContain("supabase.rpc('process_stripe_payment_event'");
+    expect(webhook).not.toContain("supabase.rpc('complete_stripe_webhook_attempt'");
+    expect(atomicSuccessor).toContain("processing_status = 'failed_retryable'");
+    expect(atomicSuccessor).toContain("v_transition_code := 'full_refund'");
+    expect(atomicSuccessor).toContain("v_transition_code := 'dispute_lost'");
     expect(successor).toContain('private.payment_reconciliation_alerts');
-    expect(successor).toContain(
-      'Processed webhook must reference an order or durable reconciliation alert'
-    );
   });
 
   it('closes a session-bound intent and alerts before acknowledging asynchronous failure', () => {
     const migration = readFileSync(migrationPath, 'utf8');
     const webhook = readFileSync('app/api/stripe/webhook/route.ts', 'utf8');
+    const stateMachine = readFileSync('lib/payment-state-machine.ts', 'utf8');
+    const atomicSuccessor = readFileSync(
+      'supabase/migrations/20260902044710_prove_payment_state_machine.sql',
+      'utf8'
+    );
 
     expect(migration).toContain("'checkout.session.async_payment_failed'");
     expect(migration).toContain("'checkout.session.expired'");
     expect(migration).toContain('Failed Checkout Session does not match intent binding');
     expect(migration).toContain("set status = 'expired'");
-    expect(webhook).toContain(
-      "['checkout.session.async_payment_failed', 'async_payment_failed_attention_required']"
-    );
-    expect(webhook).toContain("'record_stripe_operational_event'");
-    expect(webhook).toContain('async_payment_failed_attention_required');
+    expect(stateMachine).toContain("event: 'checkout.session.async_payment_failed'");
+    expect(stateMachine).toContain("event: 'checkout.session.expired'");
+    expect(atomicSuccessor).toContain('async_payment_failed_attention_required');
+    expect(webhook).toContain("supabase.rpc('process_stripe_payment_event'");
   });
 });

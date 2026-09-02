@@ -122,8 +122,20 @@ beforeEach(() => {
         error: null
       };
     }
-    if (name === 'finalize_stripe_checkout') {
-      return { data: '11111111-1111-4111-8111-111111111111', error: null };
+    if (name === 'process_stripe_payment_event') {
+      return {
+        data: [{
+          processing_status: 'processed',
+          transition_code: args?.p_event_type === 'checkout.session.completed'
+            ? 'checkout_paid'
+            : 'payment_event_recorded',
+          order_id: args?.p_event_type === 'checkout.session.completed'
+            ? '11111111-1111-4111-8111-111111111111'
+            : null,
+          attempt_count: 1
+        }],
+        error: null
+      };
     }
     if (name === 'compensate_stripe_checkout_setup') {
       return { data: 'released', error: null };
@@ -536,6 +548,7 @@ describe('signed webhook route', () => {
           },
           customer_details: { email: 'customer@example.com' },
           customer_email: 'customer@example.com',
+          customer: 'cus_test_paid',
           payment_intent: 'pi_test_paid',
           amount_total: 9900,
           currency: 'usd'
@@ -551,13 +564,11 @@ describe('signed webhook route', () => {
 
     expect(response.status).toBe(200);
     expect(mocks.constructEvent).toHaveBeenCalledTimes(1);
-    expect(mocks.rpc).toHaveBeenCalledWith('finalize_stripe_checkout', expect.objectContaining({
+    expect(mocks.rpc).toHaveBeenCalledWith('process_stripe_payment_event', expect.objectContaining({
       p_event_id: 'evt_test_paid',
       p_amount_total: 9900,
-      p_currency: 'usd'
-    }));
-    expect(mocks.rpc).toHaveBeenCalledWith('complete_stripe_webhook_attempt', expect.objectContaining({
-      p_processing_status: 'processed'
+      p_currency: 'usd',
+      p_stripe_customer_id: 'cus_test_paid'
     }));
   });
 
@@ -578,6 +589,7 @@ describe('signed webhook route', () => {
           },
           customer_details: { email: 'capacity@example.com' },
           customer_email: 'capacity@example.com',
+          customer: 'cus_test_capacity_exhausted',
           payment_intent: 'pi_test_capacity_exhausted',
           amount_total: 9900,
           currency: 'usd'
@@ -585,10 +597,15 @@ describe('signed webhook route', () => {
       }
     });
     mocks.rpc.mockImplementation(async (name: string) => {
-      if (name === 'finalize_stripe_checkout') {
+      if (name === 'process_stripe_payment_event') {
         return {
-          data: null,
-          error: { code: 'P0001', message: 'snickerdoodle_order_capacity_exhausted' }
+          data: [{
+            processing_status: 'failed_retryable',
+            transition_code: 'retry_required',
+            order_id: null,
+            attempt_count: 1
+          }],
+          error: null
         };
       }
       return { data: null, error: null };
@@ -601,10 +618,9 @@ describe('signed webhook route', () => {
     }));
 
     expect(response.status).toBe(500);
-    expect(mocks.rpc).toHaveBeenCalledWith('complete_stripe_webhook_attempt', expect.objectContaining({
+    expect(mocks.rpc).toHaveBeenCalledWith('process_stripe_payment_event', expect.objectContaining({
       p_event_id: 'evt_test_capacity_exhausted',
-      p_processing_status: 'failed',
-      p_error_code: 'order_finalization_failed'
+      p_stripe_customer_id: 'cus_test_capacity_exhausted'
     }));
   });
 
@@ -622,12 +638,11 @@ describe('signed webhook route', () => {
   });
 
   it.each([
-    ['charge.refunded', 'refund_attention_required', { id: 'ch_test_refunded', payment_intent: 'pi_test_paid' }],
-    ['charge.dispute.created', 'dispute_opened_attention_required', { id: 'dp_test_open', payment_intent: 'pi_test_paid', charge: 'ch_test_paid' }],
-    ['charge.dispute.closed', 'dispute_closed_attention_required', { id: 'dp_test_closed', payment_intent: 'pi_test_paid', charge: 'ch_test_paid' }]
-  ])('durably records %s, opens operator reconciliation, and acknowledges it', async (
+    ['charge.refunded', { id: 'ch_test_refunded', payment_intent: 'pi_test_paid', customer: 'cus_test_paid', amount: 9900, amount_refunded: 9900, currency: 'usd' }],
+    ['charge.dispute.created', { id: 'dp_test_open', payment_intent: 'pi_test_paid', charge: 'ch_test_paid', amount: 9900, currency: 'usd', status: 'needs_response' }],
+    ['charge.dispute.closed', { id: 'dp_test_closed', payment_intent: 'pi_test_paid', charge: 'ch_test_paid', amount: 9900, currency: 'usd', status: 'won' }]
+  ])('atomically records %s and acknowledges it', async (
     eventType,
-    expectedCode,
     object
   ) => {
     mocks.constructEvent.mockReturnValue({
@@ -645,18 +660,12 @@ describe('signed webhook route', () => {
     }));
 
     expect(response.status).toBe(200);
-    expect(mocks.rpc).toHaveBeenCalledWith('begin_stripe_webhook_attempt', expect.objectContaining({
-      p_event_type: eventType
-    }));
-    expect(mocks.rpc).toHaveBeenCalledWith('record_stripe_operational_event', expect.objectContaining({
+    expect(mocks.rpc).toHaveBeenCalledWith('process_stripe_payment_event', expect.objectContaining({
       p_event_type: eventType,
-      p_alert_code: expectedCode
+      p_amount_total: 9900,
+      p_currency: 'usd'
     }));
-    expect(mocks.rpc).toHaveBeenCalledWith('complete_stripe_webhook_attempt', expect.objectContaining({
-      p_processing_status: 'processed',
-      p_error_code: null
-    }));
-    expect(mocks.rpc.mock.calls.some(([name]) => name === 'finalize_stripe_checkout')).toBe(false);
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
   });
 
   it('releases the exact reservation on a signed Checkout expiration and acknowledges the durable alert', async () => {
@@ -687,19 +696,12 @@ describe('signed webhook route', () => {
     }));
 
     expect(response.status).toBe(200);
-    expect(mocks.rpc).toHaveBeenCalledWith('record_stripe_operational_event', {
+    expect(mocks.rpc).toHaveBeenCalledWith('process_stripe_payment_event', expect.objectContaining({
       p_event_id: 'evt_test_checkout_expired',
       p_event_type: 'checkout.session.expired',
       p_checkout_session_id: 'cs_test_expired',
       p_checkout_intent_id: '22222222-2222-4222-8222-222222222222',
-      p_payment_intent_id: null,
-      p_charge_id: null,
-      p_dispute_id: null,
-      p_alert_code: 'checkout_expired_attention_required'
-    });
-    expect(mocks.rpc).toHaveBeenCalledWith('complete_stripe_webhook_attempt', expect.objectContaining({
-      p_processing_status: 'processed',
-      p_error_code: null
+      p_provider_status: 'unpaid'
     }));
   });
 
@@ -731,19 +733,12 @@ describe('signed webhook route', () => {
     }));
 
     expect(response.status).toBe(200);
-    expect(mocks.rpc).toHaveBeenCalledWith('record_stripe_operational_event', {
+    expect(mocks.rpc).toHaveBeenCalledWith('process_stripe_payment_event', expect.objectContaining({
       p_event_id: 'evt_test_async_payment_failed',
       p_event_type: 'checkout.session.async_payment_failed',
       p_checkout_session_id: 'cs_test_checkout',
       p_checkout_intent_id: '22222222-2222-4222-8222-222222222222',
-      p_payment_intent_id: null,
-      p_charge_id: null,
-      p_dispute_id: null,
-      p_alert_code: 'async_payment_failed_attention_required'
-    });
-    expect(mocks.rpc).toHaveBeenCalledWith('complete_stripe_webhook_attempt', expect.objectContaining({
-      p_processing_status: 'processed',
-      p_error_code: null
+      p_provider_status: 'unpaid'
     }));
   });
 });

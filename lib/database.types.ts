@@ -770,6 +770,8 @@ export type Database = {
           primary_contact_id: string | null
           status: string
           stripe_checkout_session_id: string | null
+          stripe_charge_id: string | null
+          stripe_customer_id: string | null
           stripe_payment_intent_id: string | null
           updated_at: string
         }
@@ -789,6 +791,8 @@ export type Database = {
           primary_contact_id?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
+          stripe_charge_id?: string | null
+          stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
           updated_at?: string
         }
@@ -808,6 +812,8 @@ export type Database = {
           primary_contact_id?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
+          stripe_charge_id?: string | null
+          stripe_customer_id?: string | null
           stripe_payment_intent_id?: string | null
           updated_at?: string
         }
@@ -945,8 +951,11 @@ export type Database = {
       stripe_webhook_receipts: {
         Row: {
           attempt_count: number
+          charge_id: string | null
+          checkout_intent_id: string | null
           checkout_session_id: string | null
           completed_at: string | null
+          dispute_id: string | null
           event_id: string
           event_type: string
           first_received_at: string
@@ -954,12 +963,18 @@ export type Database = {
           last_error_code: string | null
           livemode: boolean | null
           order_id: string | null
+          payment_intent_id: string | null
           processing_status: string
+          stripe_customer_id: string | null
+          transition_code: string | null
         }
         Insert: {
           attempt_count?: number
+          charge_id?: string | null
+          checkout_intent_id?: string | null
           checkout_session_id?: string | null
           completed_at?: string | null
+          dispute_id?: string | null
           event_id: string
           event_type: string
           first_received_at?: string
@@ -967,12 +982,18 @@ export type Database = {
           last_error_code?: string | null
           livemode?: boolean | null
           order_id?: string | null
+          payment_intent_id?: string | null
           processing_status?: string
+          stripe_customer_id?: string | null
+          transition_code?: string | null
         }
         Update: {
           attempt_count?: number
+          charge_id?: string | null
+          checkout_intent_id?: string | null
           checkout_session_id?: string | null
           completed_at?: string | null
+          dispute_id?: string | null
           event_id?: string
           event_type?: string
           first_received_at?: string
@@ -980,9 +1001,19 @@ export type Database = {
           last_error_code?: string | null
           livemode?: boolean | null
           order_id?: string | null
+          payment_intent_id?: string | null
           processing_status?: string
+          stripe_customer_id?: string | null
+          transition_code?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stripe_webhook_receipts_checkout_intent_id_fkey"
+            columns: ["checkout_intent_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_intents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stripe_webhook_receipts_order_id_fkey"
             columns: ["order_id"]
@@ -1077,6 +1108,32 @@ export type Database = {
           generated_at: string
         }[]
       }
+      process_stripe_payment_event: {
+        Args: {
+          p_amount_refunded?: number | null
+          p_amount_total?: number | null
+          p_charge_id?: string | null
+          p_checkout_intent_id?: string | null
+          p_checkout_session_id?: string | null
+          p_currency?: string | null
+          p_customer_email?: string | null
+          p_dispute_id?: string | null
+          p_event_id: string
+          p_event_type: string
+          p_livemode: boolean
+          p_occurred_at?: string | null
+          p_payment_intent_id?: string | null
+          p_provider_status?: string | null
+          p_stripe_customer_id?: string | null
+          p_test_fail_after_business?: boolean
+        }
+        Returns: {
+          attempt_count: number
+          order_id: string | null
+          processing_status: string
+          transition_code: string
+        }[]
+      }
       read_engagement_workspace: {
         Args: { p_order_id: string }
         Returns: {
@@ -1114,6 +1171,15 @@ export type Database = {
           reason_code: string
           receipt_id: number
         }[]
+      }
+      transition_order_fulfillment: {
+        Args: {
+          p_event_type: string
+          p_expected_status: string
+          p_idempotency_key: string
+          p_order_id: string
+        }
+        Returns: string
       }
       write_engagement_work_item: {
         Args: {

@@ -55,6 +55,8 @@ describe('candidate-bound payment and no-AI boundary', () => {
     expect(checkout).not.toContain('automatic_tax');
     expect(checkout).not.toContain('{CHECKOUT_SESSION_ID}');
     expect(webhook).toContain('constructEvent');
-    expect(webhook.indexOf('constructEvent')).toBeLessThan(webhook.indexOf("begin_stripe_webhook_attempt"));
+    expect(webhook.indexOf('constructEvent')).toBeLessThan(
+      webhook.indexOf("supabase.rpc('process_stripe_payment_event'")
+    );
   });
 });
