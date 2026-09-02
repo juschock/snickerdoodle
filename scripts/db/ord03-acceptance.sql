@@ -52,7 +52,8 @@ begin
         'session_id', p_session_id::text,
         'exp', floor(extract(epoch from clock_timestamp()))::bigint
           + p_seconds_until_expiry,
-        'role', 'authenticated'
+        'role', 'authenticated',
+        'aal', 'aal2'
       ) || p_extra_claims
     )::text,
     false
@@ -450,9 +451,14 @@ select pg_temp.assert_true(
   'service role has only the reviewed checkout-intent table boundary'
 );
 select pg_temp.assert_true(
-  has_function_privilege(
+  not has_function_privilege(
     'service_role',
     'public.finalize_stripe_checkout(text,text,text,text,uuid,integer,text,text,timestamptz)',
+    'execute'
+  )
+  and has_function_privilege(
+    'service_role',
+    'public.process_stripe_payment_event(text,text,boolean,text,uuid,text,text,text,text,integer,integer,text,text,text,timestamptz,boolean)',
     'execute'
   )
   and has_function_privilege(
@@ -465,10 +471,10 @@ select pg_temp.assert_true(
     'public.bind_stripe_checkout_capacity(uuid,text,timestamptz)',
     'execute'
   )
-  and not has_function_privilege(
+  and has_function_privilege(
     'authenticated', 'public.payment_operations_health()', 'execute'
   ),
-  'only reviewed payment routines are available to service role and none to authenticated'
+  'only reviewed atomic payment routines are available to service role and health is an internally AAL2-gated authenticated RPC'
 );
 select pg_temp.assert_true(
   not exists (

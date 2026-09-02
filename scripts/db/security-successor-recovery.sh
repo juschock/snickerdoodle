@@ -160,21 +160,21 @@ verify_inputs() {
   verify_file_sha 'scripts/db/engagement-graph-inventory.sql' \
     '131c474108d0a257a8b541dda4b40cb411c5054e4b549987c3a7d0b058c8dafe'
   verify_file_sha 'scripts/db/ord03-acceptance.sql' \
-    '30d66277f7989f6abdd909e301d5618ec86ef386316d02258b67cd28061b0fa0'
+    '476acaec8299ba4f299eeae3a3c822f7f525e6ead4e791526c121acb1aa27e8d'
   verify_file_sha 'scripts/db/engagement-graph-integrity-acceptance.sql' \
     '0c72bef44cff6de34f42fd4e717a812afb137d55b2015754bd13052472d2660a'
   verify_file_sha 'scripts/db/intake-manager-queue-acceptance.sql' \
-    'f24cfc7e7e94aed59f7b0087cceb873722c7cfe1400b7aab742d1bf62122b130'
+    'a4cfa903c2e535b5eb5cd77ef8c9037db73e1094155536dc09eded5405dd902d'
   verify_file_sha 'scripts/db/payment-launch-acceptance.sql' \
     '843cebd2d2db29a8e7bdf93ed6d3853c8c0ccaed001e437befe46dcd74a55877'
   verify_file_sha 'scripts/db/ord03-concurrency.sh' \
-    '812a2653364d333b21f3077096318a00b320748e54ed8fb4dfde9aa1d49e33ce'
+    '0512f2eded077164725d3065254a66cc3f3a7b83b3a02a4f4f101d79f4c1b53d'
   verify_file_sha 'scripts/db/payment-launch-concurrency.sh' \
     '170d74cf681c31432a63333c41709ef5eb27751e220b33eab6464e0108023898'
   verify_file_sha 'scripts/db/payment-capacity-concurrency.sh' \
     '5d8eccda218716303ad5becb166d5ce48f4364d0f4dcec439360ba85b5eb8412'
   verify_file_sha 'scripts/db/payment-terminal-race-concurrency.sh' \
-    '3c3ccf7c9a437a22865aed938162c6bbcebdc363ffd3c546e5d204bf6f0eb10f'
+    '5b868013505c7f8624ea29df01248a24c40328e316732dcc3a340061188e50be'
   verify_file_sha \
     'supabase/migrations/20260901231324_lock_terminal_reconciliation_to_checkout_intent.sql' \
     '4c8a1dab63eff51339b0d32a06302bfb1a80064a827485d21a22277abbb951ed'

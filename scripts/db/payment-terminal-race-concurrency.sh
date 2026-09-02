@@ -23,6 +23,9 @@ race_tmp_dir="$(mktemp -d /private/tmp/snickerdoodle-payment-terminal-race.XXXXX
 cleanup_terminal_race_fixture() {
   psql -X -q "$PAYMENT_DB_URL" -v ON_ERROR_STOP=1 >/dev/null 2>&1 <<'SQL' || true
 begin;
+delete from private.intake_manager_queue
+where intake_kind = 'checkout'
+  and intake_id = '27000000-0000-4000-8000-000000000001';
 delete from private.payment_reconciliation_alerts
 where event_id in (
   'evt_test_payment_terminal_paid_0001',
@@ -139,33 +142,28 @@ set local role service_role;
 set local lock_timeout = '8s';
 set local statement_timeout = '20s';
 set local application_name = 'snick_terminal_paid';
-select public.begin_stripe_webhook_attempt(
+select * from public.process_stripe_payment_event(
   'evt_test_payment_terminal_paid_0001',
   'checkout.session.completed',
   false,
-  'cs_test_payment_terminal_race_0001'
-);
-select public.finalize_stripe_checkout(
-  'evt_test_payment_terminal_paid_0001',
-  'checkout.session.completed',
   'cs_test_payment_terminal_race_0001',
-  'pi_test_payment_terminal_race_0001',
   '27000000-0000-4000-8000-000000000001',
+  'pi_test_payment_terminal_race_0001',
+  'cus_test_payment_terminal_race_0001',
+  null,
+  null,
   9900,
+  null,
   'usd',
   'terminal-race@payment.example.invalid',
-  clock_timestamp()
-) as order_id \gset
-\echo PAID_LOCK_HELD :order_id
+  'paid',
+  clock_timestamp(),
+  false
+) \gset paid_
+\echo PAID_LOCK_HELD :paid_order_id
 select pg_sleep(2);
-select public.complete_stripe_webhook_attempt(
-  'evt_test_payment_terminal_paid_0001',
-  'processed',
-  :'order_id'::uuid,
-  null
-);
 commit;
-\echo PAID_ORDER :order_id
+\echo PAID_ORDER :paid_order_id
 SQL
 paid_pid=$!
 
@@ -199,30 +197,26 @@ begin;
 set local role service_role;
 set local lock_timeout = '8s';
 set local statement_timeout = '20s';
-select public.begin_stripe_webhook_attempt(
+select * from public.process_stripe_payment_event(
   'evt_test_payment_terminal_expired_0001',
   'checkout.session.expired',
   false,
-  'cs_test_payment_terminal_race_0001'
-);
-select public.record_stripe_operational_event(
-  'evt_test_payment_terminal_expired_0001',
-  'checkout.session.expired',
   'cs_test_payment_terminal_race_0001',
   '27000000-0000-4000-8000-000000000001',
   null,
   null,
   null,
-  'checkout_expired_attention_required'
-) as order_id \gset
-select public.complete_stripe_webhook_attempt(
-  'evt_test_payment_terminal_expired_0001',
-  'processed',
-  :'order_id'::uuid,
-  null
-);
+  null,
+  9900,
+  null,
+  'usd',
+  null,
+  'unpaid',
+  clock_timestamp(),
+  false
+) \gset expired_
 commit;
-\echo EXPIRED_ORDER :order_id
+\echo EXPIRED_ORDER :expired_order_id
 SQL
 expired_pid=$!
 
@@ -232,30 +226,26 @@ begin;
 set local role service_role;
 set local lock_timeout = '8s';
 set local statement_timeout = '20s';
-select public.begin_stripe_webhook_attempt(
+select * from public.process_stripe_payment_event(
   'evt_test_payment_terminal_async_failed_0001',
   'checkout.session.async_payment_failed',
   false,
-  'cs_test_payment_terminal_race_0001'
-);
-select public.record_stripe_operational_event(
-  'evt_test_payment_terminal_async_failed_0001',
-  'checkout.session.async_payment_failed',
   'cs_test_payment_terminal_race_0001',
   '27000000-0000-4000-8000-000000000001',
   'pi_test_payment_terminal_race_0001',
   null,
   null,
-  'async_payment_failed_attention_required'
-) as order_id \gset
-select public.complete_stripe_webhook_attempt(
-  'evt_test_payment_terminal_async_failed_0001',
-  'processed',
-  :'order_id'::uuid,
-  null
-);
+  null,
+  9900,
+  null,
+  'usd',
+  null,
+  'unpaid',
+  clock_timestamp(),
+  false
+) \gset failed_
 commit;
-\echo ASYNC_FAILED_ORDER :order_id
+\echo ASYNC_FAILED_ORDER :failed_order_id
 SQL
 async_failed_pid=$!
 
@@ -289,6 +279,10 @@ if [[ ! "$paid_order" =~ ^[0-9a-f-]{36}$ ]] \
   || [[ "$paid_order" != "$expired_order" ]] \
   || [[ "$paid_order" != "$async_failed_order" ]]; then
   echo "Payment terminal-race assertion failed: events did not bind one paid order" >&2
+  printf 'paid=%s expired=%s async_failed=%s\n' \
+    "$paid_order" "$expired_order" "$async_failed_order" >&2
+  cat "$race_tmp_dir/paid.out" "$race_tmp_dir/expired.out" \
+    "$race_tmp_dir/async-failed.out" >&2 || true
   exit 1
 fi
 

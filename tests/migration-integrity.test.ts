@@ -283,13 +283,13 @@ describe('migration package integrity', () => {
       '60459167017df426de2fc31be151260fc695236dc0db87f34ce6448efe41ab08'
     );
     expect(createHash('sha256').update(managerAcceptance).digest('hex')).toBe(
-      'f24cfc7e7e94aed59f7b0087cceb873722c7cfe1400b7aab742d1bf62122b130'
+      'a4cfa903c2e535b5eb5cd77ef8c9037db73e1094155536dc09eded5405dd902d'
     );
     expect(createHash('sha256').update(ord03Acceptance).digest('hex')).toBe(
-      '30d66277f7989f6abdd909e301d5618ec86ef386316d02258b67cd28061b0fa0'
+      '476acaec8299ba4f299eeae3a3c822f7f525e6ead4e791526c121acb1aa27e8d'
     );
     expect(createHash('sha256').update(ord03Concurrency).digest('hex')).toBe(
-      '812a2653364d333b21f3077096318a00b320748e54ed8fb4dfde9aa1d49e33ce'
+      '0512f2eded077164725d3065254a66cc3f3a7b83b3a02a4f4f101d79f4c1b53d'
     );
     expect(restoreOrder).toContain('deferrable initially deferred');
     expect(restoreOrder).toContain('validate constraint activity_events_account_id_fkey');
@@ -346,7 +346,7 @@ describe('migration package integrity', () => {
       '5d8eccda218716303ad5becb166d5ce48f4364d0f4dcec439360ba85b5eb8412'
     );
     expect(createHash('sha256').update(terminalRaceConcurrency).digest('hex')).toBe(
-      '3c3ccf7c9a437a22865aed938162c6bbcebdc363ffd3c546e5d204bf6f0eb10f'
+      '5b868013505c7f8624ea29df01248a24c40328e316732dcc3a340061188e50be'
     );
     expect(migration).toContain('Checkout customer email does not match intent');
     expect(migration).toContain('Checkout Session does not match intent binding');

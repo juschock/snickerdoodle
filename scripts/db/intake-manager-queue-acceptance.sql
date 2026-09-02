@@ -136,30 +136,19 @@ select
   clock_timestamp() - make_interval(secs => g)
 from generate_series(100, 154) as g;
 
-set local role service_role;
-select public.begin_stripe_webhook_attempt(
+-- Synthetic fixture setup deliberately inserts one orphan alert directly as
+-- the database owner. Runtime code cannot do this; the manager test only needs
+-- a stable metadata row and separately proves all browser/backend grants deny
+-- direct access to this table.
+insert into private.payment_reconciliation_alerts (
+  event_id, event_type, alert_code, payment_intent_id, charge_id
+) values (
   'evt_test_manager_queue_orphan_refund_0001',
   'charge.refunded',
-  false,
-  null
-);
-select public.record_stripe_operational_event(
-  'evt_test_manager_queue_orphan_refund_0001',
-  'charge.refunded',
-  null,
-  null,
+  'refund_attention_required',
   'pi_test_manager_queue_orphan_0001',
-  'ch_test_manager_queue_orphan_0001',
-  null,
-  'refund_attention_required'
+  'ch_test_manager_queue_orphan_0001'
 );
-select public.complete_stripe_webhook_attempt(
-  'evt_test_manager_queue_orphan_refund_0001',
-  'processed',
-  null,
-  null
-);
-reset role;
 
 insert into public.pending_intakes (
   id,
@@ -183,7 +172,29 @@ insert into public.checkout_intents (
   status
 ) values (
   '26000000-0000-4000-8000-000000000002',
-  '{"campaignName":"Synthetic checkout intake","keyDetails":"Synthetic only"}'::jsonb,
+  '{
+    "organizationType":"Small business",
+    "campaignFamily":"Offer / Promotion campaign",
+    "primaryAction":"Buy",
+    "organizationName":"Synthetic Manager Queue Account",
+    "campaignName":"Synthetic checkout intake",
+    "campaignType":"Product launch",
+    "campaignTypeOther":"",
+    "dateTime":"2099-09-02T12:00:00Z",
+    "locationOrLink":"https://manager-queue.example.invalid",
+    "audience":"Synthetic audience",
+    "mainGoal":"Exercise manager access",
+    "offerAsk":"Buy",
+    "keyDetails":"Synthetic only",
+    "tone":"Professional",
+    "toneOther":"",
+    "channels":["Email"],
+    "websiteSocial":"",
+    "phrasesInclude":"",
+    "phrasesAvoid":"",
+    "deliveryEmail":"synthetic-checkout-queue@ord03.example.invalid",
+    "additionalNotes":"No customer data"
+  }'::jsonb,
   'synthetic-checkout-queue@ord03.example.invalid',
   9900,
   'usd',
@@ -228,18 +239,36 @@ select pg_temp.assert_true(
   'validated server inserts atomically create metadata-only manager receipts'
 );
 
-update public.checkout_intents
-set status = 'paid',
-    order_id = '23000000-0000-4000-8000-000000000001',
-    updated_at = clock_timestamp()
-where id = '26000000-0000-4000-8000-000000000002';
-
-update public.orders
-set payment_status = 'paid',
-    stripe_checkout_session_id = 'cs_test_manager_queue_paid_0001',
-    stripe_payment_intent_id = 'pi_test_manager_queue_paid_0001',
-    paid_at = clock_timestamp()
-where id = '23000000-0000-4000-8000-000000000001';
+set local role service_role;
+select * from public.reserve_stripe_checkout_capacity(
+  '26000000-0000-4000-8000-000000000002',
+  clock_timestamp() + interval '1 hour',
+  clock_timestamp() + interval '65 minutes'
+) \gset manager_reservation_
+select public.bind_stripe_checkout_capacity(
+  '26000000-0000-4000-8000-000000000002',
+  'cs_test_manager_queue_paid_0001',
+  :'manager_reservation_stripe_session_expires_at'::timestamptz
+);
+select * from public.process_stripe_payment_event(
+  'evt_test_manager_queue_paid_0001',
+  'checkout.session.completed',
+  false,
+  'cs_test_manager_queue_paid_0001',
+  '26000000-0000-4000-8000-000000000002',
+  'pi_test_manager_queue_paid_0001',
+  'cus_test_manager_queue_paid_0001',
+  null,
+  null,
+  9900,
+  null,
+  'usd',
+  'synthetic-checkout-queue@ord03.example.invalid',
+  'paid',
+  clock_timestamp(),
+  false
+);
+reset role;
 
 select pg_temp.assert_true(
   exists (
@@ -249,7 +278,10 @@ select pg_temp.assert_true(
       and q.intake_id = '26000000-0000-4000-8000-000000000002'
       and q.queue_state = 'paid_ready'
       and q.payment_state = 'paid'
-      and q.order_id = '23000000-0000-4000-8000-000000000001'
+      and q.order_id = (
+        select order_id from public.checkout_intents
+        where id = '26000000-0000-4000-8000-000000000002'
+      )
   ),
   'durable paid-intent transition updates the operational queue in the same transaction'
 );
@@ -361,7 +393,10 @@ reset role;
 
 select pg_temp.assert_true(
   :'paid_brief_checkout_intent_id'::uuid = '26000000-0000-4000-8000-000000000002'::uuid
-  and :'paid_brief_order_id'::uuid = '23000000-0000-4000-8000-000000000001'::uuid
+  and :'paid_brief_order_id'::uuid = (
+    select order_id from public.checkout_intents
+    where id = '26000000-0000-4000-8000-000000000002'
+  )
   and :'paid_brief_delivery_email' = 'synthetic-checkout-queue@ord03.example.invalid'
   and :'paid_brief_payment_status' = 'paid'
   and :'paid_brief_reconciliation_status' = 'clear'

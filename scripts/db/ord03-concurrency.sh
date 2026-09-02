@@ -27,8 +27,8 @@ fi
 ord03_tmp_dir="$(mktemp -d /private/tmp/snickerdoodle-ord03-concurrency.XXXXXX)"
 trap 'rm -rf "$ord03_tmp_dir"' EXIT
 
-owner_claims="select set_config('request.jwt.claims', jsonb_build_object('sub','00000000-0000-4000-8000-000000000001','session_id','10000000-0000-4000-8000-000000000001','exp',floor(extract(epoch from clock_timestamp()))::bigint+3600,'role','authenticated')::text,true)"
-lead_b_claims="select set_config('request.jwt.claims', jsonb_build_object('sub','00000000-0000-4000-8000-000000000004','session_id','10000000-0000-4000-8000-000000000004','exp',floor(extract(epoch from clock_timestamp()))::bigint+3600,'role','authenticated')::text,true)"
+owner_claims="select set_config('request.jwt.claims', jsonb_build_object('sub','00000000-0000-4000-8000-000000000001','session_id','10000000-0000-4000-8000-000000000001','exp',floor(extract(epoch from clock_timestamp()))::bigint+3600,'role','authenticated','aal','aal2')::text,true)"
+lead_b_claims="select set_config('request.jwt.claims', jsonb_build_object('sub','00000000-0000-4000-8000-000000000004','session_id','10000000-0000-4000-8000-000000000004','exp',floor(extract(epoch from clock_timestamp()))::bigint+3600,'role','authenticated','aal','aal2')::text,true)"
 
 expect_reason() {
   local actual="$1"
