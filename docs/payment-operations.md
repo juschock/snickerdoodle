@@ -43,9 +43,10 @@ or start work. Racoben starts work only after the signed Stripe event is durably
 - Reuse of the previously bound open Checkout Session; fail closed on mismatches or stale sessions.
 - A 60-minute provider expiry with at least 35 minutes remaining at actual Session creation, leaving a bounded margin
   for database/API latency while satisfying Stripe's creation-time minimum.
-- An exact singleton-capacity reservation. Definite pre-Session failures release it atomically; provider ambiguity or
-  bind failure retains the idempotent reservation and opens a durable metadata-only reconciliation alert rather than
-  silently orphaning capacity or creating a second Session.
+- An exact per-intent reservation. Independent customers never share a capacity row or lock. Definite pre-Session
+  failures release only that intent atomically; provider ambiguity or bind failure retains that intent's idempotent
+  reservation and opens a durable metadata-only reconciliation alert rather than silently orphaning the Session or
+  creating a duplicate.
 
 ## Webhook and order controls
 
@@ -68,7 +69,8 @@ event-ledger, or order-table mutation grant.
 ## Activation and rollback sequence
 
 1. Account owner completes Stripe activation and payout setup; verify charges and payouts are enabled.
-2. Create a one-order-at-a-time Payment Link fallback and restricted production key; create the signed webhook endpoint.
+2. Bind the exact approved Stripe Product/Price to the server-side Checkout configuration, create a restricted
+   production key, and create the signed webhook endpoint. Do not use a Payment Link as a second payment truth.
 3. Apply and rehearse the exact Supabase production migration/role/recovery package; verify RLS and Data API grants separately.
 4. Configure encrypted deployment secrets, deploy one immutable preview, and run a real Stripe test-mode purchase/refund/replay drill with synthetic data.
 5. Promote the same artifact, run a low-value live self-test only if the account owner separately approves it, and verify bank/payout reconciliation.

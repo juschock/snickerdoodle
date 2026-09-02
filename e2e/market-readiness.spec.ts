@@ -89,6 +89,48 @@ test('homepage leads with a fit check and keeps the survey unlisted', async ({ p
   await expect(page.getByRole('heading', { level: 2, name: /private invite is required/i })).toBeVisible();
 });
 
+test('synthetic private intake reaches the non-authoritative checkout return through the real browser form', async ({ page }) => {
+  let submitted: Record<string, unknown> | null = null;
+  let idempotencyKey = '';
+  await page.route('**/snickerdoodle/api/checkout', async (route) => {
+    const request = route.request();
+    submitted = request.postDataJSON() as Record<string, unknown>;
+    idempotencyKey = request.headers()['idempotency-key'] ?? '';
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        url: 'http://127.0.0.1:3102/snickerdoodle/checkout/success?session_id=cs_synthetic_browser'
+      })
+    });
+  });
+
+  await page.goto(`/snickerdoodle/brief#access=${encodeURIComponent(playwrightAccessToken)}`);
+  await expect(page.getByRole('heading', { level: 1, name: /campaign survey/i })).toBeVisible();
+  await page.locator('#primaryAction').fill('Register');
+  await page.locator('#organizationName').fill('Fictional RC Organization');
+  await page.locator('#campaignName').fill('Synthetic RC Campaign');
+  await page.locator('#dateTime').fill('2099-10-15 18:00');
+  await page.locator('#locationOrLink').fill('https://sn07.example.invalid');
+  await page.locator('#audience').fill('Synthetic local-test audience');
+  await page.locator('#mainGoal').fill('Prove the release browser journey');
+  await page.locator('#offerAsk').fill('Register in the synthetic fixture');
+  await page.locator('#keyDetails').fill('No customer data and no provider call');
+  await page.getByLabel('Email', { exact: true }).check();
+  await page.locator('#deliveryEmail').fill('playwright@example.com');
+  await page.getByRole('button', { name: /continue to secure checkout/i }).click();
+
+  await expect(page).toHaveURL(/\/snickerdoodle\/checkout\/success\?session_id=cs_synthetic_browser$/);
+  await expect(page.getByRole('heading', { level: 1, name: /checkout return was received/i })).toBeVisible();
+  expect(submitted).toMatchObject({
+    organizationName: 'Fictional RC Organization',
+    campaignName: 'Synthetic RC Campaign',
+    deliveryEmail: 'playwright@example.com'
+  });
+  expect((submitted as { channels?: unknown[] } | null)?.channels).toContain('Email');
+  expect(idempotencyKey).toMatch(/^[0-9a-f-]{36}$/);
+});
+
 test('public content, health, and not-found routes respond correctly', async ({ page, request }) => {
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];

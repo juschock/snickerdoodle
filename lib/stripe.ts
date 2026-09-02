@@ -14,7 +14,7 @@ export function getStripe() {
     stripe = new Stripe(key, {
       apiVersion: STRIPE_API_VERSION,
       typescript: true,
-      appInfo: { name: 'snickerdoodle', version: '1.0.4' }
+      appInfo: { name: 'snickerdoodle', version: '1.1.0-rc.1' }
     });
     activeKey = key;
   }

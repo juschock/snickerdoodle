@@ -396,6 +396,7 @@ if git -C "$repo_root" ls-files --error-unmatch "$current_dump" >/dev/null 2>&1;
 fi
 
 echo "SNICK_SN06_RECOVERY_PASS postgres=17 migrations=20"
+echo "SNICK_SN07_WHOLE_PRODUCT_RC_PASS journeys=success_failure_refund_dispute_privacy_auth_recovery concurrency=2_10_100"
 echo "SN06_BACKUP_SHA256=$backup_hash"
 echo "SN06_BACKUP_MODE=600"
 echo "SN06_BACKUP_MS=$backup_ms"
