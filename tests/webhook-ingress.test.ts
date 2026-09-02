@@ -34,9 +34,9 @@ function checkoutEvent(overrides: Record<string, unknown> = {}) {
         id: 'cs_test_ingress',
         object: 'checkout.session',
         payment_status: 'paid',
-        client_reference_id: '22222222-2222-4222-8222-222222222222',
+        client_reference_id: '22222222-2222-8222-8222-222222222222',
         metadata: {
-          checkout_intent_id: '22222222-2222-4222-8222-222222222222',
+          checkout_intent_id: '22222222-2222-8222-8222-222222222222',
           offer_id: 'standard_99'
         },
         customer_details: { email: 'synthetic@example.invalid' },
@@ -114,7 +114,7 @@ describe('public Stripe sandbox webhook ingress', () => {
     expect(processPaymentEvent).not.toHaveBeenCalled();
   });
 
-  it('accepts a valid sandbox signature and emits only the fixed normalized payment input', async () => {
+  it('accepts a valid sandbox signature with an RFC 9562 UUIDv8 intent and emits only the fixed normalized payment input', async () => {
     const processPaymentEvent = processor();
     const payload = JSON.stringify(checkoutEvent());
     const response = await handleStripePaymentWebhook(
@@ -130,7 +130,7 @@ describe('public Stripe sandbox webhook ingress', () => {
       p_event_type: 'checkout.session.completed',
       p_livemode: false,
       p_checkout_session_id: 'cs_test_ingress',
-      p_checkout_intent_id: '22222222-2222-4222-8222-222222222222',
+      p_checkout_intent_id: '22222222-2222-8222-8222-222222222222',
       p_payment_intent_id: 'pi_test_ingress',
       p_stripe_customer_id: 'cus_test_ingress',
       p_amount_total: 9900,
