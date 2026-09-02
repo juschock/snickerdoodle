@@ -254,6 +254,7 @@ export type Database = {
           location: string | null
           name: string
           notes: string | null
+          privacy_anonymized_at: string | null
           source: string | null
           status: string
           updated_at: string
@@ -266,6 +267,7 @@ export type Database = {
           location?: string | null
           name: string
           notes?: string | null
+          privacy_anonymized_at?: string | null
           source?: string | null
           status?: string
           updated_at?: string
@@ -278,6 +280,7 @@ export type Database = {
           location?: string | null
           name?: string
           notes?: string | null
+          privacy_anonymized_at?: string | null
           source?: string | null
           status?: string
           updated_at?: string
@@ -358,6 +361,7 @@ export type Database = {
           organization_name: string | null
           phrases_to_avoid: string | null
           phrases_to_include: string | null
+          privacy_anonymized_at: string | null
           raw_submission_json: Json
           target_audience: string | null
           tone: string | null
@@ -380,6 +384,7 @@ export type Database = {
           organization_name?: string | null
           phrases_to_avoid?: string | null
           phrases_to_include?: string | null
+          privacy_anonymized_at?: string | null
           raw_submission_json?: Json
           target_audience?: string | null
           tone?: string | null
@@ -402,6 +407,7 @@ export type Database = {
           organization_name?: string | null
           phrases_to_avoid?: string | null
           phrases_to_include?: string | null
+          privacy_anonymized_at?: string | null
           raw_submission_json?: Json
           target_audience?: string | null
           tone?: string | null
@@ -425,6 +431,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          privacy_anonymized_at: string | null
           primary_action: string | null
           status: string
           updated_at: string
@@ -436,6 +443,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          privacy_anonymized_at?: string | null
           primary_action?: string | null
           status?: string
           updated_at?: string
@@ -447,6 +455,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          privacy_anonymized_at?: string | null
           primary_action?: string | null
           status?: string
           updated_at?: string
@@ -470,6 +479,7 @@ export type Database = {
           delivery_email: string
           id: string
           order_id: string | null
+          privacy_anonymized_at: string | null
           status: string
           stripe_checkout_session_id: string | null
           terms_version: string
@@ -483,6 +493,7 @@ export type Database = {
           delivery_email: string
           id?: string
           order_id?: string | null
+          privacy_anonymized_at?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
           terms_version: string
@@ -496,6 +507,7 @@ export type Database = {
           delivery_email?: string
           id?: string
           order_id?: string | null
+          privacy_anonymized_at?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
           terms_version?: string
@@ -521,6 +533,8 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          privacy_anonymized_at: string | null
+          processing_restricted_at: string | null
           role: string | null
         }
         Insert: {
@@ -532,6 +546,8 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          privacy_anonymized_at?: string | null
+          processing_restricted_at?: string | null
           role?: string | null
         }
         Update: {
@@ -543,6 +559,8 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          privacy_anonymized_at?: string | null
+          processing_restricted_at?: string | null
           role?: string | null
         }
         Relationships: [
@@ -854,6 +872,7 @@ export type Database = {
           created_at: string
           delivery_email: string
           id: string
+          privacy_anonymized_at: string | null
           status: string
           updated_at: string
         }
@@ -862,6 +881,7 @@ export type Database = {
           created_at?: string
           delivery_email: string
           id: string
+          privacy_anonymized_at?: string | null
           status?: string
           updated_at?: string
         }
@@ -870,6 +890,7 @@ export type Database = {
           created_at?: string
           delivery_email?: string
           id?: string
+          privacy_anonymized_at?: string | null
           status?: string
           updated_at?: string
         }
@@ -1060,6 +1081,28 @@ export type Database = {
           retry_after_seconds: number
         }[]
       }
+      create_privacy_request: {
+        Args: { p_request_type: string; p_subject_email: string }
+        Returns: {
+          candidate_contact_count: number
+          matched_resource_count: number
+          request_id: string
+          request_state: string
+        }[]
+      }
+      execute_privacy_request: {
+        Args: {
+          p_correction?: Json | null
+          p_export_expires_at?: string | null
+          p_idempotency_key: string
+          p_request_id: string
+        }
+        Returns: {
+          export_artifact_id: string | null
+          outcome_code: string
+          request_state: string
+        }[]
+      }
       finalize_stripe_checkout: {
         Args: {
           p_amount_total: number
@@ -1134,6 +1177,13 @@ export type Database = {
           transition_code: string
         }[]
       }
+      read_privacy_export: {
+        Args: { p_request_id: string }
+        Returns: {
+          expires_at: string
+          payload: Json
+        }[]
+      }
       read_engagement_workspace: {
         Args: { p_order_id: string }
         Returns: {
@@ -1178,6 +1228,14 @@ export type Database = {
           p_expected_status: string
           p_idempotency_key: string
           p_order_id: string
+        }
+        Returns: string
+      }
+      verify_privacy_request: {
+        Args: {
+          p_idempotency_key: string
+          p_request_id: string
+          p_subject_contact_id: string | null
         }
         Returns: string
       }

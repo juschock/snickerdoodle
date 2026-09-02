@@ -71,13 +71,16 @@ select pg_temp.assert_true(
       and p.prosecdef
       and has_function_privilege('authenticated', p.oid, 'execute')
   ) = array[
+    'execute_privacy_request',
     'manage_engagement_assignment',
     'payment_operations_health',
     'read_engagement_workspace',
     'read_intake_manager_queue',
     'read_owner_paid_brief',
+    'read_privacy_export',
     'read_service_lead_engagement',
     'transition_order_fulfillment',
+    'verify_privacy_request',
     'write_engagement_work_item'
   ]::name[],
   'authenticated SECURITY DEFINER surface is exact'
@@ -127,7 +130,10 @@ select pg_temp.assert_true(
         'engagement_access_audit_receipts',
         'intake_manager_queue_access_receipts',
         'owner_paid_brief_access_receipts',
-        'order_fulfillment_idempotency'
+        'order_fulfillment_idempotency',
+        'privacy_requests',
+        'privacy_request_actions',
+        'privacy_audit_receipts'
       )
       and column_name ~ '(email|brief|content|payload|secret|token|provider)'
   ),

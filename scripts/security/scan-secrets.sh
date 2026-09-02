@@ -72,7 +72,10 @@ common_args=(
 
 case "$mode" in
   --all)
-    "$work_dir/gitleaks" git "${common_args[@]}" --log-opts='--all' "$repo_root"
+    # Git notes contain immutable receipt digests, not source history. Exclude
+    # that derived local evidence namespace while scanning every source ref.
+    "$work_dir/gitleaks" git "${common_args[@]}" \
+      --log-opts='--exclude=refs/notes/* --all' "$repo_root"
 
     # Git mode scans commit patches, not the current uncommitted files. Build a
     # clean file-only view from tracked plus nonignored untracked paths so local
