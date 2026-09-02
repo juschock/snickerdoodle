@@ -4,6 +4,9 @@
 -- Approval-dependent policies are represented as inactive symbolic rows. The
 -- only immediately enforceable expiry is the explicit per-export expiry that
 -- an authorized owner supplies when generating a privacy export.
+-- RC.3 supersedes the unapplied RC.2 bytes of this migration after the original
+-- global long-digit guard rejected a schema-typed, Luhn-failing delivery email.
+-- All 20 preceding migration files remain byte-identical.
 
 begin;
 
@@ -56,6 +59,87 @@ begin
     raise exception 'Invalid privacy subject email' using errcode = '22023';
   end if;
   return v_email;
+end;
+$$;
+
+create or replace function private.luhn_is_valid(p_digits text)
+returns boolean
+language plpgsql
+immutable
+strict
+security invoker
+set search_path = ''
+as $$
+declare
+  v_length integer := char_length(p_digits);
+  v_index integer;
+  v_digit integer;
+  v_sum integer := 0;
+begin
+  if p_digits !~ '^[0-9]+$' or v_length not between 13 and 19 then
+    return false;
+  end if;
+
+  for v_index in 1..v_length loop
+    v_digit := substr(p_digits, v_index, 1)::integer;
+    if mod(v_length - v_index, 2) = 1 then
+      v_digit := v_digit * 2;
+      if v_digit > 9 then
+        v_digit := v_digit - 9;
+      end if;
+    end if;
+    v_sum := v_sum + v_digit;
+  end loop;
+
+  return mod(v_sum, 10) = 0;
+end;
+$$;
+
+create or replace function private.intake_delivery_email_is_allowed(p_email text)
+returns boolean
+language plpgsql
+immutable
+strict
+security invoker
+set search_path = ''
+as $$
+declare
+  v_email text := lower(btrim(p_email));
+  v_local_part text;
+  v_domain text;
+  v_match text[];
+  v_digits text;
+begin
+  if char_length(v_email) not between 3 and 320
+    or v_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$'
+  then
+    return false;
+  end if;
+
+  v_local_part := split_part(v_email, '@', 1);
+  v_domain := split_part(v_email, '@', 2);
+
+  -- A long digit run outside the typed local part has no accepted semantic
+  -- exception. Within the local part, separators are normalized before Luhn.
+  if v_domain ~ '([0-9][ -]?){12,}[0-9]' then
+    return false;
+  end if;
+
+  for v_match in
+    select candidate
+    from regexp_matches(
+      v_local_part,
+      '(([0-9][ -]?){12,}[0-9])',
+      'g'
+    ) as matches(candidate)
+  loop
+    v_digits := regexp_replace(v_match[1], '[^0-9]', '', 'g');
+    if char_length(v_digits) > 19 or private.luhn_is_valid(v_digits) then
+      return false;
+    end if;
+  end loop;
+
+  return true;
 end;
 $$;
 
@@ -113,7 +197,16 @@ as $$
     and lower(p_payload::text) !~ '(^|[^a-z0-9])whsec_[a-z0-9]+'
     and lower(p_payload::text) !~ '-----begin [^-]*(private|secret) key-----'
     and lower(p_payload::text) !~ '(password|passwd|api[_ -]?key|secret|token)[[:space:]]*[:=][[:space:]]*[^,}[:space:]]+'
-    and p_payload::text !~ '([0-9][ -]?){12,18}[0-9]';
+    and not exists (
+      select 1
+      from jsonb_each(p_payload) as e(key_name, field_value)
+      where e.key_name <> 'deliveryEmail'
+        and e.field_value::text ~ '([0-9][ -]?){12,}[0-9]'
+    )
+    and (
+      not (p_payload ? 'deliveryEmail')
+      or private.intake_delivery_email_is_allowed(p_payload ->> 'deliveryEmail')
+    );
 $$;
 
 create or replace function private.enforce_customer_intake_governance()
@@ -1203,6 +1296,8 @@ comment on function private.apply_retention_action(text, uuid, timestamptz) is
   'Rechecks candidate eligibility at action time; export expiry is explicit and legal-duration policies remain inactive by default.';
 
 revoke all on function private.normalize_privacy_email(text),
+  private.luhn_is_valid(text),
+  private.intake_delivery_email_is_allowed(text),
   private.intake_payload_is_allowed(jsonb, boolean),
   private.enforce_customer_intake_governance(),
   private.reject_restricted_subject_intake(),

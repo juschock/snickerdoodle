@@ -23,13 +23,13 @@ const requestStateMachine = readFileSync(
 describe('SN05 privacy lifecycle', () => {
   it('pins the exact forward migration and disposable corpus bytes', () => {
     expect(createHash('sha256').update(migration).digest('hex')).toBe(
-      '0adaa00fdd6566dd7576f3757e8d75fafcc8c94618758e2882880d20623dd616'
+      '87f7fd24f87e134ea79d8d4053bdd1c6e50ea324fb1d6effc662c1fcde344cb9'
     );
     expect(createHash('sha256').update(acceptance).digest('hex')).toBe(
       '0c33ce412271492bfc4833818fd3a32e2d3cfd530eb42249ee1b2243918d8362'
     );
     expect(createHash('sha256').update(replay).digest('hex')).toBe(
-      '3ea802c5a20bd788a205129151338b655f6723760f98a838221d67b5f7daf15b'
+      '08b5733b09346cb28ed045432de3f66784663c6e400fa8e482569981a81735dc'
     );
   });
 
@@ -67,7 +67,10 @@ describe('SN05 privacy lifecycle', () => {
     expect(migration).toContain("jsonb_object_keys(p_payload)");
     expect(migration).toContain("whsec_[a-z0-9]+");
     expect(migration).toContain("private|secret) key");
-    expect(migration).toContain("p_payload::text !~ '([0-9][ -]?){12,18}[0-9]'");
+    expect(migration).toContain('create or replace function private.luhn_is_valid');
+    expect(migration).toContain('create or replace function private.intake_delivery_email_is_allowed');
+    expect(migration).toContain("e.key_name <> 'deliveryEmail'");
+    expect(migration).toContain('private.luhn_is_valid(v_digits)');
     expect(migration).toContain('Existing intake payload violates the accepted privacy schema');
     expect(migration).toContain("set raw_submission_json = '{}'::jsonb");
     expect(migration).toContain("set content_json = '{\"privacyState\":\"anonymized\"}'::jsonb");

@@ -106,3 +106,23 @@ Supabase; their local tests grant no provider, release, payment, deployment, or 
   foundation-plus-five replay and reviewed local owner/assignment upgrade are not a production-like predecessor
   upgrade or managed-role/ACL restore drill.
 - Treat the ledger as evidence, not as permission to mutate a database.
+
+## SN08B hosted chronology and RC.3 privacy supersession
+
+On September 2, 2026, the exact provider-reconciliation migration and the next four
+accepted migrations through `20260902052346_harden_privileged_rpc_access.sql`
+were applied to the intended hosted Snickerdoodle project after the separately
+authorized preflight. The then-current privacy migration, SHA-256
+`0adaa00fdd6566dd7576f3757e8d75fafcc8c94618758e2882880d20623dd616`,
+failed transactionally with SQLSTATE `23514` on a typed delivery-email false
+positive and was not recorded in the hosted migration ledger. Its schema changes
+rolled back.
+
+RC.3 supersedes only that unapplied privacy migration. Its field-aware detector
+retains the existing allowlist, type, size, secret, free-text, and arbitrary-field
+guards. Only a syntactically valid `deliveryEmail` local part can admit a 13–19
+digit candidate, and only when the normalized candidate fails Luhn; valid card
+candidates, long domain candidates, malformed email, free text, payment-shaped
+objects, unknown keys, secrets, and oversized payloads remain fail closed. The
+first 20 migration files are byte-identical to RC.2. This local custody evidence
+does not authorize or credit hosted application of the superseding migration.

@@ -43,7 +43,7 @@ while read -r expected relative; do
     echo "Accepted predecessor changed: $relative ($actual)" >&2
     exit 65
   fi
-done <"$repo_root/docs/customer-readiness/sn-sprint-05-baseline-migration-shas.txt"
+done <"$repo_root/docs/customer-readiness/sn-sprint-08b2-migration-shas.txt"
 
 "$pg_bin/initdb" -D "$data_dir" -U postgres --auth=trust --no-locale >/dev/null
 "$pg_bin/pg_ctl" -D "$data_dir" -l "$log_file" \
@@ -160,6 +160,8 @@ if [[ "$migration_count" != '21' ]]; then
 fi
 
 if [[ "${SNICK_PRIVACY_REPLAY_ONLY:-false}" != true ]]; then
+  "$pg_bin/psql" -X -q "$db_url" -v ON_ERROR_STOP=1 \
+    -f "$repo_root/scripts/db/privacy-detector-supersession-acceptance.sql"
   "$pg_bin/psql" -X -q "$db_url" -v ON_ERROR_STOP=1 \
     -f "$repo_root/scripts/db/privacy-lifecycle-acceptance.sql"
   "$pg_bin/psql" -X -q "$db_url" -v ON_ERROR_STOP=1 \

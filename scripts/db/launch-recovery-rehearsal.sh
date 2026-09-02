@@ -57,7 +57,7 @@ while read -r expected relative; do
     echo "Accepted migration changed: $relative ($actual)" >&2
     exit 65
   fi
-done <"$repo_root/docs/customer-readiness/sn-sprint-08a-migration-shas.txt"
+done <"$repo_root/docs/customer-readiness/sn-sprint-08b2-migration-shas.txt"
 
 setup_cluster_roles() {
   local port="$1"

@@ -50,7 +50,7 @@ while read -r expected relative; do
     echo "Candidate migration changed: $relative ($actual)" >&2
     exit 65
   fi
-done <"$repo_root/docs/customer-readiness/sn-sprint-08a-migration-shas.txt"
+done <"$repo_root/docs/customer-readiness/sn-sprint-08b2-migration-shas.txt"
 if [[ "$(shasum -a 256 "$fixture_path" | awk '{print $1}')" != \
   'cc26f913ff32c7df5a327c037fa65fc5705fd21a841d7d522cf0bdb8f15df6b0' ]]; then
   echo 'Hosted provider evidence fixture changed' >&2
@@ -281,6 +281,28 @@ where intent_id = '68000000-0000-4000-8000-000000000010';
 SQL
 }
 
+seed_typed_email_false_positive() {
+  "$pg_bin/psql" -X -q "$hosted_url" -v ON_ERROR_STOP=1 <<'SQL'
+set role service_role;
+insert into public.checkout_intents (
+  id, brief_json, delivery_email, amount_cents, currency, terms_version, status,
+  created_at, updated_at
+) values (
+  '68000000-0000-4000-8000-000000000020',
+  jsonb_build_object(
+    'organizationType', 'Nonprofit / Community organization',
+    'campaignFamily', 'Cause / Nonprofit campaign',
+    'primaryAction', 'Register',
+    'deliveryEmail', 'synthetic+1700000000000@example.invalid'
+  ),
+  'synthetic+1700000000000@example.invalid',
+  9900, 'usd', '2026-08-30', 'pending',
+  to_timestamp(1700000000), to_timestamp(1700000000)
+);
+reset role;
+SQL
+}
+
 replay_hosted_path() {
   local count=0 migration filename
   for migration in "$repo_root"/supabase/migrations/*.sql; do
@@ -341,6 +363,9 @@ SQL
   for migration in "$repo_root"/supabase/migrations/*.sql; do
     filename="$(basename "$migration")"
     if [[ "$filename" < "$reconcile_name" ]]; then continue; fi
+    if [[ "$filename" == '20260902064553_implement_privacy_lifecycle_and_retention.sql' ]]; then
+      seed_typed_email_false_positive
+    fi
     apply_migration "$hosted_url" "$migration"
     record_migration "$hosted_url" "$migration"
   done
@@ -430,6 +455,17 @@ clean_schema_hash="$(shasum -a 256 "$tmp_dir/clean-schema.sql" | awk '{print $1}
 assert_final "$clean_url"
 assert_final "$hosted_url"
 
+"$pg_bin/psql" -X -q "$clean_url" -v ON_ERROR_STOP=1 \
+  -f "$repo_root/scripts/db/privacy-detector-supersession-acceptance.sql"
+"$pg_bin/psql" -X -q "$hosted_url" -v ON_ERROR_STOP=1 \
+  -f "$repo_root/scripts/db/privacy-detector-supersession-acceptance.sql"
+
+if [[ "$("$pg_bin/psql" -X -qAt "$hosted_url" -c \
+  "select private.intake_payload_is_allowed(brief_json, false) from public.checkout_intents where id='68000000-0000-4000-8000-000000000020'")" != t ]]; then
+  echo 'Typed delivery-email historical-shape payload did not pass unchanged' >&2
+  exit 1
+fi
+
 if [[ "$("$pg_bin/psql" -X -qAt "$hosted_url" -c \
   "select count(*) from public.checkout_intents i join public.orders o on o.id=i.order_id join public.briefs b on b.order_id=o.id where i.id='68000000-0000-4000-8000-000000000010' and i.status='paid' and o.payment_status='paid'")" != 1 ]]; then
   echo 'Historical paid graph was not preserved' >&2
@@ -443,3 +479,5 @@ echo 'SN08A_PROVIDER_ONLY_OBJECTS=retired'
 echo 'SN08A_LEGACY_RECEIPT_PRESERVATION=blocked_23514_and_rolled_back'
 echo 'SN08A_AUTHORITATIVE_FULFILLMENT=public.transition_order_fulfillment'
 echo 'SN08A_TEMP_ARTIFACT_CLEANUP=armed'
+echo 'SNICK_SN08B2_PRIVACY_SUPERSESSION_PASS paths=clean_hosted20_predecessor'
+echo 'SN08B2_TYPED_EMAIL_FALSE_POSITIVE=accepted_unchanged'

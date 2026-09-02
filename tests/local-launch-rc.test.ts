@@ -13,16 +13,16 @@ function filesBelow(path: string): string[] {
 }
 
 describe('SN07 local launch release candidate', () => {
-  it('binds every current runtime identity to 1.1.0-rc.2', () => {
+  it('binds every current runtime identity to 1.1.0-rc.3', () => {
     const pkg = JSON.parse(read('package.json')) as { version: string };
     const lock = JSON.parse(read('package-lock.json')) as {
       version: string;
       packages: Record<string, { version?: string }>;
     };
-    expect(pkg.version).toBe('1.1.0-rc.2');
+    expect(pkg.version).toBe('1.1.0-rc.3');
     expect(lock.version).toBe(pkg.version);
     expect(lock.packages['']?.version).toBe(pkg.version);
-    expect(read('lib/stripe.ts')).toContain("version: '1.1.0-rc.2'");
+    expect(read('lib/stripe.ts')).toContain("version: '1.1.0-rc.3'");
   });
 
   it('classifies every application route and keeps private paths out of discovery', () => {
