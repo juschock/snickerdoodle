@@ -38,7 +38,7 @@ Customer-facing:
 structured brief → polished human-reviewed campaign package
 ```
 
-Internal (Josh + ChatGPT + custom AI tooling, with Rachel as final expert quality gate):
+Internal role model (service lead using ChatGPT and custom AI tooling, with a prospective independent marketing reviewer as final expert quality gate):
 
 ```text
 intake normalization
@@ -50,12 +50,16 @@ intake normalization
 → AI polish pass
 → deterministic QA
 → editor packet
-→ Rachel review
+→ independent marketing review
 → package assembly
 → delivery
 ```
 
-Rachel is the final expert quality gate, not the first drafter.
+The prospective independent marketing reviewer is the final expert quality gate, not the first drafter. That role is
+unassigned and under HARD HOLD. This document records no identity, employment, compensation, ownership,
+availability, assignment, authority, or access. The two-person workflow may activate only after CEO designation and
+assignment, availability and training confirmation, classification/conflict/IP clearance, least-privilege per-order
+access approval, two timed synthetic rehearsals, and documented CFO+CRO concurrence for every monetary term.
 
 See also:
 
@@ -89,11 +93,10 @@ Over time, internal tooling should live in a **separate, access-controlled syste
 - file packaging conventions
 - internal status tracking
 
-The backend should not initially include:
+The backend does not currently include:
 
 - customer accounts
 - dashboards (customer-facing)
-- database persistence in the public app
 - automated payment workflows
 - automated delivery portals
 - customer-facing AI
@@ -101,7 +104,9 @@ The backend should not initially include:
 - multi-user customer roles
 - subscription billing
 
-Those may be considered later only after demand is validated.
+The public app does use one narrow server-only Supabase path to store qualified survey submissions as pending
+intents. It does not expose database credentials, create orders, or begin fulfillment. Broader customer or payment
+features may be considered later only after demand is validated.
 
 ## Internal AI Use
 
@@ -145,7 +150,10 @@ Human review is required for V1.
 
 This is not optional at the beginning.
 
-Rachel’s review is the final expert quality gate. Marketing copy for nonprofits, local events, fundraisers, and small businesses requires judgment, tone, and accuracy. The human review step is part of the product quality and part of Racoben’s advantage.
+Independent marketing review is the final expert quality gate. Marketing copy for nonprofits, local events,
+fundraisers, and small businesses requires judgment, tone, and accuracy. The human review step is part of the
+product quality. Until the reviewer and all two-person activation gates above are cleared, fulfillment remains on
+HARD HOLD and this workflow is rehearsal-only.
 
 The backend should support the review step, not replace it prematurely.
 
@@ -167,35 +175,42 @@ Required artifacts:
 - fact ledger spec
 - editor packet spec
 
-No database, auth, customer dashboard, or payment integration is required in this phase.
+No customer auth, customer dashboard, or payment integration is required in this phase. The narrow pending-intake
+store is already implemented for operational reliability.
 
 **Status:** complete for V1 UI/offer testing.
 
-### Phase 1 — Manual Fulfillment
+### Phase 1 — Staged Manual Pilot
 
-Goal: sell and fulfill the first 5–10 campaign packages manually.
+Goal: after every release, legal, reviewer, economics, payment, and external-motion gate opens, accept and process
+multiple independent paid orders concurrently within documented service-lead, reviewer, delivery, and quality
+capacity. Treat each completed-order reconciliation as learning evidence, never as a global acceptance lock, and
+preserve isolated reservation, assignment, access, QA, reconciliation, and delivery records per order.
 
 Workflow:
 
-1. Customer submits intake form.
-2. Submission is delivered by email or simple form handler.
-3. Racoben normalizes intake and builds a fact ledger.
+1. While payments are absent, a qualified prospect may submit the unlisted survey; the server validates and stores
+   only a pending intake in Supabase. This is not an order and does not begin fulfillment.
+2. After Gate B and all retained gates open, Racoben accepts only the independent orders that documented staffing,
+   reviewer, delivery, and quality capacity can protect concurrently.
+3. The service lead normalizes intake and builds a fact ledger.
 4. Internal AI assists with first drafts (fact-ledger constrained).
 5. Channel adaptation, critique, and polish passes run internally.
-6. Deterministic QA and editor packet prepared for Rachel.
-7. Rachel reviews and approves the package.
-8. Final files are packaged manually.
-9. Customer receives the finished package within the promised delivery window.
+6. The service lead completes deterministic QA and prepares the editor packet.
+7. The assigned, cleared independent marketing reviewer reviews and approves the package.
+8. Final files are packaged manually and delivered within the promised delivery window.
+9. New acceptance freezes until that order, handling time, revision burden, support, and economics are reconciled.
 
 Success criteria:
 
-- at least 5 real customer attempts
-- at least 1–3 paid customers, ideally more
+- two timed synthetic rehearsals completed before any capacity or turnaround claim
+- one reconciled paid order, followed only if safe by at most two more sequential orders
 - clear understanding of common campaign types
 - clear understanding of fulfillment bottlenecks
 - customer feedback on usefulness
 
-**Status:** current phase.
+**Status:** future conditional pilot; HARD HOLD. The current phase is non-payment fit-check and pending-intake
+validation only. G5 external motion remains unassigned.
 
 ### Phase 2 — Lightweight Internal Tooling
 
@@ -219,7 +234,7 @@ Possible tools:
 
 Still required:
 
-- Rachel’s final review
+- final independent marketing review by an assigned and cleared reviewer
 - human QA
 - no customer-facing AI
 - no full SaaS dashboard unless proven necessary

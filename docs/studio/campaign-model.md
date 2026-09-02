@@ -5,7 +5,7 @@ Separate **Campaign** from **Order**. A campaign is the initiative; an order is 
 ## Example
 
 ```text
-Green Valley Animal Rescue (Account)
+Meadowline Animal Rescue (fictional example account)
 ├── Fall Adoption Weekend (Campaign — short_term)
 │   └── Standard Launch Kit (Order)
 ├── Giving Tuesday Appeal (Campaign — short_term)
@@ -60,9 +60,9 @@ Optional checkpoints for ongoing/recurring campaigns.
 
 - One campaign → **many orders** over time
 - Each order has its own brief (or brief delta), fact ledger, assets, review, delivery
-- Rachel's review queue shows **campaign context**: past kits, tone notes, performance notes
+- The assigned independent marketing review queue shows **campaign context**: past kits, tone notes, performance notes
 
-## Rachel review context (ongoing clients)
+## Independent marketing review context (ongoing clients)
 
 When reviewing a new kit for a repeat client, surface:
 

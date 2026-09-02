@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { SnickerdoodleMark } from "@/components/snickerdoodle-mark"
-import { PRODUCT_EXCLUSIONS_DISCLAIMER, PRODUCT_NAME } from "@/lib/site"
+import { FIT_CHECK_CTA, FIT_CHECK_MAILTO, INTAKE_EMAIL, PRODUCT_EXCLUSIONS_DISCLAIMER, PRODUCT_HOLD_DISCLAIMER, PRODUCT_NAME, PRODUCT_QUESTIONS_MAILTO } from "@/lib/site"
 
-const footerLinks = [
+const commercialFooterLinks = [
   { label: "How It Works", href: "/#how-it-works" },
   { label: "What You Get", href: "/#what-you-get" },
   { label: "Examples", href: "/#examples" },
@@ -10,7 +10,16 @@ const footerLinks = [
   { label: "FAQ", href: "/#faq" },
 ]
 
-export function SiteFooter() {
+const holdFooterLinks = [
+  { label: "Fictional Samples", href: "/samples" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
+]
+
+export function SiteFooter({ commercialReady = false }: { commercialReady?: boolean }) {
+  const footerLinks = commercialReady ? commercialFooterLinks : holdFooterLinks
+
   return (
     <footer className="border-t border-border bg-secondary/40">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -26,8 +35,9 @@ export function SiteFooter() {
               </span>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              You have something to promote. We give you the words, structure, and campaign
-              materials to promote it professionally.
+              {commercialReady
+                ? "You have something to promote. We give you the words, structure, and campaign materials to promote it professionally."
+                : "Product-readiness review is in progress. Orders, payment, private intake, and fulfillment are unavailable."}
             </p>
           </div>
 
@@ -48,26 +58,44 @@ export function SiteFooter() {
 
           <div className="flex flex-col gap-3">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Get started
+              {commercialReady ? "Get started" : "Product status"}
             </span>
-            <Link
-              href="/brief"
+            <a
+              href={commercialReady ? FIT_CHECK_MAILTO : PRODUCT_QUESTIONS_MAILTO}
               className="text-sm text-foreground transition-colors hover:text-primary"
             >
-              Start Your Campaign Survey
+              {commercialReady ? FIT_CHECK_CTA : "Ask a product question"}
+            </a>
+            {commercialReady ? (
+              <Link
+                href="/#what-you-get"
+                className="text-sm text-foreground transition-colors hover:text-primary"
+              >
+                See What&apos;s Included
+              </Link>
+            ) : (
+              <Link href="/samples" className="text-sm text-foreground transition-colors hover:text-primary">
+                View fictional samples
+              </Link>
+            )}
+            <Link href="/privacy" className="text-sm text-foreground transition-colors hover:text-primary">
+              Privacy
             </Link>
-            <Link
-              href="/#what-you-get"
+            <Link href="/terms" className="text-sm text-foreground transition-colors hover:text-primary">
+              Terms
+            </Link>
+            <a
+              href={`mailto:${INTAKE_EMAIL}`}
               className="text-sm text-foreground transition-colors hover:text-primary"
             >
-              See What&apos;s Included
-            </Link>
+              {commercialReady ? "Contact support" : "Contact site support"}
+            </a>
           </div>
         </div>
 
         <div className="mt-10 border-t border-border pt-6">
           <p className="text-xs leading-relaxed text-muted-foreground">
-            {PRODUCT_EXCLUSIONS_DISCLAIMER}
+            {commercialReady ? PRODUCT_EXCLUSIONS_DISCLAIMER : PRODUCT_HOLD_DISCLAIMER}
           </p>
           <p className="mt-4 text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Racoben. All rights reserved.

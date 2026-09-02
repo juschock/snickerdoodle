@@ -27,6 +27,12 @@ export function SampleKitPreview({ kit }: { kit: SampleKit }) {
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{kit.summary}</p>
         </div>
 
+        <div className="mt-6 max-w-3xl rounded-xl border border-primary/30 bg-card px-5 py-4 text-sm leading-relaxed text-muted-foreground">
+          <strong className="text-foreground">Fictional demonstration:</strong> every organization, event, person,
+          offer, schedule, and outcome shown below is illustrative—not a real client or verified result. This is not an
+          offer or a promise of service capacity. Do not use the sample as-is.
+        </div>
+
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border border-border bg-card p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type</p>

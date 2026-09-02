@@ -1,8 +1,8 @@
-import { PRODUCT_NAME, publicAsset } from '@/lib/site';
+import { PRODUCT_NAME } from '@/lib/site';
 
 const uses = [
   'Paste emails into Mailchimp or Constant Contact.',
-  'Post social copy on Facebook, Instagram, LinkedIn, X, or TikTok.',
+  'Post text copy on Facebook, Instagram, LinkedIn, or X.',
   'Add landing page copy to Eventbrite, Givebutter, GoFundMe, Squarespace, WordPress, or your own website.',
   'Use flyer copy in Canva or a printed handout.',
   'Send the press release to local newspapers, newsletters, radio, schools, churches, or partners.',
@@ -14,14 +14,23 @@ export function UseAnywhere() {
     <section className="border-b border-border bg-secondary/30">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 md:py-24 lg:grid-cols-2">
         <div className="order-2 lg:order-1">
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <img
-              src={publicAsset('/images/campaign-kit-folder.png')}
-              alt="A finished campaign kit organized in a tabbed folder on a warm desk"
-              width={680}
-              height={520}
-              className="h-full w-full object-cover"
-            />
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Editable delivery</p>
+            <h3 className="mt-4 font-heading text-2xl font-semibold text-foreground">A practical handoff, not another dashboard.</h3>
+            <dl className="mt-6 grid gap-4">
+              <div className="rounded-xl bg-secondary/40 p-4">
+                <dt className="text-sm font-semibold text-foreground">Organized by channel</dt>
+                <dd className="mt-1 text-sm text-muted-foreground">Find the email, social, page, print, and schedule material quickly.</dd>
+              </div>
+              <div className="rounded-xl bg-secondary/40 p-4">
+                <dt className="text-sm font-semibold text-foreground">Facts stay aligned</dt>
+                <dd className="mt-1 text-sm text-muted-foreground">Dates, links, prices, and calls to action come from one confirmed source.</dd>
+              </div>
+              <div className="rounded-xl bg-secondary/40 p-4">
+                <dt className="text-sm font-semibold text-foreground">Ready for your tools</dt>
+                <dd className="mt-1 text-sm text-muted-foreground">Copy, paste, adapt, print, or hand the package to your team.</dd>
+              </div>
+            </dl>
           </div>
         </div>
 

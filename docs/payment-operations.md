@@ -1,72 +1,95 @@
-# Snickerdoodle payment operations
+# Payment operations
 
-## Customer workflow
+**Code state (2026-08-30):** the application contains a fail-closed Stripe-hosted Checkout and signed-webhook
+implementation for the one-time Snickerdoodle Campaign Package. Checkout does not open unless every commercial
+approval flag, the payment switch, an exact public origin, a mode-matching Stripe key, the webhook signing secret,
+and the checkout-security secret are present. Webhook settlement has a separate switch so paid obligations can
+continue to reconcile while new checkout is paused.
 
-1. The customer completes the campaign survey at `/snickerdoodle/brief`.
-2. The server validates every field and stores a pending `$99 USD` checkout intent.
-3. Stripe Checkout collects the card details and payment. Card data never passes through Racoben servers.
-4. Stripe redirects the customer to a confirmation or cancellation page.
-5. The signed Stripe webhook is the source of truth for fulfillment, not the browser redirect.
+**Provider state:** a `$99 USD` Stripe product/price has been reported, but this release has not independently bound
+or exercised the exact live account, restricted key, webhook endpoint, charge eligibility, payout destination, or
+settlement path. Those facts must be verified against the frozen release before customer payment can be accepted.
+The code or product object alone is not payment readiness.
 
-## Staff workflow
+The intended customer flow is:
 
-1. A paid Checkout Session creates the account, primary contact, campaign, order, brief, and payment activity in Studio in one database transaction.
-2. The new paid order appears in Studio as `New Intake` with `payment_status = paid`.
-3. Staff reviews the brief, requests clarification if needed, and moves the order through the existing fulfillment board.
-4. The existing 48-hour delivery expectation begins after successful payment and receipt of a complete survey.
+```text
+approved fit check → signed, unlisted intake → durable pending checkout intent
+→ Stripe-hosted payment → signed webhook → idempotent paid order finalization
+→ Racoben order/schedule confirmation → bounded fulfillment
+```
 
-## Payment controls
+A fit check, survey submission, checkout return page, or Stripe redirect does not by itself create a fulfilled order
+or start work. Racoben starts work only after the signed Stripe event is durably reconciled and the intake is complete.
 
-- The server owns the only offer definition: `standard_99`, `9900` cents, `usd`, quantity one.
-- The client cannot supply a Stripe price, amount, currency, product, or quantity.
-- Webhooks require the raw request body and a valid Stripe signature.
-- The database function validates amount and currency again and uses the Stripe event ID as its idempotency key.
-- Staff RLS remains in force. Checkout writes use a server-only Supabase service credential; no secret is exposed through a `NEXT_PUBLIC_` variable.
-- Logs include event IDs and error messages only, never card data, secrets, or the survey payload.
+## Required production configuration
 
-## Required environment variables
+- All eight `SNICKERDOODLE_*` commercial approval flags must be exactly `true`.
+- `SNICKERDOODLE_PAYMENTS_ENABLED=true` opens new checkout; set it to `false` for an acquisition stop.
+- `SNICKERDOODLE_PAYMENT_WEBHOOKS_ENABLED=true` keeps signed payment settlement enabled independently.
+- `SNICKERDOODLE_STRIPE_LIVEMODE=true`, an exact allowed origin, and mode-matching restricted Stripe key are required.
+- A minimum-32-character checkout-security secret and Stripe webhook signing secret are required.
+- Supabase URL, public key, and service-role key must target the exact reviewed schema.
+- No secret belongs in source, logs, receipts, URLs, client bundles, or support messages.
 
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `NEXT_PUBLIC_SITE_ORIGIN=https://racoben.com`
+## Checkout controls
 
-Use Stripe test-mode credentials in Preview and Development. Production must use the intended Racoben Stripe account's live credentials and a live webhook endpoint at `https://racoben.com/snickerdoodle/api/stripe/webhook`.
+- Private signed invite cookie and delivery-email binding.
+- Strict public-origin and forwarded-host validation.
+- Bounded JSON body, schema normalization, deterministic pending-intake ID, and client idempotency key.
+- Pseudonymized durable rate limits for source address and delivery email.
+- Stripe-hosted one-time Checkout with required billing address and terms consent.
+- Exact `$99 USD` amount/offer metadata and Stripe idempotency key.
+- Reuse of the previously bound open Checkout Session; fail closed on mismatches or stale sessions.
+- A 60-minute provider expiry with at least 35 minutes remaining at actual Session creation, leaving a bounded margin
+  for database/API latency while satisfying Stripe's creation-time minimum.
+- An exact singleton-capacity reservation. Definite pre-Session failures release it atomically; provider ambiguity or
+  bind failure retains the idempotent reservation and opens a durable metadata-only reconciliation alert rather than
+  silently orphaning capacity or creating a second Session.
 
-## First-real-dollar readiness
+## Webhook and order controls
 
-Code complete: validated Checkout creation, success/cancel UX, signed webhook handling, idempotent transactional persistence, staff handoff, privacy/terms copy, tests, and build verification.
+- Verify the Stripe signature over the exact bounded raw body before any database operation.
+- Reject test/live mode mismatch.
+- Persist an event receipt before processing and make duplicate/replay processing idempotent.
+- Finalize only paid Checkout events matching the exact offer, amount, currency, intent, email, and payment intent.
+- Record processed, ignored, or failed disposition without storing raw payment payloads in application logs.
+- Persist `checkout.session.async_payment_failed`, `checkout.session.expired`, `charge.refunded`,
+  `charge.dispute.created`, and `charge.dispute.closed` idempotently with a metadata-only reconciliation alert before
+  acknowledging them with HTTP 200. A true signature, integrity, receipt, or database-processing failure still returns
+  a failure so Stripe retries; a successfully recorded operator obligation does not create a retry storm.
+- Keep the success page non-authoritative: only the reconciled signed event establishes the paid-order state.
 
-Verified in Stripe test mode on July 15, 2026: browser survey submission, server-side Checkout creation, a `$99 USD` test-card payment, signed webhook delivery, idempotent Supabase finalization, and the resulting paid `New Intake` order in Studio. The Studio payment migration is deployed and its staff authorization boundary remains unchanged.
+For any open reconciliation alert, pause new checkout, reconcile the verified Stripe event against the bound
+Checkout Session/payment intent and internal order through the authorized administrator procedure, preserve the
+receipt, and resolve the customer obligation before reopening checkout. Application roles have no direct receipt,
+event-ledger, or order-table mutation grant.
 
-External cutover still required:
+## Activation and rollback sequence
 
-1. Finish Stripe account activation and connect the verified Racoben Engineering, LLC payout account.
-2. Create a live-mode webhook endpoint for `https://racoben.com/snickerdoodle/api/stripe/webhook` with `checkout.session.completed` and `checkout.session.async_payment_succeeded` enabled.
-3. Add the live Stripe secret and live webhook signing secret to Vercel Production only. Keep test credentials restricted to Preview/Development.
-4. Merge the checkout pull request only after the production secrets exist, then verify the GitHub-triggered production deployment.
-5. Open a production Checkout Session and confirm it has no test-mode or Sandbox indicator. Do not make a self-payment merely to test live mode.
-6. Rotate the test secret that was used during setup and remove the temporary Preview webhook/bypass configuration.
+1. Account owner completes Stripe activation and payout setup; verify charges and payouts are enabled.
+2. Create a one-order-at-a-time Payment Link fallback and restricted production key; create the signed webhook endpoint.
+3. Apply and rehearse the exact Supabase production migration/role/recovery package; verify RLS and Data API grants separately.
+4. Configure encrypted deployment secrets, deploy one immutable preview, and run a real Stripe test-mode purchase/refund/replay drill with synthetic data.
+5. Promote the same artifact, run a low-value live self-test only if the account owner separately approves it, and verify bank/payout reconciliation.
+6. If any integrity, reconciliation, support, or fulfillment control fails, disable new checkout while leaving webhook
+   settlement available, preserve receipts, and roll back the deployment.
 
-## Launch-day verification
+The live product/price creation does not authorize representing that Stripe can charge customers before Stripe reports
+the account active. Checkout and webhook code accept only a mode-matching restricted key; a full-access `sk_*` key is
+not a supported deployment input.
 
-- Confirm `/snickerdoodle/brief`, Checkout, cancel, success, privacy, and terms pages load through `racoben.com`.
-- Confirm a live Checkout Session contains exactly one `standard_99` item for `$99 USD` and uses the Racoben Stripe account.
-- Confirm the live webhook endpoint is enabled and its most recent deliveries return HTTP 200.
-- Confirm Stripe shows the intended Fulton business checking account for payouts and review the initial payout schedule.
-- Confirm staff can see paid orders in Studio but public/anonymous users cannot query operational tables.
-- Confirm `snickerdoodle@racoben.com` is monitored for fulfillment and refund questions.
+Stripe Tax and `automatic_tax` remain off pending the documented Virginia advertising-service tax decision; checkout
+does not automatically collect tax and no tax-registration claim is made. The gated customer policy is a one-time
+`$99 USD` purchase with a normal 48-hour window beginning only after successful payment, Racoben order confirmation,
+and complete usable intake. It provides a full refund before substantive fulfillment starts; cancellation/full refund
+if Racoben misses an unpaused window; and, for a material scope defect reported within seven calendar days after
+delivery, the customer may choose one reasonable correction or a full refund. Results, platform outcomes, and
+customer-caused delays are excluded.
 
-## Daily operations and exception handling
-
-- Treat Studio's paid order as the fulfillment trigger. A success-page visit alone is not proof of payment.
-- Reconcile Stripe payments against Studio payment activity daily during launch week, then weekly once stable.
-- For a webhook HTTP 500, fix the underlying database/configuration issue and use Stripe's retry or resend function; idempotency makes resends safe.
-- For an asynchronous payment that remains unpaid, do not start fulfillment until the success event marks it paid.
-- Issue refunds from the Racoben Stripe account, record the reason in the order activity, and update the Studio payment state when a refund workflow is added. Until then, refunds require an explicit manual reconciliation note.
-- Never request card details by email or store them in Studio. Direct customers to Stripe-hosted Checkout.
-
-## Payout expectations
-
-Accepting a successful live payment and receiving a bank payout are separate events. Stripe may hold the first payout while account verification completes, and the bank settlement date depends on the configured payout schedule. Launch readiness means the payment is captured, the webhook is processed, the order is visible to staff, and the payout account is correctly linked; it does not guarantee same-day bank availability.
+Release remains blocked until an accountable monitored-inbox owner accepts same-day webhook receipt/alert review,
+order reconciliation, refund execution, dispute response, and customer notice. The owner workspace now uses normal
+Supabase password authentication followed by verified TOTP/AAL2 and exposes the privacy-safe queue plus full paid
+brief, assignment, and reconciliation details only through owner-scoped audited RPCs. Hosted Auth, owner enrollment,
+notification delivery, and the exact live Stripe Product/Price remain unverified and must be bound before enabling
+checkout.

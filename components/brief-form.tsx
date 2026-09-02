@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, ReactNode, useState } from 'react';
+import { cloneElement, FormEvent, isValidElement, ReactElement, ReactNode, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   BriefFormData,
+  Channel,
+  briefFieldLimits,
   campaignFamilies,
   campaignTypes,
   channelOptions,
@@ -12,7 +14,7 @@ import {
   organizationTypes,
   toneOptions
 } from '@/lib/intake';
-import { KIT_PRICE } from '@/lib/site';
+import { PUBLIC_PREFIX } from '@/lib/site';
 import { getTemplatesForIntakeFamily } from '@/lib/campaign-templates';
 
 const fieldClass =
@@ -31,14 +33,27 @@ function Field({
   hint?: string;
   children: ReactNode;
 }) {
+  const hintId = hint ? `${htmlFor}-hint` : undefined;
+  const control = isValidElement(children)
+    ? cloneElement(children as ReactElement<Record<string, unknown>>, {
+        ...(required ? { required: true, 'aria-required': true } : {}),
+        ...(hintId ? { 'aria-describedby': hintId } : {})
+      })
+    : children;
+
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={htmlFor} className="text-sm font-medium text-foreground">
         {label}
-        {required ? <span className="ml-0.5 text-primary">*</span> : null}
+        {required ? (
+          <>
+            <span className="ml-0.5 text-primary" aria-hidden="true">*</span>
+            <span className="sr-only"> (required)</span>
+          </>
+        ) : null}
       </label>
-      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
-      {children}
+      {hint ? <p id={hintId} className="text-xs text-muted-foreground">{hint}</p> : null}
+      {control}
     </div>
   );
 }
@@ -55,12 +70,12 @@ function FormSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+    <section aria-labelledby={`brief-step-${step}`} className="rounded-2xl border border-border bg-card p-6 sm:p-8">
       <div className="flex items-center gap-3">
         <span className="flex size-8 items-center justify-center rounded-lg bg-secondary font-heading text-sm font-semibold text-primary">
           {step}
         </span>
-        <h2 className="font-heading text-xl font-semibold text-foreground">{title}</h2>
+        <h2 id={`brief-step-${step}`} className="font-heading text-xl font-semibold text-foreground">{title}</h2>
       </div>
       {description ? <p className="mt-2 text-sm text-muted-foreground">{description}</p> : null}
       <div className="mt-6 grid gap-5">{children}</div>
@@ -72,19 +87,26 @@ export function BriefForm() {
   const [data, setData] = useState<BriefFormData>(emptyBrief);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const submissionAttempt = useRef<{ payload: string; key: string } | null>(null);
   const suggestedTemplates = getTemplatesForIntakeFamily(data.campaignFamily);
 
   function update<K extends keyof BriefFormData>(key: K, value: BriefFormData[K]) {
     setData((current) => ({ ...current, [key]: value }));
   }
 
-  function toggleChannel(channel: string) {
+  function toggleChannel(channel: Channel) {
     setData((current) => ({
       ...current,
       channels: current.channels.includes(channel)
         ? current.channels.filter((item) => item !== channel)
         : [...current.channels, channel]
     }));
+  }
+
+  function showError(message: string) {
+    setError(message);
+    requestAnimationFrame(() => errorRef.current?.focus());
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -106,47 +128,60 @@ export function BriefForm() {
 
     for (const [key, label] of required) {
       if (!String(data[key]).trim()) {
-        setError(`${label} is required.`);
+        showError(`${label} is required.`);
         return;
       }
     }
     if (data.campaignType === 'Other' && !data.campaignTypeOther.trim()) {
-      setError('Please describe the campaign type.');
+      showError('Please describe the campaign type.');
       return;
     }
     if (data.tone === 'Other' && !data.toneOther.trim()) {
-      setError('Please describe the desired tone.');
+      showError('Please describe the desired tone.');
       return;
     }
     if (data.channels.length === 0) {
-      setError('Select at least one channel.');
+      showError('Select at least one channel.');
       return;
     }
 
     setSubmitting(true);
     try {
-      const response = await fetch('/snickerdoodle/api/checkout', {
+      const payload = JSON.stringify(data);
+      if (submissionAttempt.current?.payload !== payload) {
+        submissionAttempt.current = { payload, key: globalThis.crypto.randomUUID() };
+      }
+
+      const response = await fetch(`${PUBLIC_PREFIX}/api/checkout`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': submissionAttempt.current.key
+        },
+        body: payload
       });
       const result = (await response.json()) as { url?: string; error?: string };
-      if (!response.ok || !result.url) throw new Error(result.error ?? 'Checkout is unavailable.');
-      window.location.assign(result.url);
-    } catch (checkoutError) {
-      setError(checkoutError instanceof Error ? checkoutError.message : 'Checkout is unavailable.');
+      if (response.status === 409) submissionAttempt.current = null;
+      if (!response.ok) throw new Error(result.error ?? 'Checkout could not be started.');
+      if (result.url) {
+        globalThis.location.assign(result.url);
+        return;
+      }
+      throw new Error('Checkout did not return a secure payment URL. Please try again.');
+    } catch (submissionError) {
+      showError(submissionError instanceof Error ? submissionError.message : 'Checkout could not be started.');
       setSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6">
+    <form onSubmit={handleSubmit} className="grid gap-6" aria-busy={submitting}>
       <FormSection step="1" title="Campaign survey basics">
         <Field label="Organization Type" htmlFor="organizationType" required>
           <select
             id="organizationType"
             value={data.organizationType}
-            onChange={(e) => update('organizationType', e.target.value)}
+            onChange={(e) => update('organizationType', e.target.value as BriefFormData['organizationType'])}
             className={fieldClass}
           >
             {organizationTypes.map((type) => (
@@ -170,7 +205,7 @@ export function BriefForm() {
           <select
             id="campaignFamily"
             value={data.campaignFamily}
-            onChange={(e) => update('campaignFamily', e.target.value)}
+            onChange={(e) => update('campaignFamily', e.target.value as BriefFormData['campaignFamily'])}
             className={fieldClass}
           >
             {campaignFamilies.map((family) => (
@@ -193,6 +228,7 @@ export function BriefForm() {
             onChange={(e) => update('primaryAction', e.target.value)}
             placeholder="Book a grooming appointment, donate, attend, visit the store, register"
             className={fieldClass}
+            maxLength={briefFieldLimits.primaryAction}
           />
         </Field>
 
@@ -201,8 +237,10 @@ export function BriefForm() {
             id="organizationName"
             value={data.organizationName}
             onChange={(e) => update('organizationName', e.target.value)}
-            placeholder="Example: Green Valley Animal Rescue"
+            placeholder="Example: Meadowline Animal Rescue"
             className={fieldClass}
+            maxLength={briefFieldLimits.organizationName}
+            autoComplete="organization"
           />
         </Field>
 
@@ -213,6 +251,7 @@ export function BriefForm() {
             onChange={(e) => update('campaignName', e.target.value)}
             placeholder="Example: Annual Dog Adoption Gala"
             className={fieldClass}
+            maxLength={briefFieldLimits.campaignName}
           />
         </Field>
 
@@ -220,7 +259,7 @@ export function BriefForm() {
           <select
             id="campaignType"
             value={data.campaignType}
-            onChange={(e) => update('campaignType', e.target.value)}
+            onChange={(e) => update('campaignType', e.target.value as BriefFormData['campaignType'])}
             className={fieldClass}
           >
             {campaignTypes.map((type) => (
@@ -238,6 +277,7 @@ export function BriefForm() {
               value={data.campaignTypeOther}
               onChange={(e) => update('campaignTypeOther', e.target.value)}
               className={fieldClass}
+              maxLength={briefFieldLimits.campaignTypeOther}
             />
           </Field>
         ) : null}
@@ -249,6 +289,7 @@ export function BriefForm() {
             onChange={(e) => update('dateTime', e.target.value)}
             placeholder="Saturday, October 15, 6:00 PM — or — Campaign runs October 1–15"
             className={fieldClass}
+            maxLength={briefFieldLimits.dateTime}
           />
         </Field>
 
@@ -259,6 +300,7 @@ export function BriefForm() {
             onChange={(e) => update('locationOrLink', e.target.value)}
             placeholder="123 Main Street, Herndon, VA — or — https://eventbrite.com/..."
             className={fieldClass}
+            maxLength={briefFieldLimits.locationOrLink}
           />
         </Field>
       </FormSection>
@@ -271,6 +313,7 @@ export function BriefForm() {
             onChange={(e) => update('audience', e.target.value)}
             placeholder="Local families, animal lovers, past donors, young professionals, existing customers"
             className={fieldClass}
+            maxLength={briefFieldLimits.audience}
           />
         </Field>
 
@@ -281,6 +324,7 @@ export function BriefForm() {
             onChange={(e) => update('mainGoal', e.target.value)}
             placeholder="Sell 100 tickets, raise $5,000, get 50 sign-ups, bring 200 people to the store"
             className={fieldClass}
+            maxLength={briefFieldLimits.mainGoal}
           />
         </Field>
 
@@ -291,6 +335,7 @@ export function BriefForm() {
             onChange={(e) => update('offerAsk', e.target.value)}
             placeholder="$25 tickets, suggested $50 donation, free admission, 20% off this weekend"
             className={fieldClass}
+            maxLength={briefFieldLimits.offerAsk}
           />
         </Field>
 
@@ -306,13 +351,19 @@ export function BriefForm() {
             onChange={(e) => update('keyDetails', e.target.value)}
             rows={4}
             className={fieldClass}
+            maxLength={briefFieldLimits.keyDetails}
           />
         </Field>
       </FormSection>
 
       <FormSection step="3" title="Tone and channels">
         <Field label="Desired Tone" htmlFor="tone" required>
-          <select id="tone" value={data.tone} onChange={(e) => update('tone', e.target.value)} className={fieldClass}>
+          <select
+            id="tone"
+            value={data.tone}
+            onChange={(e) => update('tone', e.target.value as BriefFormData['tone'])}
+            className={fieldClass}
+          >
             {toneOptions.map((tone) => (
               <option key={tone} value={tone}>
                 {tone}
@@ -328,12 +379,17 @@ export function BriefForm() {
               value={data.toneOther}
               onChange={(e) => update('toneOther', e.target.value)}
               className={fieldClass}
+              maxLength={briefFieldLimits.toneOther}
             />
           </Field>
         ) : null}
 
         <fieldset>
-          <legend className="text-sm font-medium text-foreground">Channels Needed</legend>
+          <legend className="text-sm font-medium text-foreground">
+            Channels Needed
+            <span className="ml-0.5 text-primary" aria-hidden="true">*</span>
+            <span className="sr-only"> (select at least one)</span>
+          </legend>
           <p className="mt-1 text-xs text-muted-foreground">
             Not sure? A good starter set is Email, Facebook, Instagram, Flyer/Print, and Landing Page/Event Page.
           </p>
@@ -363,6 +419,7 @@ export function BriefForm() {
             rows={3}
             placeholder="Website, Facebook page, Instagram, Eventbrite, donation page, registration link, etc."
             className={fieldClass}
+            maxLength={briefFieldLimits.websiteSocial}
           />
         </Field>
       </FormSection>
@@ -376,6 +433,7 @@ export function BriefForm() {
             rows={2}
             placeholder={'“Adopt, don\'t shop” · “Support local families” · “Limited seats available”'}
             className={fieldClass}
+            maxLength={briefFieldLimits.phrasesInclude}
           />
         </Field>
 
@@ -387,6 +445,7 @@ export function BriefForm() {
             rows={2}
             placeholder="Avoid sounding too salesy · Do not mention prior low attendance · Avoid political language"
             className={fieldClass}
+            maxLength={briefFieldLimits.phrasesAvoid}
           />
         </Field>
 
@@ -398,6 +457,7 @@ export function BriefForm() {
             rows={3}
             placeholder="Anything else we should know before preparing the package?"
             className={fieldClass}
+            maxLength={briefFieldLimits.additionalNotes}
           />
         </Field>
 
@@ -409,21 +469,31 @@ export function BriefForm() {
             onChange={(e) => update('deliveryEmail', e.target.value)}
             placeholder="you@example.com"
             className={fieldClass}
+            maxLength={briefFieldLimits.deliveryEmail}
+            autoComplete="email"
           />
         </Field>
       </FormSection>
 
       {error ? (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">{error}</div>
+        <div
+          ref={errorRef}
+          role="alert"
+          aria-live="assertive"
+          tabIndex={-1}
+          className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+        >
+          {error}
+        </div>
       ) : null}
 
       <div className="rounded-2xl border border-border bg-secondary/40 p-6 sm:p-8">
         <Button type="submit" size="lg" className="h-11 w-full text-base" disabled={submitting}>
-          {submitting ? 'Opening secure checkout…' : `Continue to secure checkout — ${KIT_PRICE}`}
+          {submitting ? 'Opening secure checkout…' : 'Continue to secure checkout'}
         </Button>
         <p className="mt-3 text-center text-xs leading-relaxed text-muted-foreground">
-          Your survey is stored securely for fulfillment after payment. Card details are collected by Stripe and never
-          pass through Snickerdoodle. By continuing, you agree to our <Link className="underline" href="/terms">terms</Link> and{' '}
+          Your survey is stored securely, then Stripe collects payment on its hosted checkout. Work begins only after payment is confirmed and the intake is complete.{' '}
+          By continuing, you agree to our <Link className="underline" href="/terms">terms</Link> and{' '}
           <Link className="underline" href="/privacy">privacy notice</Link>. Fields marked with <span className="text-primary">*</span> are required.
         </p>
       </div>

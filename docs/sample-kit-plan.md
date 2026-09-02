@@ -2,112 +2,78 @@
 
 ## Purpose
 
-The public sample kits exist to prove that Snickerdoodle is not a generic template product.
+Public sample kits prove Snickerdoodle is **not** a generic template shop. They show campaign execution: one audience, one action, coordinated assets.
 
-They should show prospects that Snickerdoodle produces structured campaign thinking:
+Template metadata lives in `lib/campaign-templates.ts`. Full sample content lives in `lib/sample-kits.ts`.
 
-- clear audience
-- clear goal
-- one primary action
-- sequenced email copy
-- platform-adapted social copy
-- landing/event page copy
-- CTA bank
-- posting schedule
-- thank-you/follow-up copy
-
-## Public samples for V1
+## Public samples (V1) — three only
 
 ### 1. Animal Rescue Adoption Event
 
-**Family:** Cause / Nonprofit
+- **Template id:** `adoption-event`
+- **Family:** cause-nonprofit
+- **Route:** `/samples/adoption-event`
 
-Purpose:
-
-Show how Snickerdoodle handles a warm, local, emotionally resonant event without becoming guilt-heavy or manipulative.
-
-Core assets previewed:
-
-- 3-email sequence
-- social posts
-- event page copy
-- CTA bank
-- posting schedule
-- thank-you/follow-up copy
+Proves warm, local, emotionally resonant **cause/event** campaigns without guilt-heavy copy.
 
 ### 2. Nonprofit Year-End Appeal
 
-**Family:** Cause / Nonprofit
+- **Template id:** `year-end-appeal`
+- **Family:** cause-nonprofit
+- **Route:** `/samples/year-end-appeal`
 
-Purpose:
+Proves deadline-driven **fundraising** with donor-respecting language.
 
-Show how Snickerdoodle handles a deadline-driven fundraising campaign with donor-respecting language and strong follow-up.
+### 3. Restaurant Local Discovery Campaign
 
-Core assets previewed:
+- **Template id:** `restaurant-local-discovery`
+- **Family:** local-acquisition
+- **Route:** `/samples/restaurant-local-discovery`
 
-- 3-email sequence
-- donation page copy
-- social posts
-- CTA bank
-- posting schedule
-- thank-you/follow-up copy
+Proves **local business customer acquisition** — sharper than generic grand opening or pet grooming alone.
 
-### 3. Pet Groomer Holiday Booking Campaign
+Fictional business: **Juniper Spoon Thai Kitchen**. Do not reference real Herndon leads publicly.
 
-**Family:** Booking / Reservation
+Includes: local offer, Google Business-style post, Facebook/Instagram/local group, email, counter-card copy, review + referral ask, campaign calendar, terms note, QA usage notes.
 
-Purpose:
+## Internal templates (not public samples yet)
 
-Show that Snickerdoodle works for local service businesses from day one — practical booking copy, seasonal urgency, and clear appointment CTAs.
+Seven additional V1 templates — see `docs/campaign-template-library.md`:
 
-Core assets previewed:
+- Volunteer Drive
+- Sponsor Ask for Local Event
+- Fast-Casual Lunch Offer
+- Restaurant Catering / Signature Dish
+- Brewery / Taproom Event
+- Hobby / Collectibles Shop Event
+- Seasonal Booking (pet groomer, salon back-to-school variants)
 
-- 3-email sequence
-- social posts
-- booking page copy
-- CTA bank
-- posting schedule
-- thank-you/follow-up copy
+Pet Groomer Holiday Booking moved from public sample to **Seasonal Booking** internal variant.
 
 ## What not to show publicly
 
-Do not show:
-
-- internal AI prompts
-- private QA notes
-- Rachel review workflow
-- raw customer-like intake data
-- real client names without permission
-- performance claims
-- guaranteed donations, attendance, open rates, clicks, or conversions
+- Internal AI prompts
+- independent marketing review workflow
+- Real client names without permission
+- Real Herndon lead business names
+- Performance or revenue guarantees
 
 ## Required disclaimer
 
-Use this language or similar:
-
 > These fictional samples show the style and structure of a Snickerdoodle campaign execution package. Final deliverables are built from the client's submitted survey and reviewed before delivery.
-
-## Future sample ideas
-
-- Giving Tuesday campaign
-- Volunteer recruitment drive
-- Grand opening (local customer acquisition)
-- Review / referral campaign
-- Community class or workshop
-- Restaurant reservation push
-- Sponsor outreach add-on
-- Post-event donor stewardship kit
 
 ## Success standard
 
-A sample kit succeeds if a prospect thinks:
+Prospect thinks: *This is not just a template. This would save me time.*
 
-> This is not just a template. This would save me time.
+Fails if it feels like generic AI output, disconnected posts, or a Canva template with more words.
 
-A sample kit fails if it feels like:
+## Future public samples (when polished)
 
-- generic AI output
-- generic nonprofit copy
-- a Canva template with more words
-- a pile of disconnected posts
-- something the customer would need to rewrite heavily
+Priority after first three:
+
+1. Brewery / Taproom Event Campaign
+2. Hobby / Collectibles Shop Event Campaign
+3. Seasonal Booking Campaign (one variant)
+
+Do not publish all ten at once.

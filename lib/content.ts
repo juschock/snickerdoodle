@@ -55,7 +55,7 @@ export const deliverables = [
       'Instagram caption',
       'LinkedIn post',
       'X/Twitter post',
-      'TikTok caption or script idea',
+      'Local-community text post',
       'Reminder post',
       'Urgency post',
       'Behind-the-scenes post',
@@ -135,7 +135,7 @@ export const exampleCampaigns = [
 
 export const kitUses = [
   'Paste emails into Mailchimp or Constant Contact.',
-  'Post social copy on Facebook, Instagram, LinkedIn, X, or TikTok.',
+  'Post text copy on Facebook, Instagram, LinkedIn, or X.',
   'Add landing page copy to Eventbrite, Givebutter, GoFundMe, Squarespace, WordPress, or your own website.',
   'Use flyer copy in Canva or a printed handout.',
   'Send the press release to local newspapers, newsletters, radio stations, schools, churches, or partner organizations.',
@@ -143,7 +143,7 @@ export const kitUses = [
 ];
 
 export const faqs = [
-  { q: 'Is this a subscription?', a: 'No. V1 is a fixed-price campaign package.' },
+  { q: 'Is this a subscription?', a: 'No. The package is a one-time $99 USD purchase.' },
   {
     q: 'Do you send the emails or post on social media?',
     a: `No. ${PRODUCT_NAME} provides the materials. You publish, send, print, or post them using your own tools and accounts.`
@@ -157,10 +157,14 @@ export const faqs = [
     a: 'V1 includes flyer copy and graphics suggestions, not custom graphic design. You can use the copy in Canva, a flyer template, or with your designer.'
   },
   { q: 'Can I edit the materials?', a: 'Yes. The package is delivered in editable formats.' },
-  { q: 'How fast is delivery?', a: 'Within 48 hours after receiving a complete campaign survey.' },
+  { q: 'How fast is delivery?', a: 'Normally within 48 hours after successful payment, Racoben order confirmation, and receipt of a complete, usable campaign intake.' },
+  {
+    q: 'What is the cancellation and refund policy?',
+    a: 'Cancel before substantive fulfillment starts for a full refund. If Racoben misses an unpaused 48-hour delivery window, you may cancel for a full refund. Report a material scope defect within seven calendar days after delivery to choose one reasonable correction or a full refund. Campaign results, third-party platform outcomes, and customer-caused delays are not refundable.'
+  },
   {
     q: 'What if my campaign is urgent?',
-    a: 'If your deadline is very soon, include that in the survey. Rush delivery may be offered later, but V1 delivery is within 48 hours.'
+    a: 'If your deadline is very soon, include it in the fit check. Rush delivery may be offered later; the normal 48-hour window starts only after successful payment, Racoben order confirmation, and receipt of a complete, usable intake.'
   },
   {
     q: 'What if I do not know what channels I need?',

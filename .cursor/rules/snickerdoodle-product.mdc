@@ -18,19 +18,23 @@ Every package moves one audience toward one clearly defined action.
 ## Customer-facing scope (V1)
 
 - Campaign survey → polished human-reviewed campaign execution package
-- Mailto intake — no DB, auth, payment, or customer dashboard
-- Preserve the v0 UI: warm cream/terracotta palette, Fraunces/Geist, section layout, hero imagery, shadcn/Tailwind styling
+- Public CTAs use a monitored fit-check email; qualified prospects receive an expiring, email-bound signed link to the unlisted, no-index survey
+- Survey submissions are validated server-side and stored as pending intents in Supabase; no order or payment is created
+- No customer auth, customer dashboard, customer-facing AI, or payment runtime
+- Preserve the warm cream/green palette, Fraunces/Geist typography, section layout, and shadcn/Tailwind styling with original Snickerdoodle branding only
 - Do not re-scaffold or simplify the UI
 
 ## Internal production model
 
 ```text
 Survey → campaign family → desired action → fact ledger → campaign strategy
-→ asset map → draft → critique → polish → QA → Rachel review → package
+→ asset map → draft → critique → polish → QA → independent marketing review → package
 ```
 
-- Josh + ChatGPT + custom AI tooling draft/adapt/critique/polish/package
-- Rachel is the **final expert quality gate**, not the first drafter
+- The service-lead role uses ChatGPT and custom AI tooling to draft/adapt/critique/polish/package
+- A prospective independent marketing reviewer is the **final expert quality gate**, not the first drafter
+- The reviewer role is unassigned and under HARD HOLD. Do not infer identity, relationship, employment, compensation, ownership, availability, authority, or access.
+- This two-person model may activate only after CEO designation and assignment, availability and training confirmation, classification/conflict/IP clearance, least-privilege per-order access approval, two timed synthetic rehearsals, and documented CFO+CRO concurrence for every monetary term.
 
 ## Hard rules
 
@@ -42,7 +46,7 @@ Survey → campaign family → desired action → fact ledger → campaign strat
 
 - customer-facing AI
 - chat or prompt interfaces
-- auth / database / payment integration
+- customer auth or payment integration
 - customer dashboard or automated delivery portal
 - email sending platform or social posting automation
 - analytics that stores personal/project data
@@ -51,15 +55,17 @@ Survey → campaign family → desired action → fact ledger → campaign strat
 ## Key files
 
 - `lib/site.ts` — brand constants, basePath prefix, intake email
-- `lib/intake.ts` — survey form schema and mailto formatting
+- `lib/intake.ts` — survey field model and limits
+- `app/api/brief/route.ts` — bounded, origin-checked, idempotent Supabase intake
 - `docs/operating-doctrine.md` — product philosophy
 - `docs/campaign-families.md` — launch campaign families
 - `docs/internal-automation-pipeline.md` — staff production workflow
 - `docs/fact-ledger.md` — single source of truth for AI drafting
-- `docs/editor-packet.md` — Rachel review bundle spec
+- `docs/editor-packet.md` — independent marketing review bundle spec
 - `fulfillment/` — pipeline, QA, delivery, internal prompts
 
 ## Deploy
 
 - Standalone Vercel project with `basePath: '/snickerdoodle'`
 - Parent Racoben site rewrites `/snickerdoodle` and `/snickerdoodle/*` via `SNICKERDOODLE_PRODUCTION_URL` (no path suffix in env var)
+- The local repo is named Snickerdoodle; the GitHub repository still has the legacy `CauseBrief` name until the owner explicitly authorizes a public rename

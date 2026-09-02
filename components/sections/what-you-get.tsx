@@ -19,7 +19,7 @@ const deliverables = [
   {
     icon: Share2,
     title: "Social Media Posts",
-    body: "10 ready-to-use posts adapted for the channels you select — Facebook, Instagram, LinkedIn, X, TikTok, and more.",
+    body: "10 ready-to-use text posts adapted for the channels you select — Facebook, Instagram, LinkedIn, X, and local communities.",
   },
   {
     icon: LayoutTemplate,

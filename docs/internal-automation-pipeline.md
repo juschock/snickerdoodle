@@ -5,7 +5,7 @@ Staff-only production workflow. Customers never see this process.
 ## Overview
 
 ```text
-Customer survey (mailto / future form)
+Qualified customer survey (server-stored pending intake)
         ↓
 1. Intake normalization
         ↓
@@ -25,7 +25,7 @@ Customer survey (mailto / future form)
         ↓
 9. Editor packet
         ↓
-10. Rachel review (final quality gate)
+10. Independent marketing review (final quality gate)
         ↓
 11. Package assembly
         ↓
@@ -53,7 +53,7 @@ Customer survey (mailto / future form)
 
 ### 4. Internal AI drafting
 
-- Josh + ChatGPT + custom tooling generate first drafts.
+- The service-lead role uses ChatGPT and custom tooling to generate first drafts.
 - Prompts in `fulfillment/internal-prompts.md`.
 - **Hard rule:** use fact ledger only. No invented facts.
 
@@ -79,12 +79,12 @@ Customer survey (mailto / future form)
 
 ### 9. Editor packet
 
-- Assemble Rachel’s review packet per `docs/editor-packet.md`.
+- Assemble the independent marketing review packet per `docs/editor-packet.md`.
 - Include fact ledger, drafts, critique notes, and QA results.
 
-### 10. Rachel review
+### 10. Independent marketing review
 
-- Rachel is the final expert quality gate.
+- The assigned and cleared independent marketing reviewer is the final expert quality gate.
 - Approve, edit, or return for revision before packaging.
 
 ### 11. Package assembly
@@ -94,17 +94,27 @@ Customer survey (mailto / future form)
 ### 12. Delivery
 
 - Send ZIP + optional Google Doc link to customer delivery email.
-- Confirm 48-hour SLA from complete brief.
+- Confirm that the normal 48-hour delivery window starts only after Racoben confirms the order following any required payment and receives a complete intake.
 
 ## Hard rules
 
 - AI is internal only. Never customer-facing.
 - AI must use only facts in the fact ledger.
 - No invented sponsors, donation matches, statistics, quotes, links, partners, deadlines, outcomes, or claims.
-- Rachel review is required before every delivery in V1.
+- Independent marketing review is required before every delivery in V1.
 
 ## V1 constraints
 
-Manual payment confirmation before production starts. No customer-facing automation required for first 5–10 orders.
+The current product accepts only fit checks and server-stored pending intakes. It has no executable payment runtime;
+a pending intake is not an order and cannot start production. The future paid pilot may begin only after Gate B and
+all release, legal, reviewer, economics, and external-motion gates open. The first completed order and its
+reconciliation are learning evidence, not a global acceptance lock: multiple independent customer orders may be
+accepted and processed concurrently within documented service-lead, reviewer, and quality capacity. Every order keeps
+isolated reservation, assignment, access, QA, reconciliation, and delivery records; pause new acceptance whenever
+those staffing or quality gates cannot protect every accepted order.
 
-Goal: 5 packages sold → repeatable pipeline → faster package #5 than package #1.
+The two-person role model remains on HARD HOLD. No reviewer identity, relationship, employment, compensation,
+ownership, availability, assignment, authority, or access is implied. Activation requires CEO designation and
+assignment, availability and training confirmation, classification/conflict/IP clearance, least-privilege
+per-order access approval, two timed synthetic rehearsals, and documented CFO+CRO concurrence for all monetary
+terms. G5 external motion remains unassigned.

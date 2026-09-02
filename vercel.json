@@ -1,12 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "npm ci",
-  "buildCommand": "npm run build",
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/snickerdoodle",
-      "permanent": false
-    }
-  ]
+  "buildCommand": "npm run build"
 }

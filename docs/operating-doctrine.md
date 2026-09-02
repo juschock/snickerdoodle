@@ -65,7 +65,7 @@ Deterministic QA
 
 ↓
 
-Rachel review
+Independent marketing review
 
 ↓
 
@@ -99,17 +99,27 @@ Mandatory. No campaign asset may introduce dates, sponsors, statistics, prices, 
 ## AI and review
 
 - AI is **internal only** — never customer-facing
-- Rachel remains the **final quality gate**
+- An assigned and cleared independent marketing reviewer is the **final quality gate**
 - Human review is required before every delivery
+
+Snickerdoodle is the sole Racoben product permitted to plan human-delivered services. Its future two-person,
+AI-assisted fulfillment model is role-only: service lead plus prospective independent marketing reviewer. The
+reviewer is unassigned and under HARD HOLD; no identity, relationship, employment, compensation, ownership,
+availability, assignment, authority, or access is inferred. Paid work and delivery remain prohibited until CEO
+designation and assignment, availability and training confirmation, classification/conflict/IP clearance,
+least-privilege per-order access approval, two timed synthetic rehearsals, and documented CFO+CRO concurrence for
+all monetary terms are complete.
 
 ## Public product constraints (V1)
 
 Preserve:
 
-- current UI (v0 palette, typography, imagery, section layout)
+- current warm visual system, typography, and section layout with original Snickerdoodle branding
 - App Router
 - no customer-facing AI
-- no auth, DB, or payment
+- no customer auth, customer dashboard, or payment runtime
+- a private, no-index survey for qualified prospects only
+- server-side Supabase persistence for pending intake, with no order creation
 - standalone product repo
 - Racoben parent architecture at `racoben.com/snickerdoodle`
 

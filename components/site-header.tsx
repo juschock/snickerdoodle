@@ -6,9 +6,9 @@ import { Menu, X } from "lucide-react"
 import { SnickerdoodleMark } from "@/components/snickerdoodle-mark"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { PRODUCT_NAME, SURVEY_CTA } from "@/lib/site"
+import { FIT_CHECK_CTA, FIT_CHECK_MAILTO, PRODUCT_NAME, PRODUCT_QUESTIONS_MAILTO } from "@/lib/site"
 
-const navLinks = [
+const commercialNavLinks = [
   { label: "How It Works", href: "/#how-it-works" },
   { label: "What You Get", href: "/#what-you-get" },
   { label: "Examples", href: "/#examples" },
@@ -16,8 +16,18 @@ const navLinks = [
   { label: "FAQ", href: "/#faq" },
 ]
 
-export function SiteHeader() {
+const holdNavLinks = [
+  { label: "Fictional Samples", href: "/samples" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
+]
+
+export function SiteHeader({ commercialReady = false }: { commercialReady?: boolean }) {
   const [open, setOpen] = useState(false)
+  const navLinks = commercialReady ? commercialNavLinks : holdNavLinks
+  const primaryHref = commercialReady ? FIT_CHECK_MAILTO : "/samples"
+  const primaryLabel = commercialReady ? FIT_CHECK_CTA : "View fictional samples"
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur">
@@ -48,7 +58,9 @@ export function SiteHeader() {
           <Button
             size="lg"
             nativeButton={false}
-            render={<Link href="/brief">{SURVEY_CTA}</Link>}
+            render={commercialReady
+              ? <a href={primaryHref}>{primaryLabel}</a>
+              : <Link href={primaryHref}>{primaryLabel}</Link>}
           />
         </div>
 
@@ -57,6 +69,7 @@ export function SiteHeader() {
           className="inline-flex size-9 items-center justify-center rounded-lg text-foreground md:hidden"
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
+          aria-controls="mobile-navigation"
           onClick={() => setOpen((v) => !v)}
         >
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -64,6 +77,7 @@ export function SiteHeader() {
       </div>
 
       <div
+        id="mobile-navigation"
         className={cn(
           "border-t border-border/70 bg-background md:hidden",
           open ? "block" : "hidden",
@@ -84,8 +98,19 @@ export function SiteHeader() {
             size="lg"
             className="mt-2"
             nativeButton={false}
-            render={<Link href="/brief" onClick={() => setOpen(false)}>{SURVEY_CTA}</Link>}
+            render={commercialReady
+              ? <a href={primaryHref} onClick={() => setOpen(false)}>{primaryLabel}</a>
+              : <Link href={primaryHref} onClick={() => setOpen(false)}>{primaryLabel}</Link>}
           />
+          {!commercialReady && (
+            <a
+              href={PRODUCT_QUESTIONS_MAILTO}
+              onClick={() => setOpen(false)}
+              className="rounded-lg px-2 py-2.5 text-center text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              Ask a product question
+            </a>
+          )}
         </nav>
       </div>
     </header>

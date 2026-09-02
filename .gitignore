@@ -1,8 +1,12 @@
 node_modules
 .next
+next-env.d.ts
 out
 .env*.local
 .DS_Store
 *.log
 *.tsbuildinfo
 .vercel
+playwright-report
+test-results
+supabase/.temp/

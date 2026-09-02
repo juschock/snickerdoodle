@@ -1,28 +1,27 @@
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { SURVEY_CTA } from "@/lib/site"
+import { FIT_CHECK_CTA, FIT_CHECK_MAILTO } from "@/lib/site"
 
 const steps = [
   {
     step: "01",
-    title: "Fill out one survey",
-    body: "Tell us what you are promoting, who it is for, when it happens, and what you want people to do.",
-    meta: "Takes about 10 minutes.",
+    title: "Request a fit check",
+    body: "Tell us the campaign, deadline, audience, and primary action. We will confirm whether the fixed scope fits.",
+    meta: "No payment or sales call required.",
   },
   {
     step: "02",
-    title: "We build your campaign execution package",
-    body: "Racoben turns your survey into a complete package: email, social, landing pages, flyers, press outreach, subject lines, CTAs, and a posting schedule.",
+    title: "Complete the private survey",
+    body: "Qualified projects receive a private survey link for the facts and materials Racoben needs.",
   },
   {
     step: "03",
-    title: "You receive a polished package",
-    body: "Within 48 hours, you get an organized, editable package you can copy, paste, print, publish, or hand off to your team.",
+    title: "Confirm and pay once",
+    body: "Racoben reviews the intake, confirms the fixed scope, and sends the approved project through secure checkout for one $99 USD payment.",
   },
   {
     step: "04",
-    title: "You use it where you already work",
-    body: "Use your package in Mailchimp, Facebook, Instagram, Eventbrite, Givebutter, Canva, Google Docs, your website, or printed materials.",
+    title: "You receive a human-reviewed package",
+    body: "The normal 48-hour window starts after successful payment, Racoben order confirmation, and a complete usable intake.",
   },
 ]
 
@@ -39,7 +38,7 @@ export function HowItWorks() {
               One survey in. A complete campaign execution package out.
             </h2>
           </div>
-          <Button size="lg" nativeButton={false} render={<Link href="/brief">{SURVEY_CTA}</Link>} />
+          <Button size="lg" nativeButton={false} render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>} />
         </div>
 
         <ol className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">

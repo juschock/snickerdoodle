@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: gitleaks (staged changes)
+        entry: ./scripts/security/scan-secrets.sh --staged
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

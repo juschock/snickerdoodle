@@ -6,7 +6,7 @@ RacobenStudio is a **staff-only internal operations backend** — not a customer
 
 ```text
 juschock/racoben          → racoben.com (parent site, rewrites only)
-juschock/Snickerdoodle       → racoben.com/snickerdoodle (public marketing + intake)
+juschock/CauseBrief       → racoben.com/snickerdoodle (current legacy GitHub name; explicit owner authorization to rename it is still pending)
 juschock/ShipCheck        → racoben.com/shipcheck (public product, when split)
 juschock/RacobenStudio    → studio.racoben.com (internal ops — this system)
 ```
@@ -19,9 +19,9 @@ Snickerdoodle and RacobenStudio are **separate repos, separate Vercel projects, 
 |---|---|---|
 | URL | `racoben.com/snickerdoodle` | `studio.racoben.com` (or temp Vercel URL) |
 | Auth | None | Staff login required |
-| Database | None in V1 | Yes (Supabase Postgres) |
+| Database | Server-only pending-intake persistence | Supabase Postgres for internal operations |
 | AI | Never customer-facing | Internal drafting/critique/polish only |
-| Audience | Prospects & customers | Josh, Rachel, future ops staff |
+| Audience | Prospects & customers | Authorized service lead, assigned independent marketing reviewer, future authorized ops staff |
 
 **Do not** mount Studio at `racoben.com/snickerdoodle/studio`. It couples public marketing to sensitive operational data.
 
@@ -33,20 +33,24 @@ Snickerdoodle and RacobenStudio are **separate repos, separate Vercel projects, 
 - Orders / kits (many per campaign)
 - Briefs, fact ledgers, kit assets
 - AI draft runs (internal artifacts)
-- Review tasks (Rachel queue)
+- Independent marketing review tasks
 - Delivery packages
 - Analytics (operations, PMF, outcomes)
 - Activity events and internal notes
 
 ## Roles
 
-| Role | Who | Capabilities |
-|------|-----|--------------|
-| Owner | Josh | Full access |
-| Operator | Josh / future ops | Accounts, orders, drafting workflow, delivery |
-| Reviewer | Rachel | Review queue, editor packet, approve/revise, edit final copy |
+| Role | Assignment state | Capabilities |
+|------|------------------|--------------|
+| Owner | Authorized account owner | Full access |
+| Service lead | Must be explicitly assigned | Accounts, orders, drafting workflow, delivery |
+| Independent marketing reviewer | Unassigned; HARD HOLD | Per-order review queue, editor packet, approve/revise, edit final copy |
 
-Rachel does **not** need billing, AI prompt config, or admin settings.
+The reviewer does **not** need billing, AI prompt configuration, admin settings, other orders, or customer data beyond
+the assigned per-order review packet. No identity, relationship, employment, compensation, ownership, availability,
+assignment, authority, or access is inferred. Reviewer access may exist only after CEO designation and assignment,
+availability and training confirmation, classification/conflict/IP clearance, least-privilege per-order access
+approval, two timed synthetic rehearsals, and documented CFO+CRO concurrence for all monetary terms.
 
 ## Recommended stack (when built)
 
@@ -58,4 +62,8 @@ Rachel does **not** need billing, AI prompt config, or admin settings.
 
 ## Guiding principle
 
-Design for scale; **build for the next 10 orders**. Studio helps Josh and Rachel manage work — not customer self-service.
+Design for scale; build only when the staged pilot proves an operational bottleneck. The first completed paid order
+and its reconciliation are learning evidence, not a global acceptance lock; independent customer orders may run
+concurrently within documented staffing, reviewer, and quality capacity. Studio must isolate each order's reservation,
+assignment, access, QA, reconciliation, and delivery. It supports authorized roles; it is not customer self-service
+and must not pre-authorize the unassigned reviewer.

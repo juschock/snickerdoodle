@@ -1,7 +1,6 @@
-import Link from "next/link"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { PRODUCT_EXCLUSIONS_DISCLAIMER, SURVEY_CTA } from "@/lib/site"
+import { FIT_CHECK_CTA, FIT_CHECK_MAILTO, PRODUCT_EXCLUSIONS_DISCLAIMER } from "@/lib/site"
 
 const includes = [
   "3-email sequence",
@@ -13,7 +12,7 @@ const includes = [
   "CTA bank",
   "Posting schedule",
   "Human review",
-  "48-hour delivery",
+  "Normally delivered within 48 hours after Racoben confirms the order following any required payment and receives a complete intake",
 ]
 
 export function Pricing() {
@@ -57,7 +56,7 @@ export function Pricing() {
                 size="lg"
                 className="mt-8 h-11 w-full text-base"
                 nativeButton={false}
-                render={<Link href="/brief">{SURVEY_CTA}</Link>}
+                render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>}
               />
 
               <p className="mt-5 text-xs leading-relaxed text-muted-foreground">

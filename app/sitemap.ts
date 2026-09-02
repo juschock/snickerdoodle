@@ -3,14 +3,13 @@ import { publicUrl } from '@/lib/site';
 
 const routes = [
   '/',
-  '/brief',
   '/faq',
   '/privacy',
   '/terms',
   '/samples',
   '/samples/adoption-event',
   '/samples/year-end-appeal',
-  '/samples/pet-groomer-holiday-booking'
+  '/samples/restaurant-local-discovery'
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

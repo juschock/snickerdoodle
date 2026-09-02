@@ -3,9 +3,9 @@ import { Clock, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   HERO_PROMISE,
-  publicAsset,
+  FIT_CHECK_CTA,
+  FIT_CHECK_MAILTO,
   PRODUCT_NAME,
-  SURVEY_CTA,
   TAGLINE_LINE_1,
   TAGLINE_LINE_2
 } from '@/lib/site';
@@ -34,20 +34,20 @@ export function Hero() {
               size="lg"
               className="h-12 px-7 text-base"
               nativeButton={false}
-              render={<Link href="/brief">{SURVEY_CTA}</Link>}
+              render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>}
             />
             <Button
               size="lg"
               variant="outline"
               className="h-12 px-7 text-base"
               nativeButton={false}
-              render={<Link href="/#what-you-get">See What&apos;s Included</Link>}
+              render={<Link href="/samples">View a Full Sample</Link>}
             />
           </div>
 
           <p className="mt-6 inline-flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="size-3.5 shrink-0 text-primary" />
-            Delivered within 48 hours · Prepared and human-reviewed by Racoben
+            Normally delivered within 48 hours after Racoben confirms the order following any required payment and receives a complete intake · Prepared and human-reviewed by Racoben
           </p>
 
           <p className="mt-4 flex items-start gap-2 text-sm text-muted-foreground">
@@ -61,15 +61,21 @@ export function Hero() {
 
         <div className="relative">
           <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-secondary/60" aria-hidden="true" />
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <img
-              src={publicAsset('/images/campaign-kit-materials.png')}
-              alt="A tidy set of printed campaign materials including a flyer, email drafts, social post cards, and a posting schedule"
-              width={720}
-              height={720}
-              className="h-full w-full object-cover"
-              fetchPriority="high"
-            />
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">One coordinated package</p>
+            <p className="mt-4 font-heading text-3xl font-semibold leading-tight text-foreground">
+              One audience. One action. Every channel doing a clear job.
+            </p>
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              {['Email sequence', 'Social posts', 'Landing-page copy', 'Flyer copy', 'Calls to action', 'Posting schedule'].map((item) => (
+                <div key={item} className="rounded-xl border border-border bg-secondary/40 px-4 py-3 text-sm font-medium text-foreground">
+                  {item}
+                </div>
+              ))}
+            </div>
+            <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
+              Built from confirmed facts and reviewed by a person before delivery.
+            </p>
           </div>
         </div>
       </div>

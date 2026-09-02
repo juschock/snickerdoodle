@@ -1,0 +1,9 @@
+create index if not exists idx_activity_account on public.activity_events (account_id);
+create index if not exists idx_activity_actor on public.activity_events (actor_id);
+create index if not exists idx_notes_account on public.internal_notes (account_id);
+create index if not exists idx_notes_campaign on public.internal_notes (campaign_id);
+create index if not exists idx_notes_order on public.internal_notes (order_id);
+create index if not exists idx_notes_author on public.internal_notes (author_id);
+create index if not exists idx_orders_primary_contact on public.orders (primary_contact_id);
+create index if not exists idx_orders_assigned_reviewer on public.orders (assigned_reviewer_id);
+create index if not exists idx_profiles_invited_by on public.profiles (invited_by);

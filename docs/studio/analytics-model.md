@@ -4,12 +4,13 @@ Three layers. **V1 outcome analytics are manual** — Snickerdoodle does not sen
 
 ## Layer A — Internal operations analytics
 
-How Josh and Rachel run the business.
+How authorized service-lead and independent-review roles run fulfillment. The reviewer role is currently unassigned
+and under HARD HOLD; these are future measurement fields, not evidence of assignment, availability, authority, or access.
 
 **Track per order:**
 
 - Intake → delivery total time
-- Time in each status (drafting, Rachel review, revision, packaging)
+- Time in each status (drafting, independent marketing review, revision, packaging)
 - AI draft / critique / polish duration (from `ai_draft_runs`, `fulfillment_metrics`)
 - Revision count
 - On-time delivery (vs `due_at`)

@@ -1,6 +1,8 @@
 # Human QA checklist (before delivery)
 
-Run after AI polish pass and before editor packet assembly. Rachel re-verifies during review.
+Run after AI polish pass and before editor packet assembly. The assigned and cleared independent marketing reviewer
+re-verifies during review. Until that reviewer passes every role/access gate, this checklist is rehearsal-only and
+no delivery is permitted.
 
 ## Fact ledger compliance (hard rule)
 
@@ -27,7 +29,7 @@ Run after AI polish pass and before editor packet assembly. Rachel re-verifies d
 - [ ] File names and folder structure are clean
 - [ ] README_How_to_Use.txt is included
 
-## Rachel review
+## Independent marketing review
 
 - [ ] Editor packet assembled per `docs/editor-packet.md`
-- [ ] Rachel approved before customer delivery
+- [ ] Assigned and cleared independent marketing reviewer approved before customer delivery

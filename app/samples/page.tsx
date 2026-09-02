@@ -2,19 +2,26 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
-import { sampleKits } from '@/lib/sample-kits';
-import { PRODUCT_NAME } from '@/lib/site';
+import { publicSampleKits } from '@/lib/sample-kits';
+import { readPageCommercialReadiness } from '@/lib/commercial-runtime';
+import { PRODUCT_NAME, publicUrl } from '@/lib/site';
+
+const description = `Preview fictional ${PRODUCT_NAME} sample packages for nonprofits, local businesses, and community campaigns.`;
 
 export const metadata: Metadata = {
   title: 'Sample campaign packages',
-  description: `Preview fictional ${PRODUCT_NAME} sample packages for nonprofits, local businesses, and community campaigns.`
+  description,
+  alternates: { canonical: publicUrl('/samples') },
+  openGraph: { title: `Sample campaign packages | ${PRODUCT_NAME}`, description, url: publicUrl('/samples') }
 };
 
-export default function SamplesPage() {
+export default async function SamplesPage() {
+  const commercialReady = await readPageCommercialReadiness();
+
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1 bg-secondary/30">
+      <SiteHeader commercialReady={commercialReady} />
+      <main id="main-content" className="flex-1 bg-secondary/30">
         <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 md:py-16">
           <div className="max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">Samples</p>
@@ -22,13 +29,14 @@ export default function SamplesPage() {
               See what a {PRODUCT_NAME} campaign package looks like.
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-              These fictional samples show the structure, tone, and level of detail a customer can expect. Final
-              packages are built from the customer&apos;s submitted survey and reviewed before delivery.
+              {commercialReady
+                ? 'These fictional samples illustrate the structure, tone, and level of detail used in the current package design. Final materials depend on a separately accepted intake and order.'
+                : 'These fictional samples are available only for product evaluation. They do not represent customer work, verified results, an offer, a deliverable promise, or current service capacity.'}
             </p>
           </div>
 
           <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {sampleKits.map((kit) => (
+            {publicSampleKits.map((kit) => (
               <Link
                 key={kit.slug}
                 href={`/samples/${kit.slug}`}
@@ -47,12 +55,12 @@ export default function SamplesPage() {
             <p className="mt-4 leading-relaxed text-muted-foreground">
               These are fictional examples. They do not represent real clients, real outcomes, or guaranteed
               performance. They are intended to show how {PRODUCT_NAME} organizes campaign copy, calls to action,
-              reminders, and follow-up materials into a usable package.
+              reminders, and follow-up materials into a demonstration. Do not use them as-is.
             </p>
           </div>
         </section>
       </main>
-      <SiteFooter />
+      <SiteFooter commercialReady={commercialReady} />
     </div>
   );
 }

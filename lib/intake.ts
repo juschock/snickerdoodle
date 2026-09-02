@@ -52,19 +52,43 @@ export const channelOptions = [
   'Facebook',
   'LinkedIn',
   'X / Twitter',
-  'TikTok',
   'Flyer / Print',
   'Landing Page / Event Page',
   'Press Release'
 ] as const;
 
+export type OrganizationType = (typeof organizationTypes)[number];
+export type CampaignFamily = (typeof campaignFamilies)[number];
+export type CampaignType = (typeof campaignTypes)[number];
+export type Tone = (typeof toneOptions)[number];
+export type Channel = (typeof channelOptions)[number];
+
+export const briefFieldLimits = {
+  primaryAction: 200,
+  organizationName: 200,
+  campaignName: 200,
+  campaignTypeOther: 200,
+  dateTime: 500,
+  locationOrLink: 2_000,
+  audience: 500,
+  mainGoal: 500,
+  offerAsk: 500,
+  keyDetails: 5_000,
+  toneOther: 200,
+  websiteSocial: 5_000,
+  phrasesInclude: 5_000,
+  phrasesAvoid: 5_000,
+  deliveryEmail: 320,
+  additionalNotes: 5_000
+} as const;
+
 export type BriefFormData = {
-  organizationType: string;
-  campaignFamily: string;
+  organizationType: OrganizationType;
+  campaignFamily: CampaignFamily;
   primaryAction: string;
   organizationName: string;
   campaignName: string;
-  campaignType: string;
+  campaignType: CampaignType;
   campaignTypeOther: string;
   dateTime: string;
   locationOrLink: string;
@@ -72,9 +96,9 @@ export type BriefFormData = {
   mainGoal: string;
   offerAsk: string;
   keyDetails: string;
-  tone: string;
+  tone: Tone;
   toneOther: string;
-  channels: string[];
+  channels: Channel[];
   websiteSocial: string;
   phrasesInclude: string;
   phrasesAvoid: string;

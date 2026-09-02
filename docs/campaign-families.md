@@ -1,17 +1,17 @@
 # Snickerdoodle Campaign Families
 
-Three launch families. Everything else flows from these.
+Three launch families. All V1 templates map to one family. See `lib/campaign-templates.ts` and `docs/template-taxonomy.md`.
 
-## 1. Cause / Nonprofit Campaigns
+## 1. Cause / Nonprofit (`cause-nonprofit`)
 
-Examples:
+**Templates (4):**
 
-- fundraising
-- year-end
-- Giving Tuesday
-- adoption events
-- volunteer drives
-- community events
+- Animal Rescue Adoption Event *(public sample)*
+- Nonprofit Year-End Appeal *(public sample)*
+- Volunteer Drive Campaign
+- Sponsor Ask Campaign for Local Event
+
+Examples: fundraising, year-end, adoption events, volunteer drives, sponsor asks.
 
 Primary actions:
 
@@ -19,20 +19,19 @@ Primary actions:
 donate · attend · volunteer · register · share · sponsor · follow up
 ```
 
-Public sample: **Animal Rescue Adoption Event**, **Nonprofit Year-End Appeal**
-
 ---
 
-## 2. Local Customer Acquisition
+## 2. Local Customer Acquisition (`local-acquisition`)
 
-Examples:
+**Templates (5):**
 
-- grand opening
-- seasonal promotion
-- first-time customer
-- review campaign
-- referral campaign
-- quote campaign
+- Restaurant Local Discovery Campaign *(public sample)*
+- Fast-Casual Lunch Offer Campaign
+- Restaurant Catering / Signature Dish Campaign
+- Brewery / Taproom Event Campaign
+- Hobby / Collectibles Shop Event Campaign
+
+Examples: local discovery, lunch offers, catering inquiry, taproom events, trade nights.
 
 Primary actions:
 
@@ -42,24 +41,20 @@ visit · buy · order · book · call · redeem · review · refer
 
 ---
 
-## 3. Booking / Reservation Campaigns
+## 3. Booking / Reservation (`booking-reservation`)
 
-Examples:
+**Templates (1 + variants):**
 
-- grooming
-- salons
-- restaurants
-- consultations
-- estimates
-- classes
+- Seasonal Booking Campaign
+  - *variants:* pet groomer holiday booking, salon back-to-school haircut
+
+Examples: grooming, salons, seasonal appointment pushes.
 
 Primary actions:
 
 ```text
-book · reserve · schedule · request estimate · join class
+book · reserve · schedule · rebook
 ```
-
-Public sample: **Pet Groomer Holiday Booking Campaign**
 
 ---
 
@@ -71,4 +66,10 @@ Early survey questions should determine:
 2. campaign family
 3. desired action
 
-See `lib/intake.ts` for form fields.
+Survey hints suggest templates via `getTemplatesForIntakeFamily()` — see `lib/intake.ts` and `components/brief-form.tsx`.
+
+---
+
+## Core rule
+
+Every package exists to move **one clearly defined audience** toward **one clearly defined action**.

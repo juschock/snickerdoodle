@@ -1,31 +1,38 @@
 import { z } from 'zod';
-import { campaignFamilies, campaignTypes, channelOptions, organizationTypes, toneOptions } from '@/lib/intake';
+import {
+  briefFieldLimits,
+  campaignFamilies,
+  campaignTypes,
+  channelOptions,
+  organizationTypes,
+  toneOptions
+} from '@/lib/intake';
 
-const requiredText = z.string().trim().min(1).max(5000);
-const optionalText = z.string().trim().max(5000).default('');
+const requiredText = (max: number) => z.string().trim().min(1).max(max);
+const optionalText = (max: number) => z.string().trim().max(max).default('');
 
 export const briefCheckoutSchema = z.object({
   organizationType: z.enum(organizationTypes),
   campaignFamily: z.enum(campaignFamilies),
-  primaryAction: requiredText,
-  organizationName: requiredText,
-  campaignName: requiredText,
+  primaryAction: requiredText(briefFieldLimits.primaryAction),
+  organizationName: requiredText(briefFieldLimits.organizationName),
+  campaignName: requiredText(briefFieldLimits.campaignName),
   campaignType: z.enum(campaignTypes),
-  campaignTypeOther: optionalText,
-  dateTime: requiredText,
-  locationOrLink: requiredText,
-  audience: requiredText,
-  mainGoal: requiredText,
-  offerAsk: requiredText,
-  keyDetails: requiredText,
+  campaignTypeOther: optionalText(briefFieldLimits.campaignTypeOther),
+  dateTime: requiredText(briefFieldLimits.dateTime),
+  locationOrLink: requiredText(briefFieldLimits.locationOrLink),
+  audience: requiredText(briefFieldLimits.audience),
+  mainGoal: requiredText(briefFieldLimits.mainGoal),
+  offerAsk: requiredText(briefFieldLimits.offerAsk),
+  keyDetails: requiredText(briefFieldLimits.keyDetails),
   tone: z.enum(toneOptions),
-  toneOther: optionalText,
+  toneOther: optionalText(briefFieldLimits.toneOther),
   channels: z.array(z.enum(channelOptions)).min(1),
-  websiteSocial: optionalText,
-  phrasesInclude: optionalText,
-  phrasesAvoid: optionalText,
-  deliveryEmail: z.string().trim().email().max(320),
-  additionalNotes: optionalText
+  websiteSocial: optionalText(briefFieldLimits.websiteSocial),
+  phrasesInclude: optionalText(briefFieldLimits.phrasesInclude),
+  phrasesAvoid: optionalText(briefFieldLimits.phrasesAvoid),
+  deliveryEmail: z.string().trim().email().max(briefFieldLimits.deliveryEmail),
+  additionalNotes: optionalText(briefFieldLimits.additionalNotes)
 }).superRefine((brief, context) => {
   if (brief.campaignType === 'Other' && !brief.campaignTypeOther) {
     context.addIssue({ code: 'custom', path: ['campaignTypeOther'], message: 'Describe the campaign type.' });

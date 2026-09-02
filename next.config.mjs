@@ -1,47 +1,48 @@
-const isProduction = process.env.NODE_ENV === 'production';
-
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProduction ? '' : " 'unsafe-eval'"}`,
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data:",
-  "connect-src 'self'",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-  'upgrade-insecure-requests'
-].join('; ');
-
-const securityHeaders = [
-  { key: 'Content-Security-Policy', value: contentSecurityPolicy },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'X-Frame-Options', value: 'DENY' },
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
-  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }
-];
+import { privateResponseHeaders, securityHeaders } from './security-headers.mjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath: '/snickerdoodle',
-  output: 'standalone',
+  allowedDevOrigins: ['localhost', '127.0.0.1'],
   poweredByHeader: false,
   outputFileTracingRoot: import.meta.dirname,
   images: {
     unoptimized: true
   },
   async headers() {
-    return [{ source: '/(.*)', headers: securityHeaders }];
-  },
-  async redirects() {
     return [
+      { source: '/:path*', headers: securityHeaders },
       {
-        source: '/',
-        destination: '/snickerdoodle',
-        permanent: false,
-        basePath: false
+        source: '/brief/:path*',
+        headers: privateResponseHeaders
+      },
+      {
+        source: '/api/brief-access',
+        headers: privateResponseHeaders
+      },
+      {
+        source: '/api/brief',
+        headers: privateResponseHeaders
+      },
+      {
+        source: '/api/checkout',
+        headers: privateResponseHeaders
+      },
+      {
+        source: '/api/manager/queue',
+        headers: privateResponseHeaders
+      },
+      {
+        source: '/api/stripe/webhook',
+        headers: privateResponseHeaders
+      },
+      {
+        source: '/manager/:path*',
+        headers: privateResponseHeaders
+      },
+      {
+        source: '/checkout/:path*',
+        headers: privateResponseHeaders
       }
     ];
   }

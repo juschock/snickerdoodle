@@ -1,40 +1,33 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { ckPath } from '@/lib/nav';
-import { SNICKERDOODLE_OFFER } from '@/lib/offer';
-import { getStripe } from '@/lib/stripe';
+import { INTAKE_EMAIL } from '@/lib/site';
 
-export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
-  const { session_id: sessionId } = await searchParams;
-  let paid = false;
-  if (sessionId) {
-    try {
-      const session = await getStripe().checkout.sessions.retrieve(sessionId);
-      paid = session.payment_status === 'paid'
-        && session.amount_total === SNICKERDOODLE_OFFER.amountCents
-        && session.currency === SNICKERDOODLE_OFFER.currency
-        && session.metadata?.offer_id === SNICKERDOODLE_OFFER.id;
-    } catch {
-      paid = false;
-    }
-  }
+export const metadata: Metadata = {
+  title: 'Checkout return received',
+  robots: { index: false, follow: false, nocache: true }
+};
+
+export default function CheckoutSuccessPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="flex flex-1 items-center bg-secondary/30 px-4 py-16">
+      <main id="main-content" className="flex flex-1 items-center bg-secondary/30 px-4 py-16">
         <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8 text-center sm:p-10">
-          {paid ? <CheckCircle2 className="mx-auto size-14 text-primary" /> : null}
-          <h1 className="mt-5 font-heading text-3xl font-semibold">{paid ? 'Payment received' : 'Payment confirmation pending'}</h1>
+          <h1 className="font-heading text-3xl font-semibold">Thank you — your checkout return was received</h1>
           <p className="mt-4 text-muted-foreground">
-            {paid
-              ? 'Your survey and payment are in. The Snickerdoodle team will review your details and contact you if anything is missing before fulfillment begins.'
-              : 'We could not confirm a completed payment from this link. If you completed checkout, wait a moment and refresh; otherwise return to the survey.'}
+            If Stripe completed the payment, Stripe will email your receipt. Racoben will separately confirm the
+            paid order and delivery schedule at{' '}
+            <a className="underline" href={`mailto:${INTAKE_EMAIL}`}>{INTAKE_EMAIL}</a> after the signed payment
+            event is reconciled. Please do not submit the same campaign again unless we ask you to.
           </p>
-          {paid && sessionId ? <p className="mt-4 text-xs text-muted-foreground">Confirmation: {sessionId.slice(-12)}</p> : null}
-          <Button className="mt-8" nativeButton={false} render={<Link href={ckPath('/')}>Back to Snickerdoodle</Link>} />
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Button nativeButton={false} render={<Link href="/samples">Review sample packages</Link>} />
+            <Button variant="outline" nativeButton={false} render={<Link href={ckPath('/')}>Back to Snickerdoodle</Link>} />
+          </div>
         </div>
       </main>
       <SiteFooter />

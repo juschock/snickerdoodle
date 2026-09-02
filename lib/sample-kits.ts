@@ -1,4 +1,5 @@
 import { PRODUCT_NAME } from './site';
+import { PUBLIC_SAMPLE_SLUGS } from './campaign-templates';
 
 export type SampleEmail = {
   label: string;
@@ -10,7 +11,7 @@ export type SampleEmail = {
 };
 
 export type SampleSocialPost = {
-  platform: 'Facebook' | 'Instagram' | 'LinkedIn' | 'X' | 'TikTok';
+  platform: 'Facebook' | 'Instagram' | 'LinkedIn' | 'X';
   label: string;
   copy: string;
 };
@@ -61,17 +62,17 @@ export const sampleKits: SampleKit[] = [
         preview: 'Join us for an adoption event full of second chances.',
         timing: 'Send 7–10 days before the event',
         body:
-          'This Saturday, Green Valley Animal Rescue is bringing adoptable pets, foster volunteers, and future families together for one hopeful afternoon. If you have been thinking about adopting — or know someone who has — this is a simple way to meet animals who are ready for a safe, loving home. Stop by, ask questions, meet the team, and help one more pet get seen by the right person.',
+          'This Saturday, Meadowline Animal Rescue is bringing adoptable pets, foster volunteers, and future families together for one hopeful afternoon. If you have been thinking about adopting — or know someone who has — this is a simple way to meet animals who are ready for a safe, loving home. Stop by, ask questions, meet the team, and help one more pet get seen by the right person.',
         cta: 'Reserve your visit'
       },
       {
         label: 'Story / Reason to Care',
-        subject: 'Daisy is ready for a quiet couch and a fresh start',
-        preview: 'She has done the hard part. Now she needs someone to say yes.',
+        subject: '[Verified pet name] is ready for a fresh start',
+        preview: 'Use one approved, factual detail to introduce an adoptable pet.',
         timing: 'Send 3–5 days before the event',
         body:
-          'Daisy arrived unsure of every new sound and every new face. Now she leans into gentle hands, watches the door for familiar volunteers, and lights up when someone kneels down to say hello. She is exactly why this adoption event matters. One visit can become one introduction, and one introduction can become the start of a new life.',
-        cta: 'Meet Daisy and other adoptable pets'
+          'Insert a customer-approved pet profile here: verified name, age, temperament, adoption status, and one concrete detail supplied by the rescue. Connect that factual profile to the event without inventing history, behavior, or outcomes.',
+        cta: 'Meet [verified pet name] and other adoptable pets'
       },
       {
         label: 'Last Call',
@@ -106,13 +107,13 @@ export const sampleKits: SampleKit[] = [
         platform: 'Instagram',
         label: 'Featured pet caption',
         copy:
-          'Daisy update: soft eyes, a wagging tail, and a heart that is ready to trust again. She will be at our adoption event this weekend.'
+          '[Verified pet name] update: add one approved temperament detail and confirm attendance before publishing. Invite readers to the adoption event this weekend.'
       },
       {
         platform: 'LinkedIn',
         label: 'Community frame',
         copy:
-          'This weekend, Green Valley Animal Rescue is hosting an adoption event to connect local families with animals ready for permanent homes. Community turnout matters: every share, visit, and introduction increases the odds that an animal is seen by the right person.'
+          'This weekend, Meadowline Animal Rescue is hosting an adoption event to connect local families with animals ready for permanent homes. Community turnout matters: every share, visit, and introduction helps more people discover the event.'
       },
       {
         platform: 'LinkedIn',
@@ -130,29 +131,17 @@ export const sampleKits: SampleKit[] = [
         label: 'Day-before reminder',
         copy:
           'Tomorrow is adoption day. Save the details, invite a friend, and come meet animals waiting for a fresh start.'
-      },
-      {
-        platform: 'TikTok',
-        label: 'Video prompt',
-        copy:
-          'Prompt: "If you have been thinking about adopting, here are five pets you can meet this Saturday…" Show quick clips, names, and one gentle detail about each animal.'
-      },
-      {
-        platform: 'TikTok',
-        label: 'Behind-the-scenes prompt',
-        copy:
-          'Prompt: "Here is what it takes to get ready for one adoption event." Show crates, treats, paperwork, volunteers, transport, and setup.'
       }
     ],
     landingPageCopy: {
       headline: 'Meet adoptable pets this Saturday',
-      subhead: 'Join Green Valley Animal Rescue for a community adoption event full of second chances.',
+      subhead: 'Join Meadowline Animal Rescue for a fictional community adoption-event example.',
       body:
         'If you have been thinking about adopting, fostering, volunteering, or simply helping local rescue animals get seen, this event is for you. You will be able to meet adoptable pets, talk with volunteers, learn about the adoption process, and support the care that makes each placement possible.',
       details: [
         'Date: Saturday, October 15',
         'Time: 11:00 AM – 4:00 PM',
-        'Location: Green Valley Park Pavilion',
+        'Location placeholder: Meadowline Park Pavilion',
         'Primary action: Reserve a visit or attend during event hours',
         'Secondary action: Share the event or donate to support adoption-day care'
       ],
@@ -212,7 +201,7 @@ export const sampleKits: SampleKit[] = [
         preview: 'A year-end gift today helps us begin January ready, not behind.',
         timing: 'Send 3–4 weeks before December 31',
         body:
-          'As the year comes to a close, we are asking our community to help carry this mission into the next one. This year, your support helped neighbors receive practical care, timely help, and steady encouragement. A year-end gift today helps make sure we can begin January ready to keep going.',
+          'As the year comes to a close, we are asking our community to help carry this mission into the next one. Insert an organization-approved summary of this year’s work here using verified program facts and no invented beneficiaries or outcomes. A year-end gift today helps make sure we can begin January ready to keep going.',
         cta: 'Make your year-end gift'
       },
       {
@@ -221,7 +210,7 @@ export const sampleKits: SampleKit[] = [
         preview: 'Your support helps real people receive help at the right moment.',
         timing: 'Send 10–14 days before December 31',
         body:
-          'Behind every number is a person who needed help at the right moment. One family found support when they had nowhere else to turn. One student stayed connected. One senior received a meal and a call. That is the work your year-end gift sustains.',
+          'Insert one customer-approved impact example here using verified program facts, consented details, and no identifying information. Explain what support was provided and how a year-end gift connects to that work without inventing a beneficiary or outcome.',
         cta: 'Give before December 31'
       },
       {
@@ -245,7 +234,7 @@ export const sampleKits: SampleKit[] = [
         platform: 'Facebook',
         label: 'Impact post',
         copy:
-          'Behind every year-end donation is a real person, family, or neighbor who receives help at the right moment. That is why this campaign matters.'
+          'Use one verified, customer-approved program fact here to show why the year-end campaign matters. Do not invent a beneficiary, statistic, or outcome.'
       },
       {
         platform: 'Instagram',
@@ -281,30 +270,18 @@ export const sampleKits: SampleKit[] = [
         platform: 'X',
         label: 'Final reminder',
         copy: 'Final days before year-end. Help us finish strong and begin the new year ready to serve.'
-      },
-      {
-        platform: 'TikTok',
-        label: 'Impact video prompt',
-        copy:
-          'Prompt: "If you have ever wondered what a year-end gift really does, here are three ways it helps us start January ready…"'
-      },
-      {
-        platform: 'TikTok',
-        label: 'Staff reflection prompt',
-        copy:
-          'Prompt: "Here is what this community made possible this year — and why year-end support matters for what comes next."'
       }
     ],
     landingPageCopy: {
       headline: 'Help us start the new year ready to serve',
       subhead: 'Your year-end gift helps sustain practical care, steady support, and community-centered service.',
       body:
-        "At Hope Harbor Community Services, we work to make sure people facing difficult moments are met with care, dignity, and practical help. Right now, your year-end gift helps us close the gap between this year's needs and next year's work.",
+        "In this fictional example, Copper Lantern Community Aid invites supporters to help sustain customer-verified programs into the new year. A real package would replace this sentence with the organization's approved mission, need, and campaign facts.",
       details: [
-        '$25 helps provide immediate supplies for a neighbor in need',
-        '$50 helps support outreach and follow-up',
-        '$100 helps sustain program services into the new year',
-        'Monthly gifts help the organization plan with confidence'
+        'Impact placeholder: insert only a customer-substantiated giving amount and use',
+        'Program placeholder: identify the specific verified service the appeal supports',
+        'Proof placeholder: add an approved statistic or remove this line',
+        'Recurring-gift placeholder: confirm that monthly giving is available before use'
       ],
       faq: [
         {
@@ -342,169 +319,166 @@ export const sampleKits: SampleKit[] = [
       'Thank you for being part of this year-end campaign. Your support helps us begin the new year with momentum, clarity, and the ability to keep showing up for the people who count on this work. We are grateful for every gift, every share, and every person who chose to stand with this mission.',
     usageNotes: [
       'Replace fictional organization details with verified facts before use.',
-      'Only include impact amounts if the organization can substantiate them.',
+      'Replace every impact placeholder with organization-approved evidence or remove it.',
       'Avoid guilt-based framing; the tone should be grateful, specific, and donor-respecting.'
     ]
   },
   {
-    slug: 'pet-groomer-holiday-booking',
-    title: 'Pet Groomer Holiday Booking Campaign',
+    slug: 'restaurant-local-discovery',
+    title: 'Restaurant Local Discovery Campaign',
     eyebrow: 'Sample campaign package',
-    campaignType: 'Holiday booking campaign',
+    campaignType: 'Local discovery / first-visit offer',
     summary:
-      'A fictional sample package for a local pet grooming salon filling December appointment slots and encouraging first-time and returning customers to book before the holiday rush.',
-    goal: 'Increase holiday-season bookings, fill open appointment slots, and make it easy for pet owners to reserve grooming before travel and gatherings.',
+      'A fictional sample package for Juniper Spoon Thai Kitchen — a local restaurant example built around a weekday lunch special, review ask, and referral prompt.',
+    goal: 'Bring first-time and nearby diners in the door with one clear local offer and a simple visit or order action.',
     audience: [
-      'existing clients',
-      'first-time pet owners',
-      'busy holiday planners',
-      'families traveling with pets',
-      'local neighborhood pet owners'
+      'nearby residents',
+      'office workers at lunch',
+      'first-time diners',
+      'families looking for a local spot',
+      'regulars who have not visited recently'
     ],
-    primaryCta: 'Book a holiday grooming appointment',
-    secondaryCta: 'Call to reserve or ask about availability',
-    tone: ['friendly', 'local', 'practical', 'seasonal', 'service-focused'],
+    primaryCta: 'Try the weekday lunch special',
+    secondaryCta: 'Leave a review or refer a neighbor',
+    tone: ['local', 'welcoming', 'specific', 'offer-focused', 'not corporate'],
     emails: [
       {
-        label: 'Launch',
-        subject: 'Book your pet’s holiday groom before slots fill up',
-        preview: 'December fills fast — reserve your appointment now.',
-        timing: 'Send 3–4 weeks before peak holiday weeks',
+        label: 'Local discovery launch',
+        subject: 'Still haven’t tried us? Your weekday lunch spot is right here',
+        preview: 'A simple lunch special for neighbors who live or work nearby.',
+        timing: 'Send at campaign launch',
         body:
-          'The holidays are almost here, and so is grooming season at Paws & Polish Pet Spa. Whether your dog needs a fresh bath before guests arrive or your cat could use a tidy-up before travel, now is the time to book. December appointments go quickly, and we would love to help your pet look and feel their best before the busy weeks ahead.',
-        cta: 'Book your holiday appointment'
+          'If you live or work near Juniper Spoon Thai Kitchen and have not stopped in yet, this is your invitation. In this fictional example, the restaurant offers a weekday lunch special for nearby diners. Replace the cuisine, offer, and availability with verified restaurant facts before use.',
+        cta: 'See the lunch special'
       },
       {
-        label: 'Reminder',
-        subject: 'Still need a holiday groom? A few spots are left',
-        preview: 'Reserve your appointment before the calendar gets tight.',
-        timing: 'Send 10–14 days before peak holiday weeks',
+        label: 'Signature dish spotlight',
+        subject: 'Meet a featured lunch dish this week',
+        preview: 'One signature plate, one simple reason to visit this week.',
+        timing: 'Send 5–7 days after launch',
         body:
-          'If you have been meaning to schedule a holiday groom, this is your reminder. We still have appointment times available, but they are starting to fill. Book online, reply to this email, or call us to reserve a spot for your pet before the rush.',
-        cta: 'Reserve your spot today'
+          'Feature one verified menu item here using the restaurant-approved name, ingredients, availability, and description. If you have been meaning to try Juniper Spoon Thai Kitchen, use the confirmed weekday offer as a clear first-visit invitation.',
+        cta: 'Plan your visit'
       },
       {
-        label: 'Last Call',
-        subject: 'Last call for December grooming appointments',
-        preview: 'A few final openings remain before the holiday rush.',
-        timing: 'Send in the final week before peak demand',
+        label: 'Review & refer reminder',
+        subject: 'Loved your visit? A quick review helps neighbors find us',
+        preview: 'If we earned it, a review or referral goes a long way for a local restaurant.',
+        timing: 'Send after visit window or to recent customers',
         body:
-          'We are down to our final December openings. If your pet still needs a bath, trim, nail care, or full groom before the holidays, book now while we still have room on the calendar. Not sure what service to choose? Call us — we are happy to help you pick the right appointment.',
-        cta: 'Book before slots are gone'
+          'Local restaurants grow through word of mouth. If you enjoyed your meal at Juniper Spoon Thai Kitchen, a short, honest review helps other neighbors discover us. Know someone nearby who still needs a lunch spot? Send them our way.',
+        cta: 'Leave a review or refer a friend'
       }
     ],
     socialPosts: [
       {
         platform: 'Facebook',
-        label: 'Launch post',
+        label: 'Local discovery post',
         copy:
-          'Holiday plans? Do not forget your pet. Book a grooming appointment at Paws & Polish Pet Spa before December fills up. Fresh, clean, and ready for guests, travel, and family photos.'
+          'Neighbors: if you have not tried Juniper Spoon Thai Kitchen yet, this fictional example uses a weekday lunch special as an easy first-visit invitation. Replace every offer detail with verified facts.'
       },
       {
         platform: 'Facebook',
-        label: 'Service reminder',
+        label: 'Local group version',
         copy:
-          'Bath, trim, nails, and full grooms — we help local pets look their best before the holidays. Call or book online to reserve your appointment.'
+          'Sharing for anyone nearby — Juniper Spoon Thai Kitchen is running a weekday lunch special in this fictional example. Confirm the offer, service format, location, and hours before use.'
       },
       {
         platform: 'Instagram',
-        label: 'Seasonal caption',
+        label: 'Food caption',
         copy:
-          'December grooming slots are open. Book now so your pet is holiday-ready before the calendar gets tight.'
+          'Your weekday lunch spot might be closer than you think. Juniper Spoon Thai Kitchen — a fictional local-discovery example with an offer that must be verified before use.'
       },
       {
         platform: 'Instagram',
-        label: 'First-time client caption',
+        label: 'Signature dish caption',
         copy:
-          'New to Paws & Polish? We would love to meet your pet. Book a holiday groom and let us help you get on the calendar before the rush.'
+          'Basil stir-fry + jasmine rice — a fictional signature-dish example. Replace the dish and description with verified menu facts before use. First visit? We would love to cook for you.'
       },
       {
         platform: 'LinkedIn',
-        label: 'Local business frame',
+        label: 'Office lunch frame',
         copy:
-          'Local businesses plan for seasonal demand too. If you are a pet owner preparing for holiday travel, gatherings, or family visits, booking grooming early helps avoid last-minute stress.'
+          'Local lunch matters for small teams and solo workdays. In this fictional example, Juniper Spoon Thai Kitchen offers a weekday lunch option for professionals nearby.'
       },
       {
         platform: 'LinkedIn',
         label: 'Community note',
         copy:
-          'Paws & Polish Pet Spa is booking December appointments now for local pet owners who want dependable grooming before the holiday season gets busy.'
+          'Small local restaurants depend on nearby regulars. If you work or live close to Juniper Spoon Thai Kitchen, this example invites one verified first visit.'
       },
       {
         platform: 'X',
-        label: 'Short launch',
-        copy: 'Holiday grooming appointments are open at Paws & Polish Pet Spa. Book before December fills up.'
+        label: 'Short local post',
+        copy: 'Fictional example: weekday lunch special at Juniper Spoon Thai Kitchen — verify the offer before use.'
       },
       {
         platform: 'X',
-        label: 'Urgency reminder',
-        copy: 'Final December grooming spots are going fast. Reserve your pet’s appointment today.'
-      },
-      {
-        platform: 'TikTok',
-        label: 'Before-and-after prompt',
-        copy:
-          'Prompt: "Holiday grooming season is here — here is what a fresh groom looks like before guests arrive." Show a quick before/after with appointment booking info.'
-      },
-      {
-        platform: 'TikTok',
-        label: 'Booking reminder prompt',
-        copy:
-          'Prompt: "If you wait until the last week of December, grooming spots disappear fast. Here is how to book early."'
+        label: 'Review ask',
+        copy: 'Tried Juniper Spoon Thai Kitchen? An honest review helps other locals find us.'
       }
     ],
     landingPageCopy: {
-      headline: 'Book your pet’s holiday groom before December fills up',
-      subhead: 'Fresh baths, trims, and full grooms for local pets getting ready for the holidays.',
+      headline: 'A weekday lunch spot for nearby diners',
+      subhead: 'Fresh Thai dishes for nearby residents, office workers, and first-time diners.',
       body:
-        'At Paws & Polish Pet Spa, we help pet owners get ahead of the holiday rush with dependable grooming appointments in a calm, local setting. Whether your pet needs a bath, nail trim, or full groom, booking early makes it easier to get the time that works for you.',
+        'In this fictional example, Juniper Spoon Thai Kitchen uses a verified weekday offer to invite a first visit. Replace the location, menu, service, and offer language with restaurant-approved facts before publishing.',
       details: [
-        'Services: bath, trim, nail care, and full groom appointments',
-        'Best for: pets needing a refresh before travel, guests, or holiday photos',
-        'Primary action: Book online or call to reserve',
-        'Location: Paws & Polish Pet Spa, Maple Street Shopping Center',
-        'Hours: Tuesday–Saturday, 9:00 AM – 5:00 PM'
+        'Offer: Weekday lunch special — see in-store or online menu for current details',
+        'Best for: neighbors, office lunch, first-time visits',
+        'Primary action: Visit for lunch or order for pickup',
+        'Location placeholder: add the verified Juniper Spoon Thai Kitchen address',
+        'Hours placeholder: add verified lunch-service hours',
+        'Terms: Dine-in and pickup only unless online ordering is listed on the fact ledger'
       ],
       faq: [
         {
-          q: 'How far in advance should I book?',
-          a: 'We recommend booking at least two weeks ahead during the holiday season.'
+          q: 'Is this only for first-time customers?',
+          a: 'The campaign is aimed at nearby people who have not visited yet, but everyone is welcome.'
         },
         {
-          q: 'Are you taking new clients?',
-          a: 'Yes. First-time clients are welcome — call us if you need help choosing the right service.'
+          q: 'Can I order ahead?',
+          a: 'Use the ordering link or phone number provided by the restaurant in the fact ledger.'
         }
       ]
     },
     ctas: [
-      'Book your holiday appointment',
-      'Reserve your spot today',
-      'Call to book',
-      'Schedule before slots fill up',
-      'Get your pet holiday-ready',
-      'Book online now',
-      'Save your December appointment',
-      'Call for availability'
+      'Try the weekday lunch special',
+      'Plan your first visit',
+      'Order lunch for pickup',
+      'See the menu',
+      'Plan a local visit',
+      'Leave a review',
+      'Refer a neighbor',
+      'Make us your lunch spot'
     ],
     postingSchedule: [
-      { timing: '4 weeks before peak weeks', asset: 'Launch email + Facebook/Instagram post', purpose: 'Open booking season' },
-      { timing: '2 weeks before peak weeks', asset: 'Reminder email + service post', purpose: 'Drive reservations' },
-      { timing: '1 week before peak weeks', asset: 'Instagram countdown + short X post', purpose: 'Create urgency' },
-      { timing: 'Final week', asset: 'Last-call email + social reminder', purpose: 'Fill remaining slots' },
-      { timing: 'After appointments', asset: 'Thank-you post', purpose: 'Encourage rebooking and referrals' }
+      { timing: 'Week 1', asset: 'Launch email + Facebook/Instagram local post', purpose: 'Open discovery campaign' },
+      { timing: 'Week 2', asset: 'Signature dish spotlight + local group post', purpose: 'Give a concrete reason to visit' },
+      { timing: 'Week 3', asset: 'Counter-card / table-tent in store', purpose: 'Convert walk-ins' },
+      { timing: 'Week 4', asset: 'Review + referral reminder', purpose: 'Turn visitors into advocates' },
+      { timing: 'Ongoing', asset: 'Google Business Profile update', purpose: 'Capture local search intent' }
     ],
     followUpCopy:
-      'Thank you for trusting Paws & Polish with your pet’s holiday groom. We hope your pet feels fresh and ready for the season ahead. If you loved your visit, we would appreciate a review — and if you know another pet owner who needs to get on the calendar, send them our way.',
+      'Thank you for giving Juniper Spoon Thai Kitchen a try. Local restaurants grow through repeat visits, honest reviews, and referrals. If we earned your support, we would appreciate a review — and if you know someone nearby who still needs a lunch spot, send them our way.',
     usageNotes: [
-      'Replace fictional business name, location, hours, and service details with verified facts.',
-      'Do not invent pricing, discounts, or availability unless confirmed in the fact ledger.',
-      'Keep the tone practical and local — this is a booking campaign, not a generic marketing blast.'
+      'Fictional business — replace with verified restaurant name, offer, hours, and links from the fact ledger.',
+      'Do not invent prices, discounts, or review claims.',
+      'Offer terms and exclusions must match what the client can honor.',
+      'Do not reference real businesses or neighborhoods without permission.'
     ]
   }
 ];
 
+/** Public proof samples only — three in V1. See lib/campaign-templates.ts */
+export const publicSampleKits = sampleKits.filter((kit) => PUBLIC_SAMPLE_SLUGS.includes(kit.slug));
+
 export function getSampleKit(slug: string): SampleKit | undefined {
   return sampleKits.find((kit) => kit.slug === slug);
+}
+
+export function getPublicSampleKit(slug: string): SampleKit | undefined {
+  return publicSampleKits.find((kit) => kit.slug === slug);
 }
 
 export function sampleKitTitle(slug: string): string {

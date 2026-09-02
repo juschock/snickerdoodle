@@ -5,7 +5,7 @@ The fact ledger is the single source of truth for a Snickerdoodle order. All int
 ## Purpose
 
 - Prevent hallucinated sponsors, statistics, quotes, links, partners, deadlines, outcomes, or claims.
-- Give Rachel a quick accuracy reference during review.
+- Give the assigned and cleared independent marketing reviewer a quick accuracy reference during review.
 - Make deterministic QA possible.
 
 ## When to create
@@ -66,7 +66,7 @@ The following must NOT appear unless explicitly stated in the brief:
 2. **Unknown fields stay empty.** Mark gaps in “Explicit unknowns / gaps” — never guess.
 3. **AI prompts must include the full ledger**, not paraphrased summaries that could drift.
 4. **Critique pass must diff output against the ledger**, not against general marketing best practices alone.
-5. **Rachel verifies the ledger** before approving the editor packet.
+5. **The assigned and cleared independent marketing reviewer verifies the ledger** before approving the editor packet.
 
 ## Examples of violations
 
@@ -81,4 +81,4 @@ The following must NOT appear unless explicitly stated in the brief:
 
 - **draft** — intake received, normalization in progress
 - **complete** — all brief fields mapped; gaps documented
-- **approved** — Rachel or lead fulfiller confirms ledger is accurate before packaging
+- **approved** — the assigned and cleared independent marketing reviewer confirms the ledger is accurate before packaging

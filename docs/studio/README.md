@@ -2,9 +2,9 @@
 
 These documents describe **RacobenStudio**, the staff-only internal operations backend for Snickerdoodle (and eventually other Racoben products).
 
-**Implementation repo (planned):** [juschock/RacobenStudio](https://github.com/juschock/RacobenStudio) — separate from [juschock/Snickerdoodle](https://github.com/juschock/Snickerdoodle).
+**Implementation repo:** [juschock/RacobenStudio](https://github.com/juschock/RacobenStudio) — separate from [juschock/CauseBrief](https://github.com/juschock/CauseBrief) (Snickerdoodle product).
 
-Design-only for now. Do not implement in the public Snickerdoodle app.
+The implementation repository is external to this workspace. Discover and verify any local RacobenStudio checkout before relying on its path, setup state, or development URL; this repository does not assert that a sibling checkout exists.
 
 | Doc | Purpose |
 |-----|---------|
@@ -16,4 +16,5 @@ Design-only for now. Do not implement in the public Snickerdoodle app.
 | [intake-connectivity.md](./intake-connectivity.md) | Public form → Studio API flow |
 | [phase-plan.md](./phase-plan.md) | Phased build order |
 
-When the RacobenStudio repo is created, move or mirror these docs there.
+RacobenStudio already exists as a separate implementation repository. Keep implementation-specific documentation
+canonical there; retain only the public-product boundary and connectivity notes in this repository.

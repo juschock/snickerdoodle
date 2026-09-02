@@ -17,8 +17,8 @@ const validBrief = {
   deliveryEmail: 'customer@example.com'
 };
 
-describe('Snickerdoodle checkout contract', () => {
-  it('accepts the complete survey used for checkout', () => {
+describe('Snickerdoodle offer and intake contract', () => {
+  it('accepts a complete campaign intake', () => {
     expect(briefCheckoutSchema.safeParse(validBrief).success).toBe(true);
   });
 
@@ -27,7 +27,7 @@ describe('Snickerdoodle checkout contract', () => {
     expect(result.success).toBe(false);
   });
 
-  it('keeps the only purchasable offer fixed at $99 USD', () => {
+  it('keeps the future fixed-price offer at $99 USD', () => {
     expect(SNICKERDOODLE_OFFER).toMatchObject({ id: 'standard_99', amountCents: 9900, currency: 'usd' });
   });
 });

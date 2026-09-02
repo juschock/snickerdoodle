@@ -1,6 +1,8 @@
 # RacobenStudio phase plan
 
-Build for the **next 10 orders**, not full SaaS. Do not start Studio until Snickerdoodle is live on `racoben.com/snickerdoodle` and sample kits exist — unless manual ops becomes unbearable.
+Build only for a measured staged-pilot bottleneck, not full SaaS. Do not start Studio until Snickerdoodle is live on
+`racoben.com/snickerdoodle`, sample kits exist, and the one-order/freeze/reconcile pilot produces evidence that
+manual operations are blocking safe delivery.
 
 ## Prerequisites (Snickerdoodle public)
 
@@ -18,7 +20,7 @@ Ready for Drafting
 Drafting
 AI Critique
 Ready for Human Review
-Rachel Reviewing
+Independent Review
 Revision Needed
 Approved
 Packaged
@@ -48,7 +50,7 @@ Closed
 - Kit asset editor (draft/final text)
 - AI draft run records (manual paste or script hook)
 - Editor packet assembly
-- Rachel review queue
+- Independent marketing review queue
 - Delivery package tracker + status transitions
 
 ## Studio Phase 3 — Analytics
@@ -74,8 +76,8 @@ Closed
 
 | Studio phase | Public Snickerdoodle change |
 |--------------|--------------------------|
-| 1 | None (mailto continues) |
-| 2 | Optional: POST intake to Studio API |
+| 1 | Existing fit-check plus pending-intake flow continues |
+| 2 | Optional: move order creation behind a reviewed Studio API |
 | 3+ | Same intake; no customer dashboard |
 
 ## Open questions
@@ -84,6 +86,11 @@ Closed
 2. **Account matching:** Auto-merge by email domain vs manual dedup?
 3. **Campaign auto-create:** Every brief creates new campaign vs prompt staff to link existing?
 4. **Subdomain:** `studio.racoben.com` vs `ops.racoben.com`?
-5. **When to split:** After how many paid orders does mailto become blocking?
+5. **When to split:** After how many confirmed orders does manual fit review become blocking?
 
-Recommended defaults: `RacobenStudio`, manual account matching in V1, staff picks campaign on intake review, `studio.racoben.com`, start Studio Phase 1 after 3–5 paid kits if ops pain is real.
+Recommended planning defaults: `RacobenStudio`, manual account matching in V1, authorized staff picks the campaign
+on intake review, `studio.racoben.com`, and no Studio build until a reconciled pilot demonstrates concrete ops pain.
+The first completed paid order and its required reconciliation are learning evidence, not a global acceptance lock;
+the pilot may accept and process multiple independent customer orders concurrently within documented staffing,
+reviewer, and quality capacity. Each order requires isolated reservation, assignment, access, QA, reconciliation,
+and delivery records. This is not build, deployment, access, payment, or external-action authority.

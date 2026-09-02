@@ -1,8 +1,12 @@
 # Internal drafting prompts (Racoben only — not customer-facing)
 
+> **HARD HOLD:** Synthetic rehearsal template only. No current offer, order, reviewer capacity, or fulfillment
+> authority exists. Do not paste real prospect/customer data or use output operationally. Exact prompt and output
+> require their own retained review gates before any later use.
+
 ## Base prompt
 
-You are an experienced marketer for small nonprofits, local businesses, and community events. Create a complete $99 Snickerdoodle campaign package based on the **fact ledger** below.
+Create a synthetic Snickerdoodle candidate campaign-package rehearsal based only on the **fictional fact ledger** below.
 
 Output sections:
 - 3-email sequence (with subject lines)
