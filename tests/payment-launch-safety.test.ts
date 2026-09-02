@@ -105,7 +105,7 @@ describe('payment launch-safety successor migration', () => {
   });
 
   it('acknowledges refund, dispute, and expiry only after durable reconciliation state', () => {
-    const webhook = readFileSync('app/api/stripe/webhook/route.ts', 'utf8');
+    const webhook = readFileSync('lib/stripe-webhook-handler.ts', 'utf8');
     const stateMachine = readFileSync('lib/payment-state-machine.ts', 'utf8');
     const atomicSuccessor = readFileSync(
       'supabase/migrations/20260902044710_prove_payment_state_machine.sql',
@@ -134,7 +134,7 @@ describe('payment launch-safety successor migration', () => {
 
   it('closes a session-bound intent and alerts before acknowledging asynchronous failure', () => {
     const migration = readFileSync(migrationPath, 'utf8');
-    const webhook = readFileSync('app/api/stripe/webhook/route.ts', 'utf8');
+    const webhook = readFileSync('lib/stripe-webhook-handler.ts', 'utf8');
     const stateMachine = readFileSync('lib/payment-state-machine.ts', 'utf8');
     const atomicSuccessor = readFileSync(
       'supabase/migrations/20260902044710_prove_payment_state_machine.sql',

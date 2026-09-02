@@ -21,7 +21,7 @@ describe('durable intake and payment receipt boundary', () => {
 
   it('persists validated intake before Stripe and never treats redirect as payment truth', () => {
     const checkout = source('app/api/checkout/route.ts');
-    const webhook = source('app/api/stripe/webhook/route.ts');
+    const webhook = source('lib/stripe-webhook-handler.ts');
 
     expect(checkout.indexOf("from('checkout_intents').insert"))
       .toBeLessThan(checkout.indexOf('checkout.sessions.create'));

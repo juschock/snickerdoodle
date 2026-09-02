@@ -48,7 +48,7 @@ describe('candidate-bound payment and no-AI boundary', () => {
 
   it('uses dynamic payment methods, leaves tax automation off, and verifies webhook signatures', () => {
     const checkout = readFileSync('app/api/checkout/route.ts', 'utf8');
-    const webhook = readFileSync('app/api/stripe/webhook/route.ts', 'utf8');
+    const webhook = readFileSync('lib/stripe-webhook-handler.ts', 'utf8');
 
     expect(checkout).toContain('integration_identifier:');
     expect(checkout).not.toContain('payment_method_types');

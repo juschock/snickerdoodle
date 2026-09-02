@@ -1,0 +1,30 @@
+{
+  "name": "@snickerdoodle/webhook-ingress",
+  "version": "1.1.0-rc.3",
+  "private": true,
+  "description": "Public, signature-verified Stripe sandbox webhook ingress for Snickerdoodle",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "build": "next build --webpack",
+    "lint": "eslint .",
+    "start": "next start -p 3213",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.110.5",
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "stripe": "22.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.2",
+    "eslint-config-next": "16.3.3",
+    "typescript": "5.7.3"
+  }
+}

@@ -558,7 +558,7 @@ describe('signed webhook route', () => {
 
     const response = await webhookPost(new Request('https://racoben.com/snickerdoodle/api/stripe/webhook', {
       method: 'POST',
-      headers: { 'stripe-signature': 't=1,v1=test' },
+      headers: { 'content-type': 'application/json', 'stripe-signature': 't=1,v1=test' },
       body: '{}'
     }));
 
@@ -613,7 +613,7 @@ describe('signed webhook route', () => {
 
     const response = await webhookPost(new Request('https://racoben.com/snickerdoodle/api/stripe/webhook', {
       method: 'POST',
-      headers: { 'stripe-signature': 't=1,v1=test' },
+      headers: { 'content-type': 'application/json', 'stripe-signature': 't=1,v1=test' },
       body: '{}'
     }));
 
@@ -629,7 +629,7 @@ describe('signed webhook route', () => {
 
     const response = await webhookPost(new Request('https://racoben.com/snickerdoodle/api/stripe/webhook', {
       method: 'POST',
-      headers: { 'stripe-signature': 'bad' },
+      headers: { 'content-type': 'application/json', 'stripe-signature': 'bad' },
       body: '{}'
     }));
 
@@ -655,7 +655,7 @@ describe('signed webhook route', () => {
 
     const response = await webhookPost(new Request('https://racoben.com/snickerdoodle/api/stripe/webhook', {
       method: 'POST',
-      headers: { 'stripe-signature': 't=1,v1=test' },
+      headers: { 'content-type': 'application/json', 'stripe-signature': 't=1,v1=test' },
       body: '{}'
     }));
 
@@ -691,7 +691,7 @@ describe('signed webhook route', () => {
 
     const response = await webhookPost(new Request('https://racoben.com/snickerdoodle/api/stripe/webhook', {
       method: 'POST',
-      headers: { 'stripe-signature': 't=1,v1=test' },
+      headers: { 'content-type': 'application/json', 'stripe-signature': 't=1,v1=test' },
       body: '{}'
     }));
 
@@ -728,7 +728,7 @@ describe('signed webhook route', () => {
 
     const response = await webhookPost(new Request('https://racoben.com/snickerdoodle/api/stripe/webhook', {
       method: 'POST',
-      headers: { 'stripe-signature': 't=1,v1=test' },
+      headers: { 'content-type': 'application/json', 'stripe-signature': 't=1,v1=test' },
       body: '{}'
     }));
 

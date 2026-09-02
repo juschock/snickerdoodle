@@ -6,7 +6,7 @@ const migration = readFileSync(
   'supabase/migrations/20260902044710_prove_payment_state_machine.sql',
   'utf8'
 );
-const webhook = readFileSync('app/api/stripe/webhook/route.ts', 'utf8');
+const webhook = readFileSync('lib/stripe-webhook-handler.ts', 'utf8');
 const checkout = readFileSync('app/api/checkout/route.ts', 'utf8');
 
 describe('authoritative payment state machine', () => {
