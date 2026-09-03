@@ -37,9 +37,7 @@ export default async function PrivacyPage() {
                   : `${PRODUCT_NAME} does not currently provide private campaign intake or checkout. If you email a product question, we receive the address, message, and other information you choose to include.`}
               </p>
               <p>
-                Provider analytics is off by default. If Racoben explicitly enables it later, analytics remains suppressed on the
-                private survey and receipt subtree, and query strings and fragments are removed from allowed public-page events.
-                Privacy-safe operational error events may still be recorded to protect and keep the service reliable.
+                Analytics are disabled by default. Analytics are never collected on the private campaign survey or payment receipt pages. When analytics are enabled on public pages, recorded events exclude URL query strings and fragments. Privacy-safe operational error information may be recorded to help keep Snickerdoodle reliable.
               </p>
             </section>
             <section aria-labelledby="privacy-use" className="space-y-3">

@@ -31,7 +31,7 @@ describe('commercial customer policy', () => {
   it('states the durable intake, least-privilege manager, analytics, and deletion boundaries', () => {
     const privacy = readFileSync('app/privacy/page.tsx', 'utf8');
 
-    expect(privacy).toContain('Provider analytics is off by default');
+    expect(privacy).toContain('Analytics are disabled by default');
     expect(privacy).toContain('validated server submission creates a durable intake record');
     expect(privacy).toContain('but no raw');
     expect(privacy).toContain('active owner and a live authenticated session');
