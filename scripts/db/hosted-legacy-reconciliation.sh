@@ -204,8 +204,8 @@ replay_clean() {
       seed_owner "$clean_url"
     fi
   done
-  if [[ "$count" != 21 ]]; then
-    echo "Expected 21 clean migrations, replayed $count" >&2
+  if [[ "$count" != 22 ]]; then
+    echo "Expected 22 clean migrations, replayed $count" >&2
     exit 65
   fi
 }
@@ -472,7 +472,7 @@ if [[ "$("$pg_bin/psql" -X -qAt "$hosted_url" -c \
   exit 1
 fi
 
-echo 'SNICK_SN08A_HOSTED_RECONCILIATION_PASS postgres=17 migrations=21 paths=clean_hosted_predecessor'
+echo 'SNICK_SN08A_HOSTED_RECONCILIATION_PASS postgres=17 migrations=22 paths=clean_hosted_predecessor'
 echo "SN08A_FINAL_SCHEMA_SHA256=$clean_schema_hash"
 echo 'SN08A_HISTORICAL_GRAPH=preserved'
 echo 'SN08A_PROVIDER_ONLY_OBJECTS=retired'

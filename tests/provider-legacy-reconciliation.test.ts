@@ -14,14 +14,15 @@ describe('SN08A provider-only legacy retirement', () => {
   it('orders the one reconciliation migration before the five immutable RC migrations', () => {
     const migrations = readdirSync(join(root, 'supabase/migrations'))
       .filter((name) => name.endsWith('.sql')).sort();
-    expect(migrations).toHaveLength(21);
+    expect(migrations).toHaveLength(22);
     expect(migrations.indexOf(migrationName)).toBe(15);
     expect(migrations.slice(16)).toEqual([
       '20260901163504_enable_multi_customer_payment_concurrency.sql',
       '20260901231324_lock_terminal_reconciliation_to_checkout_intent.sql',
       '20260902044710_prove_payment_state_machine.sql',
       '20260902052346_harden_privileged_rpc_access.sql',
-      '20260902064553_implement_privacy_lifecycle_and_retention.sql'
+      '20260902064553_implement_privacy_lifecycle_and_retention.sql',
+      '20260903030728_release_rejected_checkout_session_setup.sql'
     ]);
   });
 

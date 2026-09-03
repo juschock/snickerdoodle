@@ -1,4 +1,4 @@
-import type Stripe from 'stripe';
+import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { briefCheckoutSchema } from '@/lib/checkout';
 import {
@@ -77,8 +77,19 @@ async function compensateCheckoutSetup(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   intentId: string,
   session: Stripe.Checkout.Session | null,
-  reasonCode: string
+  reasonCode: string,
+  providerRejectedCreate = false
 ) {
+  if (providerRejectedCreate && !session) {
+    const { data, error } = await supabase.rpc('release_rejected_stripe_checkout_setup', {
+      p_intent_id: intentId
+    });
+    if (error || String(data) !== 'released') {
+      throw new CheckoutOperationError('capacity_compensation_failed');
+    }
+    return 'released' as const;
+  }
+
   let providerSessionExpired = false;
   if (session) {
     try {
@@ -395,7 +406,8 @@ export async function POST(request: Request) {
           compensationClient,
           compensationIntentId,
           compensationSession,
-          error instanceof CheckoutOperationError ? error.code : 'stripe_session_create_failed'
+          error instanceof CheckoutOperationError ? error.code : 'stripe_session_create_failed',
+          error instanceof Stripe.errors.StripeInvalidRequestError
         );
       } catch {
         compensationState = 'failed';

@@ -1193,6 +1193,10 @@ export type Database = {
           workspace_json: Json
         }[]
       }
+      release_rejected_stripe_checkout_setup: {
+        Args: { p_intent_id: string }
+        Returns: string
+      }
       read_intake_manager_queue: {
         Args: {
           p_limit?: number

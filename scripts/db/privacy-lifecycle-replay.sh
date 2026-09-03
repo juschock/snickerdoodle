@@ -154,8 +154,8 @@ where id = '65000000-0000-4000-8000-000000000001';
 SQL
   fi
 done
-if [[ "$migration_count" != '21' ]]; then
-  echo "Expected 21 migrations, replayed $migration_count" >&2
+if [[ "$migration_count" != '22' ]]; then
+  echo "Expected 22 migrations, replayed $migration_count" >&2
   exit 65
 fi
 
@@ -172,6 +172,8 @@ if [[ "${SNICK_PRIVACY_REPLAY_ONLY:-false}" != true ]]; then
     -f "$repo_root/scripts/db/intake-manager-queue-acceptance.sql"
   "$pg_bin/psql" -X -q "$db_url" -v ON_ERROR_STOP=1 \
     -f "$repo_root/scripts/db/privileged-rpc-access-acceptance.sql"
+  "$pg_bin/psql" -X -q "$db_url" -v ON_ERROR_STOP=1 \
+    -f "$repo_root/scripts/db/rejected-checkout-setup-acceptance.sql"
   "$pg_bin/psql" -X -q "$db_url" -v ON_ERROR_STOP=1 \
     -f "$repo_root/scripts/db/payment-state-machine-acceptance.sql"
   PAYMENT_DB_URL="$db_url" \

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import Stripe from 'stripe';
 
 const mocks = vi.hoisted(() => ({
   getSupabaseAdmin: vi.fn(),
@@ -140,6 +141,9 @@ beforeEach(() => {
     if (name === 'compensate_stripe_checkout_setup') {
       return { data: 'released', error: null };
     }
+    if (name === 'release_rejected_stripe_checkout_setup') {
+      return { data: 'released', error: null };
+    }
     return { data: null, error: null };
   });
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -260,6 +264,40 @@ describe('live-capable checkout route', () => {
       p_provider_session_expired: false,
       p_reason_code: 'capacity_expiry_margin_too_short'
     }));
+  });
+
+  it('releases only the unbound reservation when Stripe definitively rejects Session creation', async () => {
+    const token = createBriefAccessToken({
+      email: validBrief.deliveryEmail,
+      expiresAt: Date.now() + 60_000,
+      nonce: '11111111-1111-4111-8111-111111111111',
+      secret: process.env.CHECKOUT_SECURITY_SECRET!
+    });
+    mocks.checkoutCreate.mockRejectedValueOnce(new Stripe.errors.StripeInvalidRequestError({
+      message: 'test-only provider rejection',
+      type: 'invalid_request_error'
+    }));
+
+    const response = await checkoutPost(new Request('https://racoben.com/snickerdoodle/api/checkout', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': 'checkout-test-key-123456',
+        origin: 'https://racoben.com',
+        cookie: `${BRIEF_ACCESS_COOKIE_NAME}=${encodeURIComponent(token)}`
+      },
+      body: JSON.stringify(validBrief)
+    }));
+
+    expect(response.status).toBe(500);
+    expect(mocks.checkoutExpire).not.toHaveBeenCalled();
+    expect(mocks.rpc).toHaveBeenCalledWith('release_rejected_stripe_checkout_setup', {
+      p_intent_id: expect.any(String)
+    });
+    expect(mocks.rpc).not.toHaveBeenCalledWith(
+      'compensate_stripe_checkout_setup',
+      expect.anything()
+    );
   });
 
   it('expires and releases a created Session when the atomic database bind fails', async () => {

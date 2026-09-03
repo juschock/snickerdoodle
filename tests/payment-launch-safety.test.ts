@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 const migrationPath = 'supabase/migrations/20260830140200_payment_launch_safety.sql';
 const concurrencySuccessorPath =
   'supabase/migrations/20260901163504_enable_multi_customer_payment_concurrency.sql';
+const rejectedSetupReleasePath =
+  'supabase/migrations/20260903030728_release_rejected_checkout_session_setup.sql';
 
 describe('payment launch-safety successor migration', () => {
   it('requires the Stripe email and session to match the candidate-bound intent', () => {
@@ -102,6 +104,29 @@ describe('payment launch-safety successor migration', () => {
     expect(successor).toContain(
       'revoke update on table public.checkout_intents from service_role;'
     );
+  });
+
+  it('releases only a provider-rejected unbound setup and keeps the RPC service-role-only', () => {
+    const migration = readFileSync(rejectedSetupReleasePath, 'utf8');
+    const checkout = readFileSync('app/api/checkout/route.ts', 'utf8');
+    const acceptance = readFileSync(
+      'scripts/db/rejected-checkout-setup-acceptance.sql',
+      'utf8'
+    );
+
+    expect(checkout).toContain('error instanceof Stripe.errors.StripeInvalidRequestError');
+    expect(checkout).toContain("supabase.rpc('release_rejected_stripe_checkout_setup'");
+    expect(migration).toContain("v_intent.status <> 'pending'");
+    expect(migration).toContain('v_intent.stripe_checkout_session_id is not null');
+    expect(migration).toContain("v_reservation.reservation_state <> 'reserved'");
+    expect(migration).toContain('v_reservation.checkout_session_id is not null');
+    expect(migration).toContain("released_reason = 'stripe_session_create_rejected'");
+    expect(migration).toContain('to service_role;');
+    expect(migration).not.toMatch(
+      /grant execute[^;]+to (?:public|anon|authenticated)/i
+    );
+    expect(acceptance).toContain('REJECTED_CHECKOUT_SETUP_ACCEPTANCE_PASS');
+    expect(acceptance).toContain('Bound Checkout setup was unexpectedly releasable');
   });
 
   it('acknowledges refund, dispute, and expiry only after durable reconciliation state', () => {

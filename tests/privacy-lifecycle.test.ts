@@ -29,7 +29,7 @@ describe('SN05 privacy lifecycle', () => {
       '0c33ce412271492bfc4833818fd3a32e2d3cfd530eb42249ee1b2243918d8362'
     );
     expect(createHash('sha256').update(replay).digest('hex')).toBe(
-      '08b5733b09346cb28ed045432de3f66784663c6e400fa8e482569981a81735dc'
+      '94df0ca5b2b52dc89fa2af56cc2bd61be46e36fbda761c4211fe0b89ea7e2beb'
     );
   });
 

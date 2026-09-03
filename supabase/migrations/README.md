@@ -126,3 +126,20 @@ candidates, long domain candidates, malformed email, free text, payment-shaped
 objects, unknown keys, secrets, and oversized payloads remain fail closed. The
 first 20 migration files are byte-identical to RC.2. This local custody evidence
 does not authorize or credit hosted application of the superseding migration.
+
+## SN08C.3 rejected Checkout setup recovery
+
+`20260903030728_release_rejected_checkout_session_setup.sql` is a forward-only
+correction for a hosted sandbox failure discovered after Stripe synchronously
+rejected Checkout Session creation. The existing fail-closed compensation path
+correctly kept an ambiguous unbound reservation, but it provided no safe way to
+release that reservation after the provider rejection was proven.
+
+The new service-role-only RPC releases only an exact pending intent whose
+reservation and intent both have no Checkout Session and no order. It closes
+the matching setup alert, preserves the intent for an exact retry, and refuses
+bound, paid, ordered, or otherwise changed state. The application calls it only
+for Stripe SDK `StripeInvalidRequestError`; connection and other ambiguous
+failures continue to require reconciliation. The disposable PostgreSQL 17
+corpus proves release, clean retry, bound-session refusal, and unchanged
+customer/payment/auth/privacy isolation before any hosted application.
