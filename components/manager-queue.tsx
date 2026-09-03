@@ -37,6 +37,22 @@ type QueueCursor = {
   queue_receipt_id: string;
 };
 
+type OperationsHealth = {
+  status: 'healthy' | 'attention_required';
+  generated_at: string;
+  latest_webhook_received_at: string | null;
+  latest_webhook_completed_at: string | null;
+  webhook_receipts_24h: number;
+  failed_webhook_receipts_24h: number;
+  stuck_webhook_receipts: number;
+  stale_unpaid_checkout_intents: number;
+  paid_checkout_intents_without_order: number;
+  paid_stripe_orders_without_intent: number;
+  paid_stripe_orders_without_event: number;
+  processed_stripe_events_without_paid_order: number;
+  attention_reasons: string[];
+};
+
 type AuthStep = 'password' | 'mfa' | 'ready';
 
 function isQueueReceipt(value: unknown): value is QueueReceipt {
@@ -60,6 +76,48 @@ function isPaidIntake(value: unknown): value is PaidIntake {
   ].every((key) => typeof intake[key] === 'string') &&
     Boolean(intake.brief_json && typeof intake.brief_json === 'object') &&
     Array.isArray(intake.assignments) && Array.isArray(intake.reconciliation_alerts);
+}
+
+function isOperationsHealth(value: unknown): value is OperationsHealth {
+  if (!value || typeof value !== 'object') return false;
+  const health = value as Record<string, unknown>;
+  const counts = [
+    'webhook_receipts_24h', 'failed_webhook_receipts_24h', 'stuck_webhook_receipts',
+    'stale_unpaid_checkout_intents', 'paid_checkout_intents_without_order',
+    'paid_stripe_orders_without_intent', 'paid_stripe_orders_without_event',
+    'processed_stripe_events_without_paid_order'
+  ].every((key) => Number.isSafeInteger(health[key]) && Number(health[key]) >= 0);
+  const timestamps = ['latest_webhook_received_at', 'latest_webhook_completed_at']
+    .every((key) => health[key] === null || (
+      typeof health[key] === 'string' && Number.isFinite(Date.parse(health[key]))
+    ));
+  return (health.status === 'healthy' || health.status === 'attention_required') &&
+    typeof health.generated_at === 'string' && Number.isFinite(Date.parse(health.generated_at)) &&
+    counts && timestamps &&
+    Array.isArray(health.attention_reasons) &&
+    health.attention_reasons.every((reason) => typeof reason === 'string');
+}
+
+function readPrivateInviteLink(value: unknown) {
+  if (!value || typeof value !== 'object') return null;
+  const link = (value as { link?: unknown }).link;
+  if (typeof link !== 'string' || link.length > 4096) return null;
+  try {
+    const url = new URL(link);
+    const access = new URLSearchParams(url.hash.slice(1));
+    const keys = Array.from(access.keys());
+    const isLoopbackHttp = url.protocol === 'http:' &&
+      ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+    if (
+      (url.protocol !== 'https:' && !isLoopbackHttp) ||
+      url.username || url.password || url.pathname !== '/snickerdoodle/brief' || url.search ||
+      keys.length !== 1 || keys[0] !== 'access' ||
+      !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(access.get('access') ?? '')
+    ) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 async function currentSession(client: SupabaseClient) {
@@ -93,6 +151,10 @@ export function ManagerQueue({
   const [receipts, setReceipts] = useState<QueueReceipt[]>([]);
   const [selectedIntake, setSelectedIntake] = useState<PaidIntake | null>(null);
   const [nextCursor, setNextCursor] = useState<QueueCursor | null>(null);
+  const [operationsHealth, setOperationsHealth] = useState<OperationsHealth | null>(null);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [inviteNotice, setInviteNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -172,6 +234,79 @@ export function ManagerQueue({
     return payload;
   }
 
+  async function authorizedPost(path: string, body: Record<string, unknown>) {
+    if (!session) throw new Error('A current AAL2 owner session is required.');
+    const response = await fetch(path, {
+      method: 'POST',
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    const payload: unknown = await response.json();
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('The owner session expired or no longer satisfies AAL2. Sign in again.');
+      }
+      if (response.status === 400) throw new Error('Enter a valid delivery email.');
+      throw new Error('Private invite generation is temporarily unavailable.');
+    }
+    return payload;
+  }
+
+  async function loadOperationsHealth() {
+    setError(null);
+    setLoading(true);
+    try {
+      const payload = await authorizedGet('/snickerdoodle/api/manager/health');
+      const health = (payload as { health?: unknown }).health;
+      if (!isOperationsHealth(health)) throw new Error('Payment operations returned an invalid response.');
+      setOperationsHealth(health);
+    } catch (healthError) {
+      setOperationsHealth(null);
+      setError(healthError instanceof Error ? healthError.message : 'Payment operations health is unavailable.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function issuePrivateInvite(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setInviteLink(null);
+    setInviteNotice(null);
+    setLoading(true);
+    try {
+      const payload = await authorizedPost('/snickerdoodle/api/manager/invites', { email: inviteEmail });
+      const link = readPrivateInviteLink(payload);
+      if (!link) throw new Error('Private invite generation returned an invalid response.');
+      setInviteLink(link);
+      setInviteNotice('Private link created. It expires in seven days and remains only in this page session.');
+    } catch (inviteError) {
+      setError(inviteError instanceof Error ? inviteError.message : 'Private invite generation is unavailable.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copyPrivateInvite() {
+    if (!inviteLink) return;
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setInviteNotice('Private link copied. Share it only with the intended recipient.');
+    } catch {
+      setError('The browser could not copy the private link. Select and copy it manually.');
+    }
+  }
+
+  function openPrivateInvite() {
+    if (!inviteLink) return;
+    window.open(inviteLink, '_blank', 'noopener,noreferrer');
+  }
+
   async function loadQueue(loadOlder = false) {
     setError(null);
     if (!loadOlder) setLoaded(false);
@@ -231,6 +366,10 @@ export function ManagerQueue({
     setReceipts([]);
     setNextCursor(null);
     setSelectedIntake(null);
+    setOperationsHealth(null);
+    setInviteEmail('');
+    setInviteLink(null);
+    setInviteNotice(null);
     setLoaded(false);
     setAuthStep('password');
   }
@@ -291,11 +430,88 @@ export function ManagerQueue({
       ) : null}
 
       {authClient && authStep === 'ready' ? (
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Button type="button" size="lg" disabled={loading} onClick={() => loadQueue(false)}>
-            {loading ? 'Loading…' : 'Load secure queue'}
-          </Button>
-          <Button type="button" size="lg" variant="outline" onClick={signOut}>Sign out</Button>
+        <div className="mt-8">
+          <div className="flex flex-wrap gap-3">
+            <Button type="button" size="lg" disabled={loading} onClick={() => loadQueue(false)}>
+              {loading ? 'Loading…' : 'Load secure queue'}
+            </Button>
+            <Button type="button" size="lg" variant="outline" onClick={signOut}>Sign out</Button>
+          </div>
+
+          <div className="mt-6 grid gap-5 lg:grid-cols-2">
+            <section aria-labelledby="operations-health-heading" className="rounded-xl border border-border bg-secondary/20 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 id="operations-health-heading" className="font-heading text-xl font-semibold">Payment operations health</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Aggregate reconciliation and webhook counters only.</p>
+                </div>
+                <Button type="button" variant="outline" disabled={loading} onClick={loadOperationsHealth}>
+                  Check health
+                </Button>
+              </div>
+              {operationsHealth ? (
+                <div className="mt-4">
+                  <p className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-foreground">
+                    {operationsHealth.status === 'healthy' ? 'Healthy' : 'Attention required'}
+                  </p>
+                  <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div><dt className="text-muted-foreground">Webhook receipts (24h)</dt><dd className="text-lg font-semibold">{operationsHealth.webhook_receipts_24h}</dd></div>
+                    <div><dt className="text-muted-foreground">Failed receipts (24h)</dt><dd className="text-lg font-semibold">{operationsHealth.failed_webhook_receipts_24h}</dd></div>
+                    <div><dt className="text-muted-foreground">Stuck receipts</dt><dd className="text-lg font-semibold">{operationsHealth.stuck_webhook_receipts}</dd></div>
+                    <div><dt className="text-muted-foreground">Stale unpaid checkouts</dt><dd className="text-lg font-semibold">{operationsHealth.stale_unpaid_checkout_intents}</dd></div>
+                    <div><dt className="text-muted-foreground">Paid intent/order gaps</dt><dd className="text-lg font-semibold">{operationsHealth.paid_checkout_intents_without_order}</dd></div>
+                    <div><dt className="text-muted-foreground">Paid orders missing intent</dt><dd className="text-lg font-semibold">{operationsHealth.paid_stripe_orders_without_intent}</dd></div>
+                    <div><dt className="text-muted-foreground">Paid order/event gaps</dt><dd className="text-lg font-semibold">{operationsHealth.paid_stripe_orders_without_event}</dd></div>
+                    <div><dt className="text-muted-foreground">Events missing paid order</dt><dd className="text-lg font-semibold">{operationsHealth.processed_stripe_events_without_paid_order}</dd></div>
+                  </dl>
+                  {operationsHealth.stale_unpaid_checkout_intents > 0 ? (
+                    <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                      Stale unpaid checkouts are aged follow-up items. They require review but do not indicate a confirmed payment loss.
+                    </p>
+                  ) : null}
+                  <dl className="mt-4 space-y-1 text-xs text-muted-foreground">
+                    <div><dt className="inline font-medium text-foreground">Latest webhook received: </dt><dd className="inline">{operationsHealth.latest_webhook_received_at ? new Date(operationsHealth.latest_webhook_received_at).toLocaleString() : 'None recorded'}</dd></div>
+                    <div><dt className="inline font-medium text-foreground">Latest webhook completed: </dt><dd className="inline">{operationsHealth.latest_webhook_completed_at ? new Date(operationsHealth.latest_webhook_completed_at).toLocaleString() : 'None recorded'}</dd></div>
+                  </dl>
+                  <p className="mt-3 text-xs text-muted-foreground">Generated {new Date(operationsHealth.generated_at).toLocaleString()}</p>
+                </div>
+              ) : null}
+            </section>
+
+            <section aria-labelledby="private-invite-heading" className="rounded-xl border border-border bg-secondary/20 p-5">
+              <h2 id="private-invite-heading" className="font-heading text-xl font-semibold">Create a private survey link</h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                The link is bound to one delivery email, expires in seven days, and is not saved by this workspace.
+              </p>
+              <form className="mt-4" onSubmit={issuePrivateInvite}>
+                <label className="text-sm font-medium text-foreground">
+                  Delivery email
+                  <input type="email" autoComplete="off" required maxLength={320} value={inviteEmail}
+                    onChange={(event) => {
+                      setInviteEmail(event.target.value);
+                      setInviteLink(null);
+                      setInviteNotice(null);
+                    }}
+                    className="mt-2 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/30" />
+                </label>
+                <Button type="submit" className="mt-3" disabled={loading}>Create private link</Button>
+              </form>
+              {inviteLink ? (
+                <div className="mt-4">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    One-recipient private link
+                    <input readOnly value={inviteLink} onFocus={(event) => event.currentTarget.select()}
+                      className="mt-2 h-10 w-full rounded-lg border border-input bg-background px-3 font-mono text-xs outline-none focus:border-ring focus:ring-3 focus:ring-ring/30" />
+                  </label>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button type="button" size="sm" onClick={copyPrivateInvite}>Copy link</Button>
+                    <Button type="button" size="sm" variant="outline" onClick={openPrivateInvite}>Open survey</Button>
+                  </div>
+                </div>
+              ) : null}
+              {inviteNotice ? <p className="mt-3 text-xs leading-relaxed text-muted-foreground" aria-live="polite">{inviteNotice}</p> : null}
+            </section>
+          </div>
         </div>
       ) : null}
 

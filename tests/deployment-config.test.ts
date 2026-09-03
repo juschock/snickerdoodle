@@ -18,6 +18,7 @@ describe('deployment routing configuration', () => {
     expect(configSource).toContain("source: '/checkout/:path*'");
     expect(configSource).toContain("source: '/brief/:path*'");
     expect(configSource).toContain("source: '/api/checkout'");
+    expect(configSource).toContain("source: '/api/manager/:path*'");
     expect(configSource).toContain("source: '/api/stripe/webhook'");
     expect(headerSource).toContain("{ key: 'Cache-Control', value: 'private, no-store, max-age=0' }");
     expect(headerSource).toContain("{ key: 'CDN-Cache-Control', value: 'no-store' }");

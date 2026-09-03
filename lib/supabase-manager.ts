@@ -72,3 +72,15 @@ export async function verifySupabaseOwnerAal2(accessToken: string) {
 
   return !userError && !aalError && Boolean(userData.user) && aalData.currentLevel === 'aal2';
 }
+
+export async function verifySupabaseActiveOwnerAal2(accessToken: string) {
+  if (!await verifySupabaseOwnerAal2(accessToken)) return false;
+
+  const client = getSupabaseManagerClient(accessToken);
+  const { error } = await client.rpc('read_intake_manager_queue', {
+    p_limit: 1,
+    p_before_updated_at: null,
+    p_before_queue_receipt_id: null
+  });
+  return !error;
+}

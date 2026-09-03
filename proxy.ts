@@ -6,11 +6,12 @@ import {
 } from './security-headers.mjs';
 
 const SENSITIVE_PAGE_ROOTS = ['/brief', '/checkout', '/manager'];
-const SENSITIVE_GET_ROUTES = new Set(['/api/manager/queue']);
+const SENSITIVE_GET_ROUTES = new Set(['/api/manager/queue', '/api/manager/health']);
 const SENSITIVE_API_BODY_LIMITS = new Map([
   ['/api/brief-access', 3 * 1024],
   ['/api/brief', 64 * 1024],
   ['/api/checkout', 64 * 1024],
+  ['/api/manager/invites', 2 * 1024],
   ['/api/stripe/webhook', 256 * 1024]
 ]);
 

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { readPublicSupabaseConfig } from '@/lib/supabase-manager';
 
@@ -39,5 +40,14 @@ describe('public Supabase manager configuration', () => {
     expect(source).toContain('supabaseUrl={publicConfig?.url ?? null}');
     expect(source).toContain('supabaseAnonKey={publicConfig?.anonKey ?? null}');
     expect(source).not.toContain('supabaseAnonKey={process.env');
+  });
+
+  it('uses the authoritative AAL2 owner RPC for active-owner authorization without direct profile access', () => {
+    const source = readFileSync('lib/supabase-manager.ts', 'utf8');
+    const helper = source.slice(source.indexOf('export async function verifySupabaseActiveOwnerAal2'));
+
+    expect(helper).toContain('verifySupabaseOwnerAal2(accessToken)');
+    expect(helper).toContain("rpc('read_intake_manager_queue'");
+    expect(helper).not.toContain("from('profiles')");
   });
 });

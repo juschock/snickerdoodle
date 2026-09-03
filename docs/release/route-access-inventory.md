@@ -14,7 +14,8 @@ All routes are under `/snickerdoodle` in the production build. The bare `/` is a
 | `/snickerdoodle/api/health` | Public operational | Metadata-only liveness, no-store; does not claim provider readiness |
 | `/snickerdoodle/api/brief-access`, `/snickerdoodle/api/brief`, `/snickerdoodle/api/checkout` | Private capability/API | Exact origin, bounded input, signed capability; fail closed when commercial/payment config is incomplete |
 | `/snickerdoodle/api/stripe/webhook` | Provider API | Bounded raw body and verified Stripe signature before the atomic payment RPC; independently fail closed |
-| `/snickerdoodle/api/manager/queue`, `/snickerdoodle/api/manager/intakes/[intentId]` | Owner API | Authenticated AAL2 owner, audited RPC, no-store/noindex |
+| `/snickerdoodle/api/manager/queue`, `/snickerdoodle/api/manager/intakes/[intentId]`, `/snickerdoodle/api/manager/health` | Owner API | Authenticated active AAL2 owner; manager reads use aggregate or audited RPCs; no-store/noindex |
+| `/snickerdoodle/api/manager/invites` | Owner API | Authenticated active AAL2 owner; bounded exact-origin request creates an email-bound v2 capability in a URL fragment without persistence |
 | `robots.txt`, `sitemap.xml`, `icon.svg` | Public metadata | Private/manager/checkout/API routes are not advertised |
 
 The browser matrix checks every public and return route for 404s, dead private-intake links, raw errors, console failures, mobile overflow, accessibility, closed-state 503 behavior, and manager authentication behavior. It also submits a complete synthetic private intake through the real browser form into a local intercepted Checkout response and verifies the explicitly non-authoritative return page. Provider-backed success remains a hosted gate.

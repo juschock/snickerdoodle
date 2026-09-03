@@ -10,12 +10,14 @@ describe('edge request boundary', () => {
     '/snickerdoodle/checkout/success',
     '/snickerdoodle/manager/queue',
     '/snickerdoodle/api/manager/queue',
+    '/snickerdoodle/api/manager/health',
+    '/snickerdoodle/api/manager/invites',
     '/snickerdoodle/api/brief',
     '/snickerdoodle/api/checkout',
     '/snickerdoodle/api/stripe/webhook'
   ])('marks %s private and non-cacheable', (pathname) => {
     const response = proxy(new NextRequest(`https://racoben.com${pathname}`, {
-      method: pathname === '/snickerdoodle/api/manager/queue'
+      method: pathname === '/snickerdoodle/api/manager/queue' || pathname === '/snickerdoodle/api/manager/health'
         ? 'GET'
         : pathname.includes('/api/') ? 'POST' : 'GET'
     }));
@@ -45,6 +47,17 @@ describe('edge request boundary', () => {
     expect(response.headers.get('allow')).toBe('GET');
     expect(response.headers.get('cache-control')).toBe('private, no-store, max-age=0');
     await expect(response.json()).resolves.toEqual({ error: 'Method not allowed.' });
+  });
+
+  it('rejects oversized owner invite bodies before the route runs', async () => {
+    const response = proxy(new NextRequest('https://racoben.com/snickerdoodle/api/manager/invites', {
+      method: 'POST',
+      headers: { 'content-length': String(2 * 1024 + 1) }
+    }));
+
+    expect(response.status).toBe(413);
+    expect(response.headers.get('cache-control')).toBe('private, no-store, max-age=0');
+    await expect(response.json()).resolves.toEqual({ error: 'Payload too large.' });
   });
 
   it('rejects declared oversized and malformed bodies before sensitive APIs run', async () => {

@@ -29,7 +29,7 @@ const nextConfig = {
         headers: privateResponseHeaders
       },
       {
-        source: '/api/manager/queue',
+        source: '/api/manager/:path*',
         headers: privateResponseHeaders
       },
       {
