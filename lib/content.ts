@@ -154,7 +154,7 @@ export const faqs = [
   },
   {
     q: 'Do you design graphics?',
-    a: 'V1 includes flyer copy and graphics suggestions, not custom graphic design. You can use the copy in Canva, a flyer template, or with your designer.'
+    a: 'Your package includes flyer copy and graphics suggestions, not custom graphic design. You can use the copy in Canva, a flyer template, or with your designer.'
   },
   { q: 'Can I edit the materials?', a: 'Yes. The package is delivered in editable formats.' },
   { q: 'How fast is delivery?', a: 'Normally within 48 hours after successful payment, Racoben order confirmation, and receipt of a complete, usable campaign intake.' },

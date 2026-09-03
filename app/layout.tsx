@@ -3,7 +3,8 @@ import { Fraunces, Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { SafeAnalytics } from '@/components/safe-analytics';
 import { readAnalyticsEnabled } from '@/lib/analytics-runtime';
-import { PARENT_BRAND, PRODUCT_META_DESCRIPTION, PRODUCT_NAME, TAGLINE, publicUrl } from '@/lib/site';
+import { readPageCommercialReadiness } from '@/lib/commercial-runtime';
+import { PARENT_BRAND, PRODUCT_NAME, getProductMetadataMode, publicUrl } from '@/lib/site';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
@@ -13,25 +14,31 @@ const fraunces = Fraunces({
   weight: ['400', '500', '600', '700']
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(publicUrl('/')),
-  title: {
-    default: `${PRODUCT_NAME} by ${PARENT_BRAND} — ${TAGLINE}`,
-    template: `%s | ${PRODUCT_NAME}`
-  },
-  description: PRODUCT_META_DESCRIPTION,
-  openGraph: {
-    type: 'website',
-    siteName: PRODUCT_NAME,
-    title: `${PRODUCT_NAME} by ${PARENT_BRAND} — ${TAGLINE}`,
-    description: PRODUCT_META_DESCRIPTION
-  },
-  twitter: {
-    card: 'summary',
-    title: `${PRODUCT_NAME} by ${PARENT_BRAND} — ${TAGLINE}`,
-    description: PRODUCT_META_DESCRIPTION
-  }
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const commercialReady = await readPageCommercialReadiness();
+  const { tagline, productDescription } = getProductMetadataMode(commercialReady);
+  const title = `${PRODUCT_NAME} by ${PARENT_BRAND} — ${tagline}`;
+
+  return {
+    metadataBase: new URL(publicUrl('/')),
+    title: {
+      default: title,
+      template: `%s | ${PRODUCT_NAME}`
+    },
+    description: productDescription,
+    openGraph: {
+      type: 'website',
+      siteName: PRODUCT_NAME,
+      title,
+      description: productDescription
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description: productDescription
+    }
+  };
+}
 
 export const viewport: Viewport = {
   colorScheme: 'light',

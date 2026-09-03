@@ -26,7 +26,7 @@ export function Pricing() {
           <h2 className="mt-3 text-balance font-heading text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl">
             One simple price. One complete package.
           </h2>
-          <p className="mt-3 text-muted-foreground">Introductory V1 price for early customers.</p>
+          <p className="mt-3 text-muted-foreground">Introductory price for early customers.</p>
         </div>
 
         <div className="mx-auto mt-10 max-w-xl">

@@ -17,7 +17,7 @@ const holdFooterLinks = [
   { label: "Terms", href: "/terms" },
 ]
 
-export function SiteFooter({ commercialReady = false }: { commercialReady?: boolean }) {
+export function SiteFooter({ commercialReady }: { commercialReady: boolean }) {
   const footerLinks = commercialReady ? commercialFooterLinks : holdFooterLinks
 
   return (

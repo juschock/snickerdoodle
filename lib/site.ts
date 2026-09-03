@@ -7,7 +7,8 @@ export const PRODUCT_NAME = 'Snickerdoodle';
 /** Internal folder/order prefix (no spaces). Derived from PRODUCT_NAME. */
 export const INTERNAL_ORDER_PREFIX = PRODUCT_NAME.replace(/\s+/g, '');
 
-export const TAGLINE = 'Fictional campaign samples for product evaluation.';
+export const HOLD_TAGLINE = 'Fictional campaign samples for product evaluation.';
+export const COMMERCIAL_TAGLINE = 'One survey. A complete campaign package.';
 export const TAGLINE_LINE_1 = 'One survey.';
 export const TAGLINE_LINE_2 = 'A complete campaign package.';
 export const PACKAGE_LABEL = 'campaign execution package';
@@ -37,7 +38,26 @@ export const PRODUCT_LEGAL_DISCLAIMER = `${PRODUCT_NAME} provides campaign execu
 export const PRODUCT_EXCLUSIONS_DISCLAIMER = `${PRODUCT_NAME} provides campaign execution materials and planning support. It does not include custom graphic design, ad buying, email sending, social media posting, list management, or guaranteed campaign results.`;
 export const PRODUCT_HOLD_DISCLAIMER = `${PRODUCT_NAME} is not currently offering or accepting campaign work. Public samples are fictional demonstrations only.`;
 
-export const PRODUCT_META_DESCRIPTION = `Explore clearly labeled fictional ${PRODUCT_NAME} campaign samples and check the product's current access status.`;
+export const HOLD_PRODUCT_META_DESCRIPTION = `Explore clearly labeled fictional ${PRODUCT_NAME} campaign samples and check the product's current access status.`;
+export const COMMERCIAL_PRODUCT_META_DESCRIPTION =
+  'Human-reviewed campaign execution packages for nonprofits, community organizations, local businesses, and events.';
+export const HOLD_FAQ_META_DESCRIPTION = `Current product-readiness status and fictional sample information for ${PRODUCT_NAME}.`;
+export const COMMERCIAL_FAQ_META_DESCRIPTION =
+  'Answers about Snickerdoodle campaign packages, pricing, checkout, fulfillment, and how the service works.';
+
+export function getProductMetadataMode(commercialReady: boolean) {
+  return commercialReady
+    ? {
+        tagline: COMMERCIAL_TAGLINE,
+        productDescription: COMMERCIAL_PRODUCT_META_DESCRIPTION,
+        faqDescription: COMMERCIAL_FAQ_META_DESCRIPTION
+      }
+    : {
+        tagline: HOLD_TAGLINE,
+        productDescription: HOLD_PRODUCT_META_DESCRIPTION,
+        faqDescription: HOLD_FAQ_META_DESCRIPTION
+      };
+}
 
 export function productPath(path: string = '/') {
   if (path === '/') return '/';

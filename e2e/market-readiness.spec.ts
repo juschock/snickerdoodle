@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { createBriefAccessToken } from '../lib/checkout-security';
+import { COMMERCIAL_PRODUCT_META_DESCRIPTION } from '../lib/site';
 
 const syntheticOwnerId = '50000000-0000-4000-8000-000000000005';
 const syntheticFactorId = '60000000-0000-4000-8000-000000000006';
@@ -61,8 +62,12 @@ test('homepage leads with a fit check and keeps the survey unlisted', async ({ p
   await expect(page).toHaveTitle(/Snickerdoodle/);
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     'content',
-    "Explore clearly labeled fictional Snickerdoodle campaign samples and check the product's current access status."
+    COMMERCIAL_PRODUCT_META_DESCRIPTION
   );
+  const commercialMetadata = await page
+    .locator('meta[name="description"], meta[property^="og:"], meta[name^="twitter:"]')
+    .evaluateAll((elements) => elements.map((element) => element.getAttribute('content') ?? '').join(' '));
+  expect(commercialMetadata).not.toMatch(/\b(?:fictional|readiness|hold|staging|sandbox)\b|access status/i);
   await expect(page.getByRole('heading', { level: 1, name: 'Snickerdoodle' })).toBeVisible();
   await expect(page.locator('main img')).toHaveCount(0);
 

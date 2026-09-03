@@ -7,7 +7,14 @@ import { Button } from '@/components/ui/button';
 import { readPageCommercialReadiness } from '@/lib/commercial-runtime';
 import { faqs } from '@/lib/content';
 import { ckPath } from '@/lib/nav';
-import { FIT_CHECK_CTA, FIT_CHECK_MAILTO, PRODUCT_NAME, PRODUCT_QUESTIONS_MAILTO, publicUrl } from '@/lib/site';
+import {
+  FIT_CHECK_CTA,
+  FIT_CHECK_MAILTO,
+  PRODUCT_NAME,
+  PRODUCT_QUESTIONS_MAILTO,
+  getProductMetadataMode,
+  publicUrl
+} from '@/lib/site';
 
 const holdFaqs = [
   {
@@ -28,14 +35,17 @@ const holdFaqs = [
   }
 ];
 
-const description = `Current product-readiness status and fictional sample information for ${PRODUCT_NAME}.`;
+export async function generateMetadata(): Promise<Metadata> {
+  const commercialReady = await readPageCommercialReadiness();
+  const { faqDescription } = getProductMetadataMode(commercialReady);
 
-export const metadata: Metadata = {
-  title: 'FAQ',
-  description,
-  alternates: { canonical: publicUrl('/faq') },
-  openGraph: { title: `FAQ | ${PRODUCT_NAME}`, description, url: publicUrl('/faq') }
-};
+  return {
+    title: 'FAQ',
+    description: faqDescription,
+    alternates: { canonical: publicUrl('/faq') },
+    openGraph: { title: `FAQ | ${PRODUCT_NAME}`, description: faqDescription, url: publicUrl('/faq') }
+  };
+}
 
 export default async function FaqPage() {
   const commercialReady = await readPageCommercialReadiness();

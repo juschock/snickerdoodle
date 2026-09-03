@@ -1,10 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import CheckoutSuccessPage, { metadata } from '@/app/checkout/success/page';
+import { metadata } from '@/app/checkout/success/page';
 
 describe('payment status page', () => {
-  it('is a static, no-index payment-receipt page', () => {
-    expect(CheckoutSuccessPage()).toBeTruthy();
+  it('is a no-index payment-receipt page', () => {
     expect(metadata.robots).toEqual(expect.objectContaining({ index: false, follow: false }));
   });
 

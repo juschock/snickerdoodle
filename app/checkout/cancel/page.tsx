@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
+import { readPageCommercialReadiness } from '@/lib/commercial-runtime';
 import { ckPath } from '@/lib/nav';
 
 export const metadata: Metadata = {
@@ -10,10 +11,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, nocache: true }
 };
 
-export default function CheckoutCancelPage() {
+export default async function CheckoutCancelPage() {
+  const commercialReady = await readPageCommercialReadiness();
+
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <SiteHeader commercialReady={commercialReady} />
       <main id="main-content" className="flex flex-1 items-center bg-secondary/30 px-4 py-16">
         <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8 text-center sm:p-10">
           <h1 className="font-heading text-3xl font-semibold">Checkout canceled</h1>
@@ -27,7 +30,7 @@ export default function CheckoutCancelPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
+      <SiteFooter commercialReady={commercialReady} />
     </div>
   );
 }

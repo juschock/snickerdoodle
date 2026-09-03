@@ -16,16 +16,21 @@ import { Faq } from "@/components/sections/faq"
 import { FinalCta } from "@/components/sections/final-cta"
 import { CommercialHold } from "@/components/commercial-hold"
 import { readPageCommercialReadiness } from "@/lib/commercial-runtime"
-import { PARENT_BRAND, PRODUCT_META_DESCRIPTION, PRODUCT_NAME, TAGLINE, publicUrl } from "@/lib/site"
+import { PARENT_BRAND, PRODUCT_NAME, getProductMetadataMode, publicUrl } from "@/lib/site"
 
-export const metadata: Metadata = {
-  alternates: { canonical: publicUrl('/') },
-  openGraph: {
-    type: 'website',
-    url: publicUrl('/'),
-    siteName: PRODUCT_NAME,
-    title: `${PRODUCT_NAME} by ${PARENT_BRAND} — ${TAGLINE}`,
-    description: PRODUCT_META_DESCRIPTION
+export async function generateMetadata(): Promise<Metadata> {
+  const commercialReady = await readPageCommercialReadiness()
+  const { tagline, productDescription } = getProductMetadataMode(commercialReady)
+
+  return {
+    alternates: { canonical: publicUrl('/') },
+    openGraph: {
+      type: 'website',
+      url: publicUrl('/'),
+      siteName: PRODUCT_NAME,
+      title: `${PRODUCT_NAME} by ${PARENT_BRAND} — ${tagline}`,
+      description: productDescription
+    }
   }
 }
 

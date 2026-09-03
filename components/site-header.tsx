@@ -23,7 +23,7 @@ const holdNavLinks = [
   { label: "Terms", href: "/terms" },
 ]
 
-export function SiteHeader({ commercialReady = false }: { commercialReady?: boolean }) {
+export function SiteHeader({ commercialReady }: { commercialReady: boolean }) {
   const [open, setOpen] = useState(false)
   const navLinks = commercialReady ? commercialNavLinks : holdNavLinks
   const primaryHref = commercialReady ? FIT_CHECK_MAILTO : "/samples"
