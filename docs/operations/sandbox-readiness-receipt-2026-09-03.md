@@ -31,7 +31,7 @@ FAILED_OR_EXPIRED_PROOF=not_run
 PAID_BRIEF_PROOF=not_run
 FULFILLMENT_CLOSE_PROOF=not_run
 CLEANUP_PROOF=not_run
-INCIDENT_RESPONSE_DRILL=not_run
+INCIDENT_RESPONSE_DRILL=pass
 LIVE_STRIPE_PROVEN=false
 PUBLIC_PRODUCTION_PROMOTION_PROVEN=false
 HOSTED_DESTRUCTIVE_RESTORE_PROVEN=false
@@ -134,20 +134,42 @@ The read-only cleanup preflight's one stale unpaid candidate is pending operatio
 ## Incident response drill
 
 ```text
-scenario=not_run
-detection_time=not_run
-operator_role=not_run
-reviewer_role=not_run
-checkout_hold_decision=not_run
-evidence_preservation=not_run
-secret_and_pii_hygiene=not_run
-recovery_or_fail_closed_result=not_run
-post_exercise_verifier=not_run
-post_exercise_health=not_run
-reopen_decision=HOLD
+scenario=unsigned_webhook_authentication_failure
+detection_time=2026-09-03T04:43:26Z
+exercise_start_time=2026-09-03T04:43:26Z
+operator_role=Snickerdoodle primary developer
+reviewer_role=Implementation: PG & SN guide
+checkout_hold_decision=no_hold
+checkout_hold_reason=rejected before business logic and receipt creation
+detection_point=raw-body Stripe signature verification
+unsigned_request=empty JSON object
+unsigned_response=HTTP 400
+expected_business_effect=none
+evidence_scope=aggregate-only
+pre_receipt_count=2
+pre_latest_received_at=2026-09-02 21:30:50.045566+00
+pre_failed_retryable_count=0
+pre_unfinished_count=0
+pre_total_attempts=3
+post_receipt_count=2
+post_latest_received_at=2026-09-02 21:30:50.045566+00
+post_failed_retryable_count=0
+post_unfinished_count=0
+post_total_attempts=3
+vercel_app_runtime_error_query_start=2026-09-03T04:43:20Z
+vercel_app_runtime_error_query_result=none
+ingress_exact_deployment_error_log_window=2026-09-03T04:43:20Z–2026-09-03T04:46:00Z
+ingress_exact_deployment_error_log_result=none
+secret_or_pii_exposure=false
+provider_mutation=false
+database_mutation=false
+recovery_or_fail_closed_result=pass
+post_exercise_verifier=SNICKERDOODLE_SANDBOX_READINESS_PASS schema=1 checks=75
+post_exercise_health=not_run_pending_owner_aal2
+reopen_decision=continue_private_sandbox
 ```
 
-No incident-response drill result is claimed from the passive readiness verification.
+This `pass` is scoped only to the unsigned-webhook authentication-failure exercise. The unsigned request failed closed before business logic and receipt creation, the pre/post aggregates were identical, and no runtime or ingress error entry was found in the stated windows. It does not establish broader payment, mail, live-provider, or public-production incident readiness.
 
 ## Release boundary attestations
 
@@ -171,6 +193,6 @@ Active owner role/date: `not_run — HOLD`.
 
 Independent reviewer role/date: `not_run — HOLD`.
 
-Open gates: second distinct customer and isolation; failed/expired Checkout; hosted owner AAL2 health and paid-brief access; hosted fulfillment and repeated close; authorized cleanup and post-cleanup health; incident-response drill; production mail/monitoring; live Stripe; public production promotion; hosted destructive restore/RPO/RTO; tax, legal, retention, and real-customer approvals.
+Open gates: second distinct customer and isolation; failed/expired Checkout; hosted owner AAL2 health and paid-brief access; hosted fulfillment and repeated close; authorized cleanup and post-cleanup health; broader payment/mail/live incident readiness; production mail/monitoring; live Stripe; public production promotion; hosted destructive restore/RPO/RTO; tax, legal, retention, and real-customer approvals.
 
 This receipt authorizes no new action. Live Stripe, public production promotion, hosted destructive restore, production mail/monitoring, and real-customer operation remain unproven and held.
