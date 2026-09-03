@@ -7,10 +7,10 @@ Status: `HOLD`. This is a secret-free sandbox readiness record for the exact can
 ```text
 SNICKERDOODLE_SANDBOX_RECEIPT_SCHEMA=1
 CLASSIFICATION=HOLD
-RECORDED_AT_UTC=2026-09-03T04:36:28Z
-CANDIDATE_COMMIT=2545aac0790565806112ed744bc0079724c268f5
-CANDIDATE_TREE=2383747f3e0864152b7ff7386326a4f0c9a9d729
-APP_DEPLOYMENT_ID=dpl_En13aYDccEprr1q6VnoHCZqW2fit
+RECORDED_AT_UTC=2026-09-03T05:01:46Z
+CANDIDATE_COMMIT=f3b9c93cc607df8660e593e8d809d2879a3ba537
+CANDIDATE_TREE=7dcc0d86db0786c5c3ddb5c9f276ac346063f8fd
+APP_DEPLOYMENT_ID=dpl_4vWQGBW8piThZyqrDpzWmo9CgD7B
 APP_EXPECTED_ALIAS=https://snickerdoodle-sandbox-joshuauschock-gmailcoms-projects.vercel.app
 INGRESS_DEPLOYMENT_ID=dpl_Fr1e5Q6gzQgfBn9uHXEMSvscRVnt
 INGRESS_EXPECTED_ALIAS=https://snickerdoodle-webhook-ingress-sandbox.vercel.app
@@ -45,15 +45,15 @@ The `false` and `not_run` values are deliberate release holds. The completed bas
 
 | Field | Proven evidence |
 | --- | --- |
-| Candidate | Commit `2545aac0790565806112ed744bc0079724c268f5`; tree `2383747f3e0864152b7ff7386326a4f0c9a9d729` |
-| Protected app deployment | `dpl_En13aYDccEprr1q6VnoHCZqW2fit`; READY Preview; Node 22; source is the candidate above; Vercel SSO protected |
+| Candidate | Commit `f3b9c93cc607df8660e593e8d809d2879a3ba537`; tree `7dcc0d86db0786c5c3ddb5c9f276ac346063f8fd` |
+| Protected app deployment | `dpl_4vWQGBW8piThZyqrDpzWmo9CgD7B`; READY Preview; Node 22; source is the candidate above; Vercel SSO protected |
 | Protected app alias | `https://snickerdoodle-sandbox-joshuauschock-gmailcoms-projects.vercel.app` — origin only |
 | Public ingress deployment | `dpl_Fr1e5Q6gzQgfBn9uHXEMSvscRVnt`; isolated sandbox webhook ingress |
 | Public ingress alias | `https://snickerdoodle-webhook-ingress-sandbox.vercel.app` — origin only and the only intentionally public sandbox surface |
 | Supabase | Project `iybwbnabyphpzlmzypga`; `us-east-2`; PostgreSQL `17.6.1` |
 | Stripe sandbox | Test account `acct_1QuAMn4MU7boT10f`; product `prod_VBgO5qK1uoS0hz`; one-time $99 USD price `price_1UBJ1m4MU7boT10fhU1VoOZm`; seven-event endpoint `we_1UBJ4L4MU7boT10f6cOS5XqU` |
 | Migrations | 22 SQL migrations; local aggregate ledger SHA-256 `6e586b76e7d8efdc4a465d0f27d7bf4d4a07347af78a30a6a77490c10bb5ad0b`; unchanged by this candidate |
-| Git custody | Clean before and after the read-only verification and browser proofs; creation of this receipt is the only expected new working-tree path |
+| Git custody | The deployed app identity is the exact candidate commit and tree above. Later evidence-only receipt commits do not change that deployment identity. |
 
 No credential, customer email, private link, event payload, card data, or preview-bypass material is recorded here.
 
@@ -83,16 +83,18 @@ The verifier observed the protected app SSO boundary without a bypass; app-layer
 
 | Check | Result |
 | --- | --- |
-| Focused fulfillment and proxy tests | PASS, 28/28 |
-| Full Vitest suite | PASS, 31 files and 188/188 tests |
+| Full Vitest suite | PASS, 33 files and 196/196 tests |
 | ESLint | PASS |
 | Next type generation and TypeScript | PASS |
-| Default production build | PASS, 24 routes including `/api/manager/fulfillment` |
-| Gate-true/hold production build | PASS, the same 24 routes |
-| Main Chromium browser matrix | PASS, 6/6, including public routing, synthetic private-intake flow, mobile layout, accessibility, and manager password/TOTP boundary |
-| Closed-state Chromium matrix | PASS, 3/3, including fail-closed APIs and accessibility |
+| Default production build | PASS, 24 routes |
+| Commercial production build | PASS, 24 routes |
+| Commercial Chromium browser matrix | PASS, 6/6, including public routing, synthetic private-intake flow, mobile layout, accessibility, and manager password/TOTP boundary |
+| HOLD Chromium browser matrix | PASS, 3/3, including fail-closed APIs and accessibility |
 | Readiness verifier | PASS, 75 checks |
-| Secret scan | PASS, full Git history and current candidate working tree, 0 findings |
+| Public-polish gate coupling | PASS. One gate-driven metadata selector controls the mode; commercial homepage title, description, Open Graph, Twitter, and FAQ metadata contain no HOLD wording. Checkout success and cancel header/footer chrome uses the same readiness gate with required explicit props. |
+| Exact hosted app probes | PASS. The protected exact deployment and stable alias passed; anonymous access remains at the Vercel SSO boundary; the authenticated health probe returned HTTP 200; queried runtime errors were 0. |
+| Secret scan | PASS. Full-history scan covered the 33 commits preceding the app candidate commit, and the current working tree scan returned 0 findings. Subsequent evidence-only receipt commits are not misclassified as part of that earlier 33-commit run. |
+| Production dependency audit | PASS, 0 vulnerabilities |
 
 These are local and boundary checks. The browser manager journey uses synthetic responses and does not prove a hosted owner session or hosted fulfillment transition.
 
@@ -169,7 +171,7 @@ post_exercise_health=not_run_pending_owner_aal2
 reopen_decision=continue_private_sandbox
 ```
 
-This `pass` is scoped only to the unsigned-webhook authentication-failure exercise. The unsigned request failed closed before business logic and receipt creation, the pre/post aggregates were identical, and no runtime or ingress error entry was found in the stated windows. It does not establish broader payment, mail, live-provider, or public-production incident readiness.
+This `pass` is scoped only to the earlier unsigned-webhook authentication-failure exercise against the unchanged ingress. The unsigned request failed closed before business logic and receipt creation, the pre/post aggregates were identical, and no runtime or ingress error entry was found in the stated windows. It does not establish broader payment, mail, live-provider, or public-production incident readiness.
 
 ## Release boundary attestations
 
