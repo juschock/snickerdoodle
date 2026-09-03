@@ -1,16 +1,17 @@
 # Snickerdoodle sandbox readiness receipt — 2026-09-03
 
-Status: `HOLD`. This is a secret-free sandbox readiness record for the exact candidate below. It is not a live-production launch receipt.
+Status: `HOLD`. Overall full-stack completion estimate: `92%`. This is a secret-free sandbox readiness record for the exact candidate below. It is not a live-production launch receipt.
 
 ## Machine-readable decision record
 
 ```text
 SNICKERDOODLE_SANDBOX_RECEIPT_SCHEMA=1
 CLASSIFICATION=HOLD
-RECORDED_AT_UTC=2026-09-03T05:01:46Z
-CANDIDATE_COMMIT=f3b9c93cc607df8660e593e8d809d2879a3ba537
-CANDIDATE_TREE=7dcc0d86db0786c5c3ddb5c9f276ac346063f8fd
-APP_DEPLOYMENT_ID=dpl_4vWQGBW8piThZyqrDpzWmo9CgD7B
+RECORDED_AT_UTC=2026-09-03T05:15:40Z
+CANDIDATE_COMMIT=16a5d6f6183e2b5b1ba370e3b135a51050c279d8
+CANDIDATE_TREE=79968008cba773da0226598e78deeeed7344002f
+APP_DEPLOYMENT_ID=dpl_HdceMmAZJTR8U7ngwLTKSecWbpQ6
+APP_IMMUTABLE_URL=https://campaign-ig6j35u6e-joshuauschock-gmailcoms-projects.vercel.app
 APP_EXPECTED_ALIAS=https://snickerdoodle-sandbox-joshuauschock-gmailcoms-projects.vercel.app
 INGRESS_DEPLOYMENT_ID=dpl_Fr1e5Q6gzQgfBn9uHXEMSvscRVnt
 INGRESS_EXPECTED_ALIAS=https://snickerdoodle-webhook-ingress-sandbox.vercel.app
@@ -45,8 +46,9 @@ The `false` and `not_run` values are deliberate release holds. The completed bas
 
 | Field | Proven evidence |
 | --- | --- |
-| Candidate | Commit `f3b9c93cc607df8660e593e8d809d2879a3ba537`; tree `7dcc0d86db0786c5c3ddb5c9f276ac346063f8fd` |
-| Protected app deployment | `dpl_4vWQGBW8piThZyqrDpzWmo9CgD7B`; READY Preview; Node 22; source is the candidate above; Vercel SSO protected |
+| Candidate | Commit `16a5d6f6183e2b5b1ba370e3b135a51050c279d8`; tree `79968008cba773da0226598e78deeeed7344002f` |
+| Protected app deployment | `dpl_HdceMmAZJTR8U7ngwLTKSecWbpQ6`; READY Preview; Node 22; source is the candidate above; Vercel SSO protected |
+| Protected app immutable URL | `https://campaign-ig6j35u6e-joshuauschock-gmailcoms-projects.vercel.app` — exact deployment, origin only |
 | Protected app alias | `https://snickerdoodle-sandbox-joshuauschock-gmailcoms-projects.vercel.app` — origin only |
 | Public ingress deployment | `dpl_Fr1e5Q6gzQgfBn9uHXEMSvscRVnt`; isolated sandbox webhook ingress |
 | Public ingress alias | `https://snickerdoodle-webhook-ingress-sandbox.vercel.app` — origin only and the only intentionally public sandbox surface |
@@ -83,7 +85,7 @@ The verifier observed the protected app SSO boundary without a bypass; app-layer
 
 | Check | Result |
 | --- | --- |
-| Full Vitest suite | PASS, 33 files and 196/196 tests |
+| Full Vitest suite | PASS, 34 files and 198/198 tests |
 | ESLint | PASS |
 | Next type generation and TypeScript | PASS |
 | Default production build | PASS, 24 routes |
@@ -92,8 +94,9 @@ The verifier observed the protected app SSO boundary without a bypass; app-layer
 | HOLD Chromium browser matrix | PASS, 3/3, including fail-closed APIs and accessibility |
 | Readiness verifier | PASS, 75 checks |
 | Public-polish gate coupling | PASS. One gate-driven metadata selector controls the mode; commercial homepage title, description, Open Graph, Twitter, and FAQ metadata contain no HOLD wording. Checkout success and cancel header/footer chrome uses the same readiness gate with required explicit props. |
-| Exact hosted app probes | PASS. The protected exact deployment and stable alias passed; anonymous access remains at the Vercel SSO boundary; the authenticated health probe returned HTTP 200; queried runtime errors were 0. |
-| Secret scan | PASS. Full-history scan covered the 33 commits preceding the app candidate commit, and the current working tree scan returned 0 findings. Subsequent evidence-only receipt commits are not misclassified as part of that earlier 33-commit run. |
+| Authenticated exact public-detritus probes | PASS. The privacy page displayed the exact approved analytics promises, the old configuration note was absent, and checked public copy contained no development-stage terms. Robots preserved public allow while disallowing `/snickerdoodle/brief`, `/snickerdoodle/checkout`, `/snickerdoodle/manager`, and `/snickerdoodle/api`. |
+| Exact hosted app probes | PASS. The immutable deployment and stable alias passed; anonymous access returned HTTP 302 at the Vercel SSO boundary; the authenticated health probe returned HTTP 200; queried runtime errors were 0. |
+| Secret scan | PASS. Full-history scan covered 35 commits and the current working tree scan returned 0 findings. |
 | Production dependency audit | PASS, 0 vulnerabilities |
 
 These are local and boundary checks. The browser manager journey uses synthetic responses and does not prove a hosted owner session or hosted fulfillment transition.
