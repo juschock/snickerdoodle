@@ -11,6 +11,7 @@ const SENSITIVE_API_BODY_LIMITS = new Map([
   ['/api/brief-access', 3 * 1024],
   ['/api/brief', 64 * 1024],
   ['/api/checkout', 64 * 1024],
+  ['/api/manager/fulfillment', 2 * 1024],
   ['/api/manager/invites', 2 * 1024],
   ['/api/stripe/webhook', 256 * 1024]
 ]);

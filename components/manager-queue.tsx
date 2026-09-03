@@ -53,6 +53,58 @@ type OperationsHealth = {
   attention_reasons: string[];
 };
 
+export type FulfillmentAction = {
+  eventType: 'fulfillment.started' | 'fulfillment.completed' | 'order.closed';
+  expectedStatus: 'new_intake' | 'drafting' | 'delivered';
+  nextStatus: 'drafting' | 'delivered' | 'closed';
+  label: string;
+};
+
+export type FulfillmentRetry = FulfillmentAction & {
+  orderId: string;
+  idempotencyKey: string;
+};
+
+const FULFILLMENT_ACTIONS: Partial<Record<string, FulfillmentAction>> = {
+  new_intake: {
+    eventType: 'fulfillment.started',
+    expectedStatus: 'new_intake',
+    nextStatus: 'drafting',
+    label: 'Start fulfillment'
+  },
+  drafting: {
+    eventType: 'fulfillment.completed',
+    expectedStatus: 'drafting',
+    nextStatus: 'delivered',
+    label: 'Mark delivered'
+  },
+  delivered: {
+    eventType: 'order.closed',
+    expectedStatus: 'delivered',
+    nextStatus: 'closed',
+    label: 'Close order'
+  }
+};
+
+export function selectFulfillmentRetry(
+  current: FulfillmentRetry | null,
+  orderId: string,
+  action: FulfillmentAction,
+  createIdempotencyKey: () => string
+) {
+  if (
+    current?.orderId === orderId &&
+    current.eventType === action.eventType &&
+    current.expectedStatus === action.expectedStatus
+  ) return current;
+
+  return {
+    ...action,
+    orderId,
+    idempotencyKey: createIdempotencyKey()
+  };
+}
+
 type AuthStep = 'password' | 'mfa' | 'ready';
 
 function isQueueReceipt(value: unknown): value is QueueReceipt {
@@ -155,6 +207,9 @@ export function ManagerQueue({
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [inviteNotice, setInviteNotice] = useState<string | null>(null);
+  const [fulfillmentRetry, setFulfillmentRetry] = useState<FulfillmentRetry | null>(null);
+  const [fulfillmentNotice, setFulfillmentNotice] = useState<string | null>(null);
+  const [fulfillmentPending, setFulfillmentPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -307,7 +362,7 @@ export function ManagerQueue({
     window.open(inviteLink, '_blank', 'noopener,noreferrer');
   }
 
-  async function loadQueue(loadOlder = false) {
+  async function loadQueue(loadOlder = false, preserveSelectedIntentId: string | null = null) {
     setError(null);
     if (!loadOlder) setLoaded(false);
     setLoading(true);
@@ -332,7 +387,7 @@ export function ManagerQueue({
             !current.some((item) => item.queue_receipt_id === receipt.queue_receipt_id))]
         : candidateReceipts);
       setNextCursor((candidateCursor ?? null) as QueueCursor | null);
-      setSelectedIntake(null);
+      if (!preserveSelectedIntentId) setSelectedIntake(null);
       setLoaded(true);
     } catch (queueError) {
       setReceipts([]);
@@ -344,6 +399,10 @@ export function ManagerQueue({
   }
 
   async function loadPaidIntake(intentId: string) {
+    if (selectedIntake?.checkout_intent_id !== intentId) {
+      setFulfillmentRetry(null);
+      setFulfillmentNotice(null);
+    }
     setError(null);
     setLoading(true);
     try {
@@ -359,6 +418,67 @@ export function ManagerQueue({
     }
   }
 
+  async function transitionSelectedOrder(action: FulfillmentAction) {
+    if (!session || !selectedIntake || selectedIntake.payment_status !== 'paid') return;
+    const transition = selectFulfillmentRetry(
+      fulfillmentRetry,
+      selectedIntake.order_id,
+      action,
+      () => crypto.randomUUID()
+    );
+    const selectedIntentId = selectedIntake.checkout_intent_id;
+
+    setFulfillmentRetry(transition);
+    setFulfillmentNotice(null);
+    setError(null);
+    setFulfillmentPending(true);
+    setLoading(true);
+    try {
+      const response = await fetch('/snickerdoodle/api/manager/fulfillment', {
+        method: 'POST',
+        cache: 'no-store',
+        credentials: 'same-origin',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          order_id: transition.orderId,
+          event_type: transition.eventType,
+          expected_status: transition.expectedStatus,
+          idempotency_key: transition.idempotencyKey
+        })
+      });
+      const payload: unknown = await response.json();
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error('The owner session expired or no longer satisfies AAL2. Sign in again.');
+        }
+        throw new Error('The fulfillment update was not applied. Retry this action safely or refresh the order.');
+      }
+      if (
+        !payload || typeof payload !== 'object' ||
+        Object.keys(payload).length !== 1 ||
+        (payload as { status?: unknown }).status !== action.nextStatus
+      ) {
+        throw new Error('The fulfillment update returned an invalid response. Retry this action safely.');
+      }
+
+      setFulfillmentRetry(null);
+      setFulfillmentNotice(`Order moved to ${action.nextStatus.replaceAll('_', ' ')}.`);
+      await loadQueue(false, selectedIntentId);
+      await loadPaidIntake(selectedIntentId);
+      await loadOperationsHealth();
+    } catch (transitionError) {
+      setError(transitionError instanceof Error
+        ? transitionError.message
+        : 'The fulfillment update did not complete. Retry this action safely.');
+    } finally {
+      setFulfillmentPending(false);
+      setLoading(false);
+    }
+  }
+
   async function signOut() {
     if (authClient) await authClient.auth.signOut({ scope: 'local' });
     setSession(null);
@@ -370,9 +490,16 @@ export function ManagerQueue({
     setInviteEmail('');
     setInviteLink(null);
     setInviteNotice(null);
+    setFulfillmentRetry(null);
+    setFulfillmentNotice(null);
+    setFulfillmentPending(false);
     setLoaded(false);
     setAuthStep('password');
   }
+
+  const selectedFulfillmentAction = selectedIntake
+    ? FULFILLMENT_ACTIONS[selectedIntake.order_status]
+    : undefined;
 
   return (
     <section aria-labelledby="manager-queue-heading" className="rounded-2xl border border-border bg-card p-6 sm:p-8">
@@ -557,6 +684,31 @@ export function ManagerQueue({
             <div><dt className="font-medium">Terms version</dt><dd>{selectedIntake.terms_version}</dd></div>
             <div><dt className="font-medium">Reconciliation</dt><dd>{selectedIntake.reconciliation_status}</dd></div>
           </dl>
+          <div className="mt-6 rounded-lg border border-border bg-background p-4">
+            <h3 className="font-semibold">Fulfillment action</h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Each action applies only to this paid order and its displayed source state. A retry reuses the same
+              idempotency key so a lost response cannot apply the action twice.
+            </p>
+            {selectedIntake.payment_status === 'paid' && selectedFulfillmentAction ? (
+              <Button type="button" className="mt-3" disabled={loading || fulfillmentPending}
+                onClick={() => transitionSelectedOrder(selectedFulfillmentAction)}>
+                {fulfillmentPending ? 'Updating order…' : selectedFulfillmentAction.label}
+              </Button>
+            ) : (
+              <p className="mt-3 text-sm text-muted-foreground">
+                No owner fulfillment action is available for this order state.
+              </p>
+            )}
+            {fulfillmentRetry ? (
+              <p className="mt-3 text-xs text-muted-foreground">
+                A safe retry is retained in memory for this action until it succeeds or another order is selected.
+              </p>
+            ) : null}
+            {fulfillmentNotice ? (
+              <p className="mt-3 text-sm font-medium text-foreground" aria-live="polite">{fulfillmentNotice}</p>
+            ) : null}
+          </div>
           <h3 className="mt-6 font-semibold">Customer brief</h3><pre className="mt-2 max-h-96 overflow-auto rounded-lg border border-border bg-background p-4 text-xs whitespace-pre-wrap">{JSON.stringify(selectedIntake.brief_json, null, 2)}</pre>
           <h3 className="mt-6 font-semibold">Assignments</h3><pre className="mt-2 max-h-64 overflow-auto rounded-lg border border-border bg-background p-4 text-xs whitespace-pre-wrap">{JSON.stringify(selectedIntake.assignments, null, 2)}</pre>
           <h3 className="mt-6 font-semibold">Reconciliation alerts</h3><pre className="mt-2 max-h-64 overflow-auto rounded-lg border border-border bg-background p-4 text-xs whitespace-pre-wrap">{JSON.stringify(selectedIntake.reconciliation_alerts, null, 2)}</pre>

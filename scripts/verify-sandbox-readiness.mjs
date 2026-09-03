@@ -207,6 +207,14 @@ async function verifyLocalManagerBoundary() {
     assertCheck(invite.status === 401, 'manager.invite_missing_bearer_401');
     assertPrivateSecurityHeaders(invite, 'manager.invite');
 
+    const fulfillment = await safeFetch(`${server.origin}/snickerdoodle/api/manager/fulfillment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    assertCheck(fulfillment.status === 401, 'manager.fulfillment_missing_bearer_401');
+    assertPrivateSecurityHeaders(fulfillment, 'manager.fulfillment');
+
     const healthWrongMethod = await safeFetch(`${server.origin}/snickerdoodle/api/manager/health`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -220,6 +228,11 @@ async function verifyLocalManagerBoundary() {
     assertCheck(inviteWrongMethod.status === 405, 'manager.invite_wrong_method_405');
     assertCheck(inviteWrongMethod.headers.get('allow') === 'POST', 'manager.invite_allow_post');
     assertPrivateSecurityHeaders(inviteWrongMethod, 'manager.invite_wrong_method');
+
+    const fulfillmentWrongMethod = await safeFetch(`${server.origin}/snickerdoodle/api/manager/fulfillment`);
+    assertCheck(fulfillmentWrongMethod.status === 405, 'manager.fulfillment_wrong_method_405');
+    assertCheck(fulfillmentWrongMethod.headers.get('allow') === 'POST', 'manager.fulfillment_allow_post');
+    assertPrivateSecurityHeaders(fulfillmentWrongMethod, 'manager.fulfillment_wrong_method');
   } finally {
     await stopLocalBuild(server.child, server.exit);
   }

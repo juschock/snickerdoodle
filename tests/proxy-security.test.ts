@@ -11,6 +11,7 @@ describe('edge request boundary', () => {
     '/snickerdoodle/manager/queue',
     '/snickerdoodle/api/manager/queue',
     '/snickerdoodle/api/manager/health',
+    '/snickerdoodle/api/manager/fulfillment',
     '/snickerdoodle/api/manager/invites',
     '/snickerdoodle/api/brief',
     '/snickerdoodle/api/checkout',
@@ -58,6 +59,21 @@ describe('edge request boundary', () => {
     expect(response.status).toBe(413);
     expect(response.headers.get('cache-control')).toBe('private, no-store, max-age=0');
     await expect(response.json()).resolves.toEqual({ error: 'Payload too large.' });
+  });
+
+  it('method-gates and bounds owner fulfillment before the route runs', async () => {
+    const wrongMethod = proxy(new NextRequest(
+      'https://racoben.com/snickerdoodle/api/manager/fulfillment'
+    ));
+    const oversized = proxy(new NextRequest(
+      'https://racoben.com/snickerdoodle/api/manager/fulfillment',
+      { method: 'POST', headers: { 'content-length': String(2 * 1024 + 1) } }
+    ));
+
+    expect(wrongMethod.status).toBe(405);
+    expect(wrongMethod.headers.get('allow')).toBe('POST');
+    expect(oversized.status).toBe(413);
+    expect(oversized.headers.get('cache-control')).toBe('private, no-store, max-age=0');
   });
 
   it('rejects declared oversized and malformed bodies before sensitive APIs run', async () => {
