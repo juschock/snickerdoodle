@@ -37,8 +37,15 @@ Guiding-session inspection/check-in cadence:
 
 `minutes 00 and 30 only`
 
-The first scheduled heartbeat cycle has **not yet been independently observed**
-and must not be treated as proven by this receipt.
+Multiple scheduled heartbeat cycles have now been independently observed
+executing the committed monitor and returning the exact sanitized result:
+
+`SNICKERDOODLE_LAUNCH_MONITOR PASS`
+
+The observed scheduled cycles ran the same committed monitor bytes identified
+in this receipt. This proves scheduler execution and monitor success at those
+observation times only; it does not by itself prove production promotion or
+full launch readiness.
 
 ## Self-test proof
 
@@ -146,7 +153,7 @@ Manual self-test: PASS
 
 Manual live monitor run: PASS
 
-First independently observed scheduled cycle: PENDING
+Scheduled heartbeat execution: PASS — multiple observed cycles
 
 Production promotion: NOT CLAIMED
 
