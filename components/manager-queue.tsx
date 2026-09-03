@@ -2,6 +2,7 @@
 
 import { type FormEvent, useMemo, useState } from 'react';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { createSupabaseOwnerAuthClient } from '@/lib/supabase-manager';
 
@@ -105,7 +106,39 @@ export function selectFulfillmentRetry(
   };
 }
 
-type AuthStep = 'password' | 'mfa' | 'ready';
+type AuthStep = 'password' | 'mfa' | 'enrollment' | 'ready';
+
+export type OwnerSecondFactorPreparation =
+  | { step: 'mfa'; factorId: string }
+  | { step: 'enrollment'; factorId: string; qrCode: string; manualSecret: string };
+
+export async function prepareOwnerSecondFactor(
+  client: SupabaseClient
+): Promise<OwnerSecondFactorPreparation> {
+  const factors = await client.auth.mfa.listFactors();
+  if (factors.error) throw new Error('Could not inspect registered second factors.');
+
+  const verifiedTotp = factors.data?.totp.find((factor) => factor.status === 'verified');
+  if (verifiedTotp) return { step: 'mfa', factorId: verifiedTotp.id };
+
+  const enrollment = await client.auth.mfa.enroll({
+    factorType: 'totp',
+    friendlyName: 'Snickerdoodle owner authenticator'
+  });
+  const factorId = enrollment.data?.id;
+  const qrCode = enrollment.data?.totp.qr_code;
+  const manualSecret = enrollment.data?.totp.secret;
+  if (
+    enrollment.error ||
+    typeof factorId !== 'string' || !/^[0-9a-f-]{36}$/i.test(factorId) ||
+    typeof qrCode !== 'string' || !qrCode.startsWith('data:image/svg+xml;utf-8,') || qrCode.length > 100_000 ||
+    typeof manualSecret !== 'string' || !/^[A-Z2-7]+=*$/i.test(manualSecret) || manualSecret.length > 256
+  ) {
+    throw new Error('Could not start authenticator enrollment.');
+  }
+
+  return { step: 'enrollment', factorId, qrCode, manualSecret };
+}
 
 function isQueueReceipt(value: unknown): value is QueueReceipt {
   if (!value || typeof value !== 'object') return false;
@@ -198,6 +231,8 @@ export function ManagerQueue({
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
   const [factorId, setFactorId] = useState<string | null>(null);
+  const [enrollmentQrCode, setEnrollmentQrCode] = useState<string | null>(null);
+  const [enrollmentManualSecret, setEnrollmentManualSecret] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [authStep, setAuthStep] = useState<AuthStep>('password');
   const [receipts, setReceipts] = useState<QueueReceipt[]>([]);
@@ -219,6 +254,10 @@ export function ManagerQueue({
     if (assurance.error || assurance.data.currentLevel !== 'aal2') {
       throw new Error('A verified second factor is required.');
     }
+    setTotpCode('');
+    setFactorId(null);
+    setEnrollmentQrCode(null);
+    setEnrollmentManualSecret(null);
     setSession(nextSession);
     setAuthStep('ready');
   }
@@ -240,14 +279,19 @@ export function ManagerQueue({
         return;
       }
 
-      const factors = await authClient.auth.mfa.listFactors();
-      const verifiedTotp = factors.data?.totp.find((factor) => factor.status === 'verified');
-      if (factors.error || !verifiedTotp) {
+      let secondFactor: OwnerSecondFactorPreparation;
+      try {
+        secondFactor = await prepareOwnerSecondFactor(authClient);
+      } catch (factorError) {
         await authClient.auth.signOut({ scope: 'local' });
-        throw new Error('This owner account must enroll a verified TOTP factor before queue access.');
+        throw factorError;
       }
-      setFactorId(verifiedTotp.id);
-      setAuthStep('mfa');
+      setFactorId(secondFactor.factorId);
+      if (secondFactor.step === 'enrollment') {
+        setEnrollmentQrCode(secondFactor.qrCode);
+        setEnrollmentManualSecret(secondFactor.manualSecret);
+      }
+      setAuthStep(secondFactor.step);
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : 'Owner sign-in failed.');
     } finally {
@@ -480,9 +524,11 @@ export function ManagerQueue({
   }
 
   async function signOut() {
-    if (authClient) await authClient.auth.signOut({ scope: 'local' });
     setSession(null);
+    setTotpCode('');
     setFactorId(null);
+    setEnrollmentQrCode(null);
+    setEnrollmentManualSecret(null);
     setReceipts([]);
     setNextCursor(null);
     setSelectedIntake(null);
@@ -495,6 +541,7 @@ export function ManagerQueue({
     setFulfillmentPending(false);
     setLoaded(false);
     setAuthStep('password');
+    if (authClient) await authClient.auth.signOut({ scope: 'local' });
   }
 
   const selectedFulfillmentAction = selectedIntake
@@ -554,6 +601,45 @@ export function ManagerQueue({
             {loading ? 'Verifying…' : 'Verify second factor'}
           </Button>
         </form>
+      ) : null}
+
+      {authClient && authStep === 'enrollment' && enrollmentQrCode && enrollmentManualSecret ? (
+        <div className="mt-8 max-w-lg rounded-xl border border-border bg-secondary/20 p-5">
+          <h2 className="font-heading text-xl font-semibold text-foreground">Set up your owner authenticator</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Scan this QR code with your authenticator app. If scanning is unavailable, enter the manual setup key.
+            The QR code and key are kept only in this page&apos;s memory and are cleared after verification or sign-out.
+          </p>
+          <Image
+            src={enrollmentQrCode}
+            alt="QR code for Snickerdoodle owner authenticator enrollment"
+            width={192}
+            height={192}
+            unoptimized
+            className="mt-5 rounded-lg border border-border bg-white p-2"
+          />
+          <div className="mt-5">
+            <p className="text-sm font-medium text-foreground">Manual setup key</p>
+            <p
+              aria-label="Manual authenticator setup key"
+              className="mt-2 break-all rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm text-foreground"
+            >
+              {enrollmentManualSecret}
+            </p>
+          </div>
+          <form className="mt-5 max-w-sm" onSubmit={verifyMfa}>
+            <label className="text-sm font-medium text-foreground">
+              Six-digit authenticator code
+              <input type="text" inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6}"
+                minLength={6} maxLength={6} value={totpCode}
+                onChange={(event) => setTotpCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                className="mt-2 h-10 w-full rounded-lg border border-input bg-background px-3 font-mono text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/30" />
+            </label>
+            <Button type="submit" size="lg" disabled={loading || totpCode.length !== 6} className="mt-4">
+              {loading ? 'Verifying…' : 'Enable authenticator and continue'}
+            </Button>
+          </form>
+        </div>
       ) : null}
 
       {authClient && authStep === 'ready' ? (
