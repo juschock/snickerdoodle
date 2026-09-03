@@ -7,11 +7,11 @@ Status: `HOLD`. Overall full-stack completion estimate: `92%`. This is a secret-
 ```text
 SNICKERDOODLE_SANDBOX_RECEIPT_SCHEMA=1
 CLASSIFICATION=HOLD
-RECORDED_AT_UTC=2026-09-03T05:15:40Z
-CANDIDATE_COMMIT=16a5d6f6183e2b5b1ba370e3b135a51050c279d8
-CANDIDATE_TREE=79968008cba773da0226598e78deeeed7344002f
-APP_DEPLOYMENT_ID=dpl_HdceMmAZJTR8U7ngwLTKSecWbpQ6
-APP_IMMUTABLE_URL=https://campaign-ig6j35u6e-joshuauschock-gmailcoms-projects.vercel.app
+RECORDED_AT_UTC=2026-09-03T13:14:18Z
+CANDIDATE_COMMIT=42fddfefcee558b17b6bc0c4508e81fee8a7aadb
+CANDIDATE_TREE=5cf2c267d4e72cc46301e80a1138dd629907aaf9
+APP_DEPLOYMENT_ID=dpl_9ZYTTBzVV33MA2zKtXECb2NLdx1o
+APP_IMMUTABLE_URL=https://campaign-qhxpdc496-joshuauschock-gmailcoms-projects.vercel.app
 APP_EXPECTED_ALIAS=https://snickerdoodle-sandbox-joshuauschock-gmailcoms-projects.vercel.app
 INGRESS_DEPLOYMENT_ID=dpl_Fr1e5Q6gzQgfBn9uHXEMSvscRVnt
 INGRESS_EXPECTED_ALIAS=https://snickerdoodle-webhook-ingress-sandbox.vercel.app
@@ -46,9 +46,9 @@ The `false` and `not_run` values are deliberate release holds. The completed bas
 
 | Field | Proven evidence |
 | --- | --- |
-| Candidate | Commit `16a5d6f6183e2b5b1ba370e3b135a51050c279d8`; tree `79968008cba773da0226598e78deeeed7344002f` |
-| Protected app deployment | `dpl_HdceMmAZJTR8U7ngwLTKSecWbpQ6`; READY Preview; Node 22; source is the candidate above; Vercel SSO protected |
-| Protected app immutable URL | `https://campaign-ig6j35u6e-joshuauschock-gmailcoms-projects.vercel.app` — exact deployment, origin only |
+| Candidate | Commit `42fddfefcee558b17b6bc0c4508e81fee8a7aadb`; tree `5cf2c267d4e72cc46301e80a1138dd629907aaf9` |
+| Protected app deployment | `dpl_9ZYTTBzVV33MA2zKtXECb2NLdx1o`; READY Preview; Node 22; source is the candidate above; Vercel SSO protected |
+| Protected app immutable URL | `https://campaign-qhxpdc496-joshuauschock-gmailcoms-projects.vercel.app` — exact deployment, origin only |
 | Protected app alias | `https://snickerdoodle-sandbox-joshuauschock-gmailcoms-projects.vercel.app` — origin only |
 | Public ingress deployment | `dpl_Fr1e5Q6gzQgfBn9uHXEMSvscRVnt`; isolated sandbox webhook ingress |
 | Public ingress alias | `https://snickerdoodle-webhook-ingress-sandbox.vercel.app` — origin only and the only intentionally public sandbox surface |
@@ -85,7 +85,7 @@ The verifier observed the protected app SSO boundary without a bypass; app-layer
 
 | Check | Result |
 | --- | --- |
-| Full Vitest suite | PASS, 34 files and 198/198 tests |
+| Full Vitest suite | PASS, 35 files and 202/202 tests |
 | ESLint | PASS |
 | Next type generation and TypeScript | PASS |
 | Default production build | PASS, 24 routes |
@@ -95,8 +95,11 @@ The verifier observed the protected app SSO boundary without a bypass; app-layer
 | Readiness verifier | PASS, 75 checks |
 | Public-polish gate coupling | PASS. One gate-driven metadata selector controls the mode; commercial homepage title, description, Open Graph, Twitter, and FAQ metadata contain no HOLD wording. Checkout success and cancel header/footer chrome uses the same readiness gate with required explicit props. |
 | Authenticated exact public-detritus probes | PASS. The privacy page displayed the exact approved analytics promises, the old configuration note was absent, and checked public copy contained no development-stage terms. Robots preserved public allow while disallowing `/snickerdoodle/brief`, `/snickerdoodle/checkout`, `/snickerdoodle/manager`, and `/snickerdoodle/api`. |
-| Exact hosted app probes | PASS. The immutable deployment and stable alias passed; anonymous access returned HTTP 302 at the Vercel SSO boundary; the authenticated health probe returned HTTP 200; queried runtime errors were 0. |
-| Secret scan | PASS. Full-history scan covered 35 commits and the current working tree scan returned 0 findings. |
+| Exact hosted app probes | PASS. The immutable deployment and stable alias passed; anonymous access returned HTTP 302 at the Vercel SSO boundary; the authenticated browser loaded the restricted manager sign-in surface; the 75-check readiness verifier passed; queried browser and Vercel runtime errors were 0. |
+| Owner Auth plumbing | PASS, scoped to the authentication boundary. The protected workspace's password sign-in reached the exact hosted Supabase project, `/token` and `/user` succeeded, the registered-factor challenge succeeded, and an incorrect TOTP was rejected by hosted Auth. The client and API use the same Supabase origin; the API independently checks the user and AAL2 before invoking owner-only RPCs. The current blocker is the inaccessible verified factor, not a disconnected or mocked Auth path. |
+| TOTP recovery candidate | PASS locally and deployed. Existing verified-factor challenge remains primary. Only after no verified TOTP exists does the UI use Supabase `mfa.enroll`, keep QR/manual secret/factor/session in React memory, call `challengeAndVerify`, and independently require AAL2 before exposing manager operations. No factor reset is recorded here. |
+| Browser credential persistence | PASS. After the exact deployment loaded, there were no Supabase-prefixed local-storage keys, session-storage keys, or script-readable Supabase cookies; browser and Vercel runtime error checks were empty. |
+| Secret scan | PASS. Full-history scan covered 37 commits and the current working tree scan returned 0 findings. |
 | Production dependency audit | PASS, 0 vulnerabilities |
 
 These are local and boundary checks. The browser manager journey uses synthetic responses and does not prove a hosted owner session or hosted fulfillment transition.
