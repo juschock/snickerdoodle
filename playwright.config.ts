@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const siteOrigin = 'http://127.0.0.1:3102';
+const analyticsPositiveMode = process.env.SNICKERDOODLE_E2E_ANALYTICS === 'true';
 const commercialTestGates = {
   SNICKERDOODLE_COMMERCIAL_READY: 'true',
   SNICKERDOODLE_OFFER_APPROVED: 'true',
@@ -14,6 +15,7 @@ const commercialTestGates = {
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: analyticsPositiveMode ? [] : ['**/analytics-privacy.spec.ts'],
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
@@ -36,9 +38,12 @@ export default defineConfig({
     env: {
       CHECKOUT_SECURITY_SECRET: 'playwright-only-checkout-security-secret',
       SNICKERDOODLE_ALLOWED_ORIGIN: siteOrigin,
+      SUPABASE_URL: 'https://playwright-supabase.example.invalid',
+      SUPABASE_ANON_KEY: 'sb_publishable_playwright_only_public_test_key',
+      SNICKERDOODLE_ANALYTICS_ENABLED: analyticsPositiveMode ? 'true' : 'false',
       ...commercialTestGates
     },
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env.CI && !analyticsPositiveMode,
     timeout: 120_000
   }
 });

@@ -20,6 +20,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "npm run build && playwright test",
+    "test:e2e:analytics": "SNICKERDOODLE_E2E_ANALYTICS=true playwright test --config=playwright.analytics.config.ts e2e/analytics-privacy.spec.ts",
     "test:e2e:hold": "npm run build:gate-true-test && playwright test --config=playwright.hold.config.ts",
     "test:e2e:hold:built": "playwright test --config=playwright.hold.config.ts",
     "test:e2e:built": "playwright test",
