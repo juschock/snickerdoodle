@@ -58,7 +58,7 @@ describe("Snickerdoodle launch monitor", () => {
       'const CANONICAL_ORIGIN = "https://racoben.com";',
     );
     expect(source).toContain(
-      '"https://campaign-qhxpdc496-joshuauschock-gmailcoms-projects.vercel.app"',
+      '"https://campaign-crnlm7yfl-joshuauschock-gmailcoms-projects.vercel.app"',
     );
     expect(source).toContain(
       '"https://snickerdoodle-webhook-ingress-sandbox.vercel.app"',

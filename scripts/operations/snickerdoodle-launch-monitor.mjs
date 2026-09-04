@@ -17,7 +17,7 @@ import {
 
 const CANONICAL_ORIGIN = "https://racoben.com";
 const CANDIDATE_ORIGIN =
-  "https://campaign-qhxpdc496-joshuauschock-gmailcoms-projects.vercel.app";
+  "https://campaign-crnlm7yfl-joshuauschock-gmailcoms-projects.vercel.app";
 const INGRESS_ORIGIN =
   "https://snickerdoodle-webhook-ingress-sandbox.vercel.app";
 const VERCEL_CWD =
