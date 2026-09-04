@@ -6,6 +6,8 @@ import { COMMERCIAL_PRODUCT_META_DESCRIPTION } from '../lib/site';
 const syntheticOwnerId = '50000000-0000-4000-8000-000000000005';
 const syntheticFactorId = '60000000-0000-4000-8000-000000000006';
 const secondarySyntheticFactorId = '61000000-0000-4000-8000-000000000006';
+const incompleteSyntheticFactorId = '62000000-0000-4000-8000-000000000006';
+const replacementSyntheticFactorId = '63000000-0000-4000-8000-000000000006';
 
 function syntheticJwt(aal: 'aal1' | 'aal2') {
   const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -66,6 +68,21 @@ function syntheticOwner(aal: 'aal1' | 'aal2') {
 function syntheticSingleFactorOwner(aal: 'aal1' | 'aal2') {
   const owner = syntheticOwner(aal);
   return { ...owner, factors: owner.factors.slice(0, 1) };
+}
+
+function syntheticIncompleteFactorOwner(hasIncompleteFactor: boolean) {
+  const owner = syntheticOwner('aal1');
+  return {
+    ...owner,
+    factors: hasIncompleteFactor ? [{
+      id: incompleteSyntheticFactorId,
+      friendly_name: 'Snickerdoodle owner authenticator',
+      factor_type: 'totp',
+      status: 'unverified',
+      created_at: '2026-08-30T16:00:00.000Z',
+      updated_at: '2026-08-30T16:00:00.000Z'
+    }] : []
+  };
 }
 
 const playwrightAccessToken = createBriefAccessToken({
@@ -333,10 +350,119 @@ test('mobile navigation and survey layout work without horizontal overflow', asy
   expect(surveyOverflow).toBe(false);
 });
 
+test('an incomplete owner factor requires explicit cleanup before one replacement enrollment', async ({ page }) => {
+  const aal1Token = syntheticJwt('aal1');
+  let hasIncompleteFactor = true;
+  let cleanupRequests = 0;
+  let enrollmentRequests = 0;
+  const lifecycle: string[] = [];
+
+  await page.route('**/auth/v1/**', async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const common = { contentType: 'application/json', headers: { 'Cache-Control': 'no-store' } };
+
+    if (url.pathname.endsWith('/auth/v1/token') && url.searchParams.get('grant_type') === 'password') {
+      await route.fulfill({
+        ...common,
+        status: 200,
+        body: JSON.stringify({
+          access_token: aal1Token,
+          token_type: 'bearer',
+          expires_in: 3_600,
+          refresh_token: 'synthetic-incomplete-factor-refresh-aal1',
+          user: syntheticIncompleteFactorOwner(true)
+        })
+      });
+      return;
+    }
+
+    if (url.pathname.endsWith('/auth/v1/user')) {
+      lifecycle.push(hasIncompleteFactor ? 'list-incomplete' : 'list-empty');
+      await route.fulfill({
+        ...common,
+        status: 200,
+        body: JSON.stringify(syntheticIncompleteFactorOwner(hasIncompleteFactor))
+      });
+      return;
+    }
+
+    if (
+      request.method() === 'DELETE' &&
+      url.pathname.endsWith(`/auth/v1/factors/${incompleteSyntheticFactorId}`)
+    ) {
+      cleanupRequests += 1;
+      lifecycle.push('cleanup');
+      hasIncompleteFactor = false;
+      await route.fulfill({
+        ...common,
+        status: 200,
+        body: JSON.stringify({ id: incompleteSyntheticFactorId })
+      });
+      return;
+    }
+
+    if (request.method() === 'POST' && url.pathname.endsWith('/auth/v1/factors')) {
+      enrollmentRequests += 1;
+      lifecycle.push('enroll');
+      expect(request.postDataJSON()).toEqual({
+        factor_type: 'totp',
+        friendly_name: 'Snickerdoodle owner authenticator'
+      });
+      await route.fulfill({
+        ...common,
+        status: 200,
+        body: JSON.stringify({
+          id: replacementSyntheticFactorId,
+          type: 'totp',
+          friendly_name: 'Snickerdoodle owner authenticator',
+          totp: {
+            qr_code: '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
+            secret: 'JBSWY3DPEHPK3PXP',
+            uri: 'otpauth://example.invalid'
+          }
+        })
+      });
+      return;
+    }
+
+    await route.abort('failed');
+  });
+
+  await page.goto('/snickerdoodle/manager/queue');
+  await page.getByLabel('Owner email').fill('owner@example.invalid');
+  await page.getByLabel('Password').fill('synthetic-password');
+  await page.getByRole('button', { name: 'Continue securely' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Finish authenticator setup' })).toBeVisible();
+  await expect(page.getByText(/previous Snickerdoodle owner-authenticator setup did not finish/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Remove incomplete setup and retry' })).toBeVisible();
+  expect(cleanupRequests).toBe(0);
+  expect(enrollmentRequests).toBe(0);
+  expect(lifecycle.length).toBeGreaterThanOrEqual(1);
+  expect(lifecycle.every((event) => event === 'list-incomplete')).toBe(true);
+  const actionLifecycleStart = lifecycle.length;
+
+  await page.getByRole('button', { name: 'Remove incomplete setup and retry' }).click();
+  await expect(page.getByRole('heading', { name: 'Set up your owner authenticator' })).toBeVisible();
+  await expect(page.getByLabel('Manual authenticator setup key')).toBeVisible();
+  expect(cleanupRequests).toBe(1);
+  expect(enrollmentRequests).toBe(1);
+  expect(lifecycle.slice(actionLifecycleStart)).toEqual([
+    'list-incomplete',
+    'cleanup',
+    'list-empty',
+    'enroll'
+  ]);
+  await expect(page.locator('body')).not.toContainText(incompleteSyntheticFactorId);
+  await expect(page.locator('body')).not.toContainText(replacementSyntheticFactorId);
+});
+
 test('one verified owner factor remains automatically selected', async ({ page }) => {
   const aal1Token = syntheticJwt('aal1');
   const aal2Token = syntheticJwt('aal2');
   let challenged = false;
+  let unexpectedFactorMutations = 0;
 
   await page.route('**/auth/v1/**', async (route) => {
     const request = route.request();
@@ -397,6 +523,13 @@ test('one verified owner factor remains automatically selected', async ({ page }
       return;
     }
 
+    if (
+      (request.method() === 'POST' && url.pathname.endsWith('/auth/v1/factors')) ||
+      (request.method() === 'DELETE' && url.pathname.includes('/auth/v1/factors/'))
+    ) {
+      unexpectedFactorMutations += 1;
+    }
+
     await route.abort('failed');
   });
 
@@ -410,6 +543,7 @@ test('one verified owner factor remains automatically selected', async ({ page }
   await expect(page.getByRole('button', { name: 'Verify second factor' })).toBeEnabled();
   await page.getByRole('button', { name: 'Verify second factor' }).click();
   expect(challenged).toBe(true);
+  expect(unexpectedFactorMutations).toBe(0);
   await expect(page.getByRole('button', { name: 'Load secure queue' })).toBeVisible();
 });
 

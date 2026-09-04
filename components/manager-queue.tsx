@@ -106,7 +106,12 @@ export function selectFulfillmentRetry(
   };
 }
 
-type AuthStep = 'password' | 'mfa' | 'enrollment' | 'ready';
+type AuthStep = 'password' | 'mfa' | 'enrollment' | 'cleanup' | 'ready';
+
+const OWNER_TOTP_FRIENDLY_NAME = 'Snickerdoodle owner authenticator';
+const MAX_TOTP_QR_CODE_LENGTH = 3_000_000;
+const FACTOR_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type OwnerVerifiedFactor = {
   id: string;
@@ -115,7 +120,8 @@ export type OwnerVerifiedFactor = {
 
 export type OwnerSecondFactorPreparation =
   | { step: 'mfa'; factors: OwnerVerifiedFactor[] }
-  | { step: 'enrollment'; factorId: string; qrCode: string; manualSecret: string };
+  | { step: 'enrollment'; factorId: string; qrCode: string; manualSecret: string }
+  | { step: 'cleanup'; factorId: string };
 
 export function selectOwnerFactorId(
   factors: OwnerVerifiedFactor[],
@@ -127,6 +133,149 @@ export function selectOwnerFactorId(
     selectedFactorIndex < 0
   ) return null;
   return factors[selectedFactorIndex]?.id ?? null;
+}
+
+function validFactorId(value: unknown): value is string {
+  return typeof value === 'string' && FACTOR_ID_PATTERN.test(value);
+}
+
+function isSafeTotpSvg(value: string) {
+  const svg = value.trim().replace(/^<\?xml[^>]*>\s*/i, '');
+  return (
+    /^<svg(?:\s|>)/i.test(svg) &&
+    /<\/svg>\s*$/i.test(svg) &&
+    !/<(?:script|foreignObject)\b/i.test(svg) &&
+    !/\son[a-z]+\s*=/i.test(svg)
+  );
+}
+
+function normalizeTotpQrCode(value: unknown) {
+  if (typeof value !== 'string') return null;
+  if (value.length === 0 || value.length > MAX_TOTP_QR_CODE_LENGTH) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const dataPrefix = trimmed.match(/^data:image\/svg\+xml;(?:utf-8|charset=utf-8),/i)?.[0];
+  if (dataPrefix) {
+    try {
+      const svg = decodeURIComponent(trimmed.slice(dataPrefix.length));
+      return isSafeTotpSvg(svg) ? trimmed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  if (isSafeTotpSvg(trimmed)) {
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmed)}`;
+  }
+
+  return null;
+}
+
+function normalizeTotpSecret(value: unknown) {
+  if (typeof value !== 'string') return null;
+  const normalized = value.replace(/\s+/g, '').toUpperCase();
+  if (
+    normalized.length < 16 ||
+    normalized.length > 256 ||
+    !/^[A-Z2-7]+={0,6}$/.test(normalized)
+  ) return null;
+  return normalized;
+}
+
+async function readOwnerFactorState(client: SupabaseClient) {
+  const factors = await client.auth.mfa.listFactors();
+  if (factors.error) {
+    throw new Error('Could not inspect registered second factors.');
+  }
+
+  // `data.all` is authoritative for lifecycle state. The convenience
+  // `data.totp` collection cannot detect an incomplete enrollment.
+  const allFactors = factors.data?.all ?? [];
+  const allTotp = allFactors.filter(
+    (factor) => factor.factor_type === 'totp'
+  );
+  const verifiedTotp = allTotp.filter(
+    (factor) => factor.status === 'verified'
+  );
+
+  const verifiedFactors = verifiedTotp.map((factor, index) => {
+    if (!validFactorId(factor.id)) {
+      throw new Error('Could not inspect registered second factors.');
+    }
+
+    const friendlyName = typeof factor.friendly_name === 'string'
+      ? factor.friendly_name.replace(/\s+/g, ' ').trim().slice(0, 80)
+      : '';
+    return {
+      id: factor.id,
+      label: friendlyName
+        ? `${friendlyName} (${index + 1})`
+        : `Authenticator ${index + 1}`
+    };
+  });
+
+  const incompleteNamed = allTotp.filter(
+    (factor) =>
+      factor.status === 'unverified' &&
+      factor.friendly_name === OWNER_TOTP_FRIENDLY_NAME
+  );
+  if (incompleteNamed.length > 1) {
+    throw new Error('Could not inspect registered second factors.');
+  }
+
+  const incompleteFactorId = incompleteNamed[0]?.id ?? null;
+  if (incompleteFactorId !== null && !validFactorId(incompleteFactorId)) {
+    throw new Error('Could not inspect registered second factors.');
+  }
+
+  return { verifiedFactors, incompleteFactorId };
+}
+
+function readEnrollmentArtifacts(data: unknown) {
+  if (!data || typeof data !== 'object') return null;
+  const candidate = data as {
+    id?: unknown;
+    totp?: { qr_code?: unknown; secret?: unknown };
+  };
+  if (!validFactorId(candidate.id)) return null;
+
+  const qrCode = normalizeTotpQrCode(candidate.totp?.qr_code);
+  const manualSecret = normalizeTotpSecret(candidate.totp?.secret);
+  if (!qrCode || !manualSecret) return null;
+  return { factorId: candidate.id, qrCode, manualSecret };
+}
+
+async function enrollOwnerSecondFactor(
+  client: SupabaseClient
+): Promise<OwnerSecondFactorPreparation> {
+  const enrollment = await client.auth.mfa.enroll({
+    factorType: 'totp',
+    friendlyName: OWNER_TOTP_FRIENDLY_NAME
+  });
+  if (enrollment.error) {
+    throw new Error('Could not start authenticator enrollment.');
+  }
+
+  const artifacts = readEnrollmentArtifacts(enrollment.data);
+  if (artifacts) return { step: 'enrollment', ...artifacts };
+
+  // Enrollment may succeed provider-side even when its presentation payload
+  // cannot be accepted. Re-read state; never enroll twice or auto-unenroll.
+  const createdId = enrollment.data && typeof enrollment.data === 'object'
+    ? (enrollment.data as { id?: unknown }).id
+    : null;
+  if (validFactorId(createdId)) {
+    const state = await readOwnerFactorState(client);
+    if (
+      state.verifiedFactors.length === 0 &&
+      state.incompleteFactorId === createdId
+    ) {
+      return { step: 'cleanup', factorId: createdId };
+    }
+  }
+
+  throw new Error('Could not start authenticator enrollment.');
 }
 
 export function getOwnerRecoveryRedirect(origin: string) {
@@ -151,42 +300,49 @@ export function getOwnerRecoveryRedirect(origin: string) {
 export async function prepareOwnerSecondFactor(
   client: SupabaseClient
 ): Promise<OwnerSecondFactorPreparation> {
-  const factors = await client.auth.mfa.listFactors();
-  if (factors.error) throw new Error('Could not inspect registered second factors.');
+  const state = await readOwnerFactorState(client);
+  if (state.verifiedFactors.length > 0) {
+    return { step: 'mfa', factors: state.verifiedFactors };
+  }
+  if (state.incompleteFactorId) {
+    return { step: 'cleanup', factorId: state.incompleteFactorId };
+  }
+  return enrollOwnerSecondFactor(client);
+}
 
-  const verifiedTotp = (factors.data?.totp ?? [])
-    .filter((factor) => factor.status === 'verified')
-    .map((factor, index) => {
-      if (typeof factor.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(factor.id)) {
-        throw new Error('Could not inspect registered second factors.');
-      }
-      const friendlyName = typeof factor.friendly_name === 'string'
-        ? factor.friendly_name.replace(/\s+/g, ' ').trim().slice(0, 80)
-        : '';
-      return {
-        id: factor.id,
-        label: friendlyName ? `${friendlyName} (${index + 1})` : `Authenticator ${index + 1}`
-      };
-    });
-  if (verifiedTotp.length > 0) return { step: 'mfa', factors: verifiedTotp };
-
-  const enrollment = await client.auth.mfa.enroll({
-    factorType: 'totp',
-    friendlyName: 'Snickerdoodle owner authenticator'
-  });
-  const factorId = enrollment.data?.id;
-  const qrCode = enrollment.data?.totp.qr_code;
-  const manualSecret = enrollment.data?.totp.secret;
-  if (
-    enrollment.error ||
-    typeof factorId !== 'string' || !/^[0-9a-f-]{36}$/i.test(factorId) ||
-    typeof qrCode !== 'string' || !qrCode.startsWith('data:image/svg+xml;utf-8,') || qrCode.length > 100_000 ||
-    typeof manualSecret !== 'string' || !/^[A-Z2-7]+=*$/i.test(manualSecret) || manualSecret.length > 256
-  ) {
-    throw new Error('Could not start authenticator enrollment.');
+export async function retryIncompleteOwnerSecondFactor(
+  client: SupabaseClient,
+  factorId: string
+): Promise<OwnerSecondFactorPreparation> {
+  if (!validFactorId(factorId)) {
+    throw new Error('Incomplete authenticator state changed. Sign in again.');
   }
 
-  return { step: 'enrollment', factorId, qrCode, manualSecret };
+  // Re-read at action time. If a verified factor appeared, prefer it and
+  // remove nothing.
+  const before = await readOwnerFactorState(client);
+  if (before.verifiedFactors.length > 0) {
+    return { step: 'mfa', factors: before.verifiedFactors };
+  }
+  if (before.incompleteFactorId !== factorId) {
+    throw new Error('Incomplete authenticator state changed. Sign in again.');
+  }
+
+  const removal = await client.auth.mfa.unenroll({ factorId });
+  if (removal.error) {
+    throw new Error('Could not remove the incomplete authenticator setup.');
+  }
+
+  const after = await readOwnerFactorState(client);
+  if (after.verifiedFactors.length > 0) {
+    return { step: 'mfa', factors: after.verifiedFactors };
+  }
+  if (after.incompleteFactorId) {
+    throw new Error('Could not remove the incomplete authenticator setup.');
+  }
+
+  // Exactly one replacement enrollment attempt per explicit cleanup action.
+  return enrollOwnerSecondFactor(client);
 }
 
 function isQueueReceipt(value: unknown): value is QueueReceipt {
@@ -280,6 +436,7 @@ export function ManagerQueue({
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
   const [factorId, setFactorId] = useState<string | null>(null);
+  const [incompleteFactorId, setIncompleteFactorId] = useState<string | null>(null);
   const [verifiedFactors, setVerifiedFactors] = useState<OwnerVerifiedFactor[]>([]);
   const [selectedFactorIndex, setSelectedFactorIndex] = useState<number | null>(null);
   const [enrollmentQrCode, setEnrollmentQrCode] = useState<string | null>(null);
@@ -310,12 +467,36 @@ export function ManagerQueue({
     }
     setTotpCode('');
     setFactorId(null);
+    setIncompleteFactorId(null);
     setVerifiedFactors([]);
     setSelectedFactorIndex(null);
     setEnrollmentQrCode(null);
     setEnrollmentManualSecret(null);
     setSession(nextSession);
     setAuthStep('ready');
+  }
+
+  function showSecondFactorPreparation(secondFactor: OwnerSecondFactorPreparation) {
+    setTotpCode('');
+    setFactorId(null);
+    setIncompleteFactorId(null);
+    setVerifiedFactors([]);
+    setSelectedFactorIndex(null);
+    setEnrollmentQrCode(null);
+    setEnrollmentManualSecret(null);
+
+    if (secondFactor.step === 'enrollment') {
+      setFactorId(secondFactor.factorId);
+      setEnrollmentQrCode(secondFactor.qrCode);
+      setEnrollmentManualSecret(secondFactor.manualSecret);
+    } else if (secondFactor.step === 'mfa') {
+      setVerifiedFactors(secondFactor.factors);
+      setSelectedFactorIndex(secondFactor.factors.length === 1 ? 0 : null);
+    } else {
+      setIncompleteFactorId(secondFactor.factorId);
+    }
+
+    setAuthStep(secondFactor.step);
   }
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
@@ -342,20 +523,28 @@ export function ManagerQueue({
         await authClient.auth.signOut({ scope: 'local' });
         throw factorError;
       }
-      if (secondFactor.step === 'enrollment') {
-        setFactorId(secondFactor.factorId);
-        setVerifiedFactors([]);
-        setSelectedFactorIndex(null);
-        setEnrollmentQrCode(secondFactor.qrCode);
-        setEnrollmentManualSecret(secondFactor.manualSecret);
-      } else {
-        setFactorId(null);
-        setVerifiedFactors(secondFactor.factors);
-        setSelectedFactorIndex(secondFactor.factors.length === 1 ? 0 : null);
-      }
-      setAuthStep(secondFactor.step);
+      showSecondFactorPreparation(secondFactor);
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : 'Owner sign-in failed.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function replaceIncompleteAuthenticator() {
+    if (!authClient || !incompleteFactorId || loading) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const secondFactor = await retryIncompleteOwnerSecondFactor(
+        authClient,
+        incompleteFactorId
+      );
+      showSecondFactorPreparation(secondFactor);
+    } catch (authError) {
+      setError(authError instanceof Error
+        ? authError.message
+        : 'Could not restart authenticator enrollment.');
     } finally {
       setLoading(false);
     }
@@ -621,6 +810,7 @@ export function ManagerQueue({
     setSession(null);
     setTotpCode('');
     setFactorId(null);
+    setIncompleteFactorId(null);
     setVerifiedFactors([]);
     setSelectedFactorIndex(null);
     setEnrollmentQrCode(null);
@@ -751,6 +941,28 @@ export function ManagerQueue({
             {loading ? 'Verifying…' : 'Verify second factor'}
           </Button>
         </form>
+      ) : null}
+
+      {authClient && authStep === 'cleanup' && incompleteFactorId ? (
+        <div className="mt-8 max-w-lg rounded-xl border border-border bg-secondary/20 p-5">
+          <h2 className="font-heading text-xl font-semibold text-foreground">
+            Finish authenticator setup
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            A previous Snickerdoodle owner-authenticator setup did not finish, so its QR code
+            cannot be shown again. Continue only when you are ready to remove that incomplete,
+            unverified setup and create one replacement QR code. Any verified authenticator is
+            preserved and used instead if it appears before this action runs.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button type="button" size="lg" disabled={loading} onClick={replaceIncompleteAuthenticator}>
+              {loading ? 'Retrying setup…' : 'Remove incomplete setup and retry'}
+            </Button>
+            <Button type="button" size="lg" variant="outline" disabled={loading} onClick={signOut}>
+              Sign out
+            </Button>
+          </div>
+        </div>
       ) : null}
 
       {authClient && authStep === 'enrollment' && enrollmentQrCode && enrollmentManualSecret ? (
