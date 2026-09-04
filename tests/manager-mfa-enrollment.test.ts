@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
-import { prepareOwnerSecondFactor } from '@/components/manager-queue';
+import {
+  prepareOwnerSecondFactor,
+  selectOwnerFactorId,
+  type OwnerVerifiedFactor
+} from '@/components/manager-queue';
 
 const verifiedFactorId = '10000000-0000-4000-8000-000000000001';
 const enrollmentFactorId = '20000000-0000-4000-8000-000000000002';
@@ -12,7 +16,11 @@ function mfaClient({
   enrollment,
   enrollmentError = null
 }: {
-  factors: Array<{ id: string; status: 'verified' | 'unverified' }>;
+  factors: Array<{
+    id: string;
+    status: 'verified' | 'unverified';
+    friendly_name?: string;
+  }>;
   factorError?: Error | null;
   enrollment?: { id: string; qrCode: string; secret: string };
   enrollmentError?: Error | null;
@@ -39,16 +47,35 @@ function mfaClient({
 }
 
 describe('owner TOTP enrollment routing', () => {
-  it('preserves the existing challenge path when a verified TOTP factor exists', async () => {
+  it('preserves every verified TOTP factor and excludes unverified factors', async () => {
     const { client, enroll } = mfaClient({
-      factors: [{ id: verifiedFactorId, status: 'verified' }]
+      factors: [
+        { id: verifiedFactorId, status: 'verified', friendly_name: 'Google Authenticator' },
+        { id: enrollmentFactorId, status: 'verified', friendly_name: 'Microsoft Authenticator' },
+        { id: '30000000-0000-4000-8000-000000000003', status: 'unverified' }
+      ]
     });
 
     await expect(prepareOwnerSecondFactor(client)).resolves.toEqual({
       step: 'mfa',
-      factorId: verifiedFactorId
+      factors: [
+        { id: verifiedFactorId, label: 'Google Authenticator (1)' },
+        { id: enrollmentFactorId, label: 'Microsoft Authenticator (2)' }
+      ]
     });
     expect(enroll).not.toHaveBeenCalled();
+  });
+
+  it('selects only the explicitly chosen verified factor', () => {
+    const factors: OwnerVerifiedFactor[] = [
+      { id: verifiedFactorId, label: 'Authenticator 1' },
+      { id: enrollmentFactorId, label: 'Authenticator 2' }
+    ];
+
+    expect(selectOwnerFactorId(factors, null)).toBeNull();
+    expect(selectOwnerFactorId(factors, -1)).toBeNull();
+    expect(selectOwnerFactorId(factors, 2)).toBeNull();
+    expect(selectOwnerFactorId(factors, 1)).toBe(enrollmentFactorId);
   });
 
   it('starts first-time or recovery enrollment when no verified TOTP factor exists', async () => {
@@ -96,7 +123,7 @@ describe('owner TOTP enrollment routing', () => {
 
   it('keeps enrollment artifacts ephemeral and proves AAL2 before exposing manager controls', () => {
     const source = readFileSync('components/manager-queue.tsx', 'utf8');
-    const challengeIndex = source.indexOf('challengeAndVerify({ factorId, code: totpCode })');
+    const challengeIndex = source.indexOf('challengeAndVerify({');
     const currentSessionIndex = source.indexOf('acceptAal2Session(await currentSession(authClient))');
     const readyControlsIndex = source.indexOf("authStep === 'ready'");
     const signOutSource = source.slice(source.indexOf('async function signOut()'), readyControlsIndex);
@@ -105,6 +132,9 @@ describe('owner TOTP enrollment routing', () => {
     expect(source).toContain("authStep === 'enrollment'");
     expect(source).toContain('enrollmentQrCode');
     expect(source).toContain('enrollmentManualSecret');
+    expect(source).toContain("name=\"owner-authenticator\"");
+    expect(source).toContain('selectOwnerFactorId(verifiedFactors, selectedFactorIndex)');
+    expect(source).not.toContain('value={factor.id}');
     expect(source.match(/setEnrollmentQrCode\(null\)/g)).toHaveLength(2);
     expect(source.match(/setEnrollmentManualSecret\(null\)/g)).toHaveLength(2);
     expect(challengeIndex).toBeGreaterThan(-1);

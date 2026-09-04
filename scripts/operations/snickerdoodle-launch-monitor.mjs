@@ -22,6 +22,7 @@ const INGRESS_ORIGIN =
   "https://snickerdoodle-webhook-ingress-sandbox.vercel.app";
 const VERCEL_CWD =
   "/Users/joshuauschock/Documents/ChatGPT/Racoben 2/Snickerdoodle";
+const VERCEL_CLI_PACKAGE = "vercel@59.11.2";
 const PROMOTION_MARKER =
   "/Users/joshuauschock/.codex/operations/snickerdoodle-production-promoted";
 const ACCEPTED_TITLE =
@@ -79,7 +80,7 @@ async function readJsonBounded(response) {
 }
 
 function runVercel(args, checkName) {
-  const result = spawnSync("vercel", args, {
+  const result = spawnSync("npx", ["--yes", VERCEL_CLI_PACKAGE, ...args], {
     cwd: VERCEL_CWD,
     encoding: "utf8",
     timeout: CLI_TIMEOUT_MS,

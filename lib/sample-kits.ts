@@ -46,10 +46,10 @@ export const sampleKits: SampleKit[] = [
   {
     slug: 'adoption-event',
     title: 'Animal Rescue Adoption Event',
-    eyebrow: 'Sample campaign package',
+    eyebrow: 'Fictional campaign template',
     campaignType: 'Adoption event',
     summary:
-      'A fictional sample package for a local animal rescue hosting a weekend adoption event and asking the community to attend, share, foster, or donate.',
+      'A fictional campaign template for a local animal rescue hosting a weekend adoption event and asking the community to attend, share, foster, or donate.',
     goal: 'Drive event attendance, increase pet visibility, and create secondary support from people who cannot adopt right now.',
     audience: ['local families', 'animal lovers', 'past adopters', 'foster volunteers', 'rescue supporters'],
     primaryCta: 'Attend the adoption event',
@@ -67,12 +67,12 @@ export const sampleKits: SampleKit[] = [
       },
       {
         label: 'Story / Reason to Care',
-        subject: '[Verified pet name] is ready for a fresh start',
-        preview: 'Use one approved, factual detail to introduce an adoptable pet.',
+        subject: 'Meet Milo, a friendly three-year-old looking for a home',
+        preview: 'Milo is the fictional featured pet in this example campaign.',
         timing: 'Send 3–5 days before the event',
         body:
-          'Insert a customer-approved pet profile here: verified name, age, temperament, adoption status, and one concrete detail supplied by the rescue. Connect that factual profile to the event without inventing history, behavior, or outcomes.',
-        cta: 'Meet [verified pet name] and other adoptable pets'
+          'For this fictional campaign, Milo is a three-year-old mixed-breed dog with a gentle, curious personality. He enjoys relaxed walks, settles comfortably near people, and will be among the adoptable pets at Saturday’s event. Come meet Milo, talk with the Meadowline team, and learn whether his needs fit your home.',
+        cta: 'Meet Milo and other adoptable pets'
       },
       {
         label: 'Last Call',
@@ -107,7 +107,7 @@ export const sampleKits: SampleKit[] = [
         platform: 'Instagram',
         label: 'Featured pet caption',
         copy:
-          '[Verified pet name] update: add one approved temperament detail and confirm attendance before publishing. Invite readers to the adoption event this weekend.'
+          'Meet Milo, the fictional featured pet in this example campaign. He is a gentle, curious three-year-old who enjoys relaxed walks and will be at Saturday’s Meadowline adoption event. Stop by and say hello.'
       },
       {
         platform: 'LinkedIn',
@@ -141,7 +141,7 @@ export const sampleKits: SampleKit[] = [
       details: [
         'Date: Saturday, October 15',
         'Time: 11:00 AM – 4:00 PM',
-        'Location placeholder: Meadowline Park Pavilion',
+        'Location: Meadowline Park Pavilion, 400 Lantern Lane, Brookhaven (fictional)',
         'Primary action: Reserve a visit or attend during event hours',
         'Secondary action: Share the event or donate to support adoption-day care'
       ],
@@ -185,10 +185,10 @@ export const sampleKits: SampleKit[] = [
   {
     slug: 'year-end-appeal',
     title: 'Nonprofit Year-End Appeal',
-    eyebrow: 'Sample campaign package',
+    eyebrow: 'Fictional campaign template',
     campaignType: 'Year-end fundraising appeal',
     summary:
-      'A fictional sample package for a small nonprofit asking supporters to make a year-end gift before December 31.',
+      'A fictional campaign template for a small nonprofit asking supporters to make a year-end gift before December 31.',
     goal: 'Raise year-end donations, remind existing supporters why the work matters, and invite recurring support.',
     audience: ['past donors', 'newsletter subscribers', 'volunteers', 'lapsed supporters', 'community partners'],
     primaryCta: 'Make a year-end gift',
@@ -201,16 +201,16 @@ export const sampleKits: SampleKit[] = [
         preview: 'A year-end gift today helps us begin January ready, not behind.',
         timing: 'Send 3–4 weeks before December 31',
         body:
-          'As the year comes to a close, we are asking our community to help carry this mission into the next one. Insert an organization-approved summary of this year’s work here using verified program facts and no invented beneficiaries or outcomes. A year-end gift today helps make sure we can begin January ready to keep going.',
+          'As the year comes to a close, Copper Lantern Community Aid is asking its community to help carry this fictional mission into the next one. In this example, the organization runs a weekly grocery pickup and a resource-navigation desk. A year-end gift helps cover grocery supplies, translated resource guides, and local transit passes so the program can begin January ready to serve.',
         cta: 'Make your year-end gift'
       },
       {
         label: 'Story / Impact',
         subject: 'What one gift can do before we turn the calendar',
-        preview: 'Your support helps real people receive help at the right moment.',
+        preview: 'See how an illustrative $50 gift connects to a defined program cost.',
         timing: 'Send 10–14 days before December 31',
         body:
-          'Insert one customer-approved impact example here using verified program facts, consented details, and no identifying information. Explain what support was provided and how a year-end gift connects to that work without inventing a beneficiary or outcome.',
+          'In this fictional campaign, a $50 gift is described as helping cover one grocery box and two local transit passes for a scheduled community pickup. The example gives supporters a concrete view of how one gift could support the Community Resource Desk without presenting an invented beneficiary or guaranteed outcome.',
         cta: 'Give before December 31'
       },
       {
@@ -234,7 +234,7 @@ export const sampleKits: SampleKit[] = [
         platform: 'Facebook',
         label: 'Impact post',
         copy:
-          'Use one verified, customer-approved program fact here to show why the year-end campaign matters. Do not invent a beneficiary, statistic, or outcome.'
+          'In this fictional campaign, a $50 year-end gift helps cover one grocery box and two local transit passes for a scheduled community pickup. Every gift moves the Community Resource Desk closer to its winter campaign goal.'
       },
       {
         platform: 'Instagram',
@@ -276,12 +276,12 @@ export const sampleKits: SampleKit[] = [
       headline: 'Help us start the new year ready to serve',
       subhead: 'Your year-end gift helps sustain practical care, steady support, and community-centered service.',
       body:
-        "In this fictional example, Copper Lantern Community Aid invites supporters to help sustain customer-verified programs into the new year. A real package would replace this sentence with the organization's approved mission, need, and campaign facts.",
+        'Copper Lantern Community Aid is a fictional nonprofit offering a weekly grocery pickup and resource-navigation desk. This example campaign invites supporters to help fund winter pickup appointments, translated resource guides, and local transit passes before December 31.',
       details: [
-        'Impact placeholder: insert only a customer-substantiated giving amount and use',
-        'Program placeholder: identify the specific verified service the appeal supports',
-        'Proof placeholder: add an approved statistic or remove this line',
-        'Recurring-gift placeholder: confirm that monthly giving is available before use'
+        'Illustrative gift: $50 helps cover one grocery box and two local transit passes',
+        'Fictional program: Community Resource Desk and weekly grocery pickup',
+        'Campaign goal: fund 120 winter grocery-pickup appointments',
+        'Monthly giving example: recurring gifts help replenish weekly grocery supplies'
       ],
       faq: [
         {
@@ -319,17 +319,17 @@ export const sampleKits: SampleKit[] = [
       'Thank you for being part of this year-end campaign. Your support helps us begin the new year with momentum, clarity, and the ability to keep showing up for the people who count on this work. We are grateful for every gift, every share, and every person who chose to stand with this mission.',
     usageNotes: [
       'Replace fictional organization details with verified facts before use.',
-      'Replace every impact placeholder with organization-approved evidence or remove it.',
+      'Verify every illustrative amount, program detail, and impact statement against organization-approved evidence; remove anything unsupported.',
       'Avoid guilt-based framing; the tone should be grateful, specific, and donor-respecting.'
     ]
   },
   {
     slug: 'restaurant-local-discovery',
     title: 'Restaurant Local Discovery Campaign',
-    eyebrow: 'Sample campaign package',
+    eyebrow: 'Fictional campaign template',
     campaignType: 'Local discovery / first-visit offer',
     summary:
-      'A fictional sample package for Juniper Spoon Thai Kitchen — a local restaurant example built around a weekday lunch special, review ask, and referral prompt.',
+      'A fictional campaign template for Juniper Spoon Thai Kitchen — a local restaurant example built around a weekday lunch special, review ask, and referral prompt.',
     goal: 'Bring first-time and nearby diners in the door with one clear local offer and a simple visit or order action.',
     audience: [
       'nearby residents',
@@ -348,7 +348,7 @@ export const sampleKits: SampleKit[] = [
         preview: 'A simple lunch special for neighbors who live or work nearby.',
         timing: 'Send at campaign launch',
         body:
-          'If you live or work near Juniper Spoon Thai Kitchen and have not stopped in yet, this is your invitation. In this fictional example, the restaurant offers a weekday lunch special for nearby diners. Replace the cuisine, offer, and availability with verified restaurant facts before use.',
+          'If you live or work near Juniper Spoon Thai Kitchen and have not stopped in yet, this fictional campaign is your invitation. The example features a $14 weekday basil stir-fry lunch set with jasmine rice and a choice of tofu or chicken, available Monday through Friday from 11:30 AM to 2:30 PM.',
         cta: 'See the lunch special'
       },
       {
@@ -357,7 +357,7 @@ export const sampleKits: SampleKit[] = [
         preview: 'One signature plate, one simple reason to visit this week.',
         timing: 'Send 5–7 days after launch',
         body:
-          'Feature one verified menu item here using the restaurant-approved name, ingredients, availability, and description. If you have been meaning to try Juniper Spoon Thai Kitchen, use the confirmed weekday offer as a clear first-visit invitation.',
+          'This fictional menu spotlight features Juniper Spoon’s basil stir-fry: crisp vegetables, Thai basil, jasmine rice, and a choice of tofu or chicken. It is the centerpiece of the example $14 weekday lunch set and a simple reason to plan a first visit.',
         cta: 'Plan your visit'
       },
       {
@@ -375,25 +375,25 @@ export const sampleKits: SampleKit[] = [
         platform: 'Facebook',
         label: 'Local discovery post',
         copy:
-          'Neighbors: if you have not tried Juniper Spoon Thai Kitchen yet, this fictional example uses a weekday lunch special as an easy first-visit invitation. Replace every offer detail with verified facts.'
+          'Neighbors: if you have not tried Juniper Spoon Thai Kitchen yet, this fictional campaign offers an easy first-visit invitation — a $14 basil stir-fry lunch set, weekdays from 11:30 AM to 2:30 PM.'
       },
       {
         platform: 'Facebook',
         label: 'Local group version',
         copy:
-          'Sharing for anyone nearby — Juniper Spoon Thai Kitchen is running a weekday lunch special in this fictional example. Confirm the offer, service format, location, and hours before use.'
+          'Sharing for anyone nearby: in this fictional example, Juniper Spoon Thai Kitchen serves a $14 weekday lunch set at 18 Juniper Row in Brookhaven, with dine-in and pickup available from 11:30 AM to 2:30 PM.'
       },
       {
         platform: 'Instagram',
         label: 'Food caption',
         copy:
-          'Your weekday lunch spot might be closer than you think. Juniper Spoon Thai Kitchen — a fictional local-discovery example with an offer that must be verified before use.'
+          'Your weekday lunch spot might be closer than you think. This fictional Juniper Spoon campaign pairs a basil stir-fry lunch set with a simple invitation for nearby diners: stop in weekdays from 11:30 AM to 2:30 PM.'
       },
       {
         platform: 'Instagram',
         label: 'Signature dish caption',
         copy:
-          'Basil stir-fry + jasmine rice — a fictional signature-dish example. Replace the dish and description with verified menu facts before use. First visit? We would love to cook for you.'
+          'Basil stir-fry, crisp vegetables, and jasmine rice — the fictional signature dish in this example campaign. Choose tofu or chicken, then make it your next weekday lunch.'
       },
       {
         platform: 'LinkedIn',
@@ -405,12 +405,12 @@ export const sampleKits: SampleKit[] = [
         platform: 'LinkedIn',
         label: 'Community note',
         copy:
-          'Small local restaurants depend on nearby regulars. If you work or live close to Juniper Spoon Thai Kitchen, this example invites one verified first visit.'
+          'Small local restaurants depend on nearby regulars. This fictional post invites people who live or work close to Juniper Spoon Thai Kitchen to make a first weekday visit.'
       },
       {
         platform: 'X',
         label: 'Short local post',
-        copy: 'Fictional example: weekday lunch special at Juniper Spoon Thai Kitchen — verify the offer before use.'
+        copy: 'Fictional example: a $14 weekday lunch set at Juniper Spoon Thai Kitchen, served from 11:30 AM to 2:30 PM.'
       },
       {
         platform: 'X',
@@ -422,14 +422,14 @@ export const sampleKits: SampleKit[] = [
       headline: 'A weekday lunch spot for nearby diners',
       subhead: 'Fresh Thai dishes for nearby residents, office workers, and first-time diners.',
       body:
-        'In this fictional example, Juniper Spoon Thai Kitchen uses a verified weekday offer to invite a first visit. Replace the location, menu, service, and offer language with restaurant-approved facts before publishing.',
+        'In this fictional example, Juniper Spoon Thai Kitchen invites nearby diners to try a $14 basil stir-fry lunch set with jasmine rice and a choice of tofu or chicken. The weekday offer is available for dine-in or pickup at the example Brookhaven location.',
       details: [
-        'Offer: Weekday lunch special — see in-store or online menu for current details',
+        'Offer: $14 basil stir-fry lunch set with jasmine rice; choose tofu or chicken (fictional)',
         'Best for: neighbors, office lunch, first-time visits',
         'Primary action: Visit for lunch or order for pickup',
-        'Location placeholder: add the verified Juniper Spoon Thai Kitchen address',
-        'Hours placeholder: add verified lunch-service hours',
-        'Terms: Dine-in and pickup only unless online ordering is listed on the fact ledger'
+        'Location: 18 Juniper Row, Brookhaven (fictional)',
+        'Hours: Monday–Friday, 11:30 AM–2:30 PM (fictional)',
+        'Terms: Dine-in and pickup only in this fictional example; availability may vary'
       ],
       faq: [
         {
@@ -438,7 +438,7 @@ export const sampleKits: SampleKit[] = [
         },
         {
           q: 'Can I order ahead?',
-          a: 'Use the ordering link or phone number provided by the restaurant in the fact ledger.'
+          a: 'Yes. In this fictional example, pickup orders can be placed at juniperspoon.example during lunch hours.'
         }
       ]
     },
@@ -462,7 +462,7 @@ export const sampleKits: SampleKit[] = [
     followUpCopy:
       'Thank you for giving Juniper Spoon Thai Kitchen a try. Local restaurants grow through repeat visits, honest reviews, and referrals. If we earned your support, we would appreciate a review — and if you know someone nearby who still needs a lunch spot, send them our way.',
     usageNotes: [
-      'Fictional business — replace with verified restaurant name, offer, hours, and links from the fact ledger.',
+      'Replace the fictional business with the restaurant-approved name, offer, hours, and links before use.',
       'Do not invent prices, discounts, or review claims.',
       'Offer terms and exclusions must match what the client can honor.',
       'Do not reference real businesses or neighborhoods without permission.'

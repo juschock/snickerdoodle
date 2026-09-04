@@ -37,7 +37,7 @@ export function SiteFooter({ commercialReady }: { commercialReady: boolean }) {
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               {commercialReady
                 ? "You have something to promote. We give you the words, structure, and campaign materials to promote it professionally."
-                : "Product-readiness review is in progress. Orders, payment, private intake, and fulfillment are unavailable."}
+                : "Snickerdoodle is not accepting orders yet. Payment, private intake, and fulfillment are unavailable."}
             </p>
           </div>
 

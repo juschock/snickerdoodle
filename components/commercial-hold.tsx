@@ -10,7 +10,7 @@ export function CommercialHold() {
         <div className="max-w-2xl">
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
             <FlaskConical className="size-3.5" aria-hidden="true" />
-            Product-readiness review
+            Availability update
           </span>
           <h1 className="mt-6 text-balance font-heading text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             {PRODUCT_NAME} is not accepting orders.
@@ -35,10 +35,10 @@ export function CommercialHold() {
 
         <div className="rounded-3xl border border-border bg-card p-7 shadow-sm sm:p-9">
           <CircleOff className="size-9 text-primary" aria-hidden="true" />
-          <h2 className="mt-5 font-heading text-2xl font-semibold text-foreground">Commercial readiness is on hold</h2>
+          <h2 className="mt-5 font-heading text-2xl font-semibold text-foreground">Snickerdoodle is not accepting orders yet</h2>
           <p className="mt-3 leading-relaxed text-muted-foreground">
-            Public availability will remain closed unless every retained offer, fulfillment, reviewer, legal, payment,
-            monetary-approval, and go-to-market gate is resolved and recorded.
+            Public availability will remain closed until service delivery, review capacity, legal terms, payment readiness,
+            and all required launch approvals are complete.
           </p>
           <p className="mt-5 rounded-xl bg-secondary/60 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
             A sample is a fictional demonstration, not a customer result, offer, deliverable promise, or indication of current

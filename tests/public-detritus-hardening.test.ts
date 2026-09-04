@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import robots from '@/app/robots';
+import sitemap from '@/app/sitemap';
 
 describe('public detritus hardening', () => {
   it('publishes the exact four analytics privacy promises without configuration notes', () => {
@@ -30,5 +31,45 @@ describe('public detritus hardening', () => {
       '/snickerdoodle/api'
     ]));
     expect(disallow).not.toContain('/snickerdoodle');
+  });
+
+  it('frames placeholder-based examples as templates rather than completed samples', () => {
+    const sampleSurface = [
+      'components/sections/hero.tsx',
+      'components/sections/final-cta.tsx',
+      'components/sections/examples.tsx',
+      'components/sample-kit-preview.tsx',
+      'app/samples/page.tsx',
+      'app/samples/[slug]/page.tsx'
+    ].map((path) => readFileSync(path, 'utf8')).join('\n');
+
+    expect(sampleSurface).toContain('Explore Sample Templates');
+    expect(sampleSurface).toContain('Fictional campaign template:');
+    expect(sampleSurface).not.toContain('View a Full Sample');
+    expect(sampleSurface).not.toContain('View full sample campaign packages');
+  });
+
+  it('keeps internal launch-gate terminology off customer-facing surfaces', () => {
+    const customerSurface = [
+      'components/commercial-hold.tsx',
+      'components/site-footer.tsx',
+      'app/faq/page.tsx',
+      'app/terms/page.tsx',
+      'lib/site.ts'
+    ].map((path) => readFileSync(path, 'utf8')).join('\n');
+
+    const normalizedSurface = customerSurface.toLowerCase();
+    for (const internalPhrase of [
+      'monetary-approval',
+      'go-to-market gate',
+      'commercial readiness is on hold',
+      'product-readiness'
+    ]) {
+      expect(normalizedSurface).not.toContain(internalPhrase);
+    }
+  });
+
+  it('does not claim every sitemap entry changed at generation time', () => {
+    for (const entry of sitemap()) expect(entry).not.toHaveProperty('lastModified');
   });
 });

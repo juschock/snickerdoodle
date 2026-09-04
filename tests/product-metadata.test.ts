@@ -24,12 +24,16 @@ vi.mock('next/font/google', () => ({
 }));
 
 import { generateMetadata as generateFaqMetadata } from '@/app/faq/page';
-import { generateMetadata as generateLayoutMetadata } from '@/app/layout';
+import { dynamic as layoutDynamic, generateMetadata as generateLayoutMetadata } from '@/app/layout';
 import { generateMetadata as generateHomeMetadata } from '@/app/page';
 
 describe('product metadata mode', () => {
   beforeEach(() => {
     readPageCommercialReadinessMock.mockReset();
+  });
+
+  it('resolves readiness-dependent metadata at request time', () => {
+    expect(layoutDynamic).toBe('force-dynamic');
   });
 
   it('selects the complete hold metadata mode without mixing in commercial copy', () => {

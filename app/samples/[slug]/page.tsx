@@ -20,14 +20,14 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const title = sampleKitTitle(slug);
-  const description = `Preview a fictional ${PRODUCT_NAME} sample campaign package.`;
+  const description = `Preview a fictional ${PRODUCT_NAME} campaign package template.`;
   const url = publicUrl(`/samples/${slug}`);
 
   return {
-    title: `${title} sample`,
+    title: `${title} template`,
     description,
     alternates: { canonical: url },
-    openGraph: { title: `${title} sample | ${PRODUCT_NAME}`, description, url }
+    openGraph: { title: `${title} template | ${PRODUCT_NAME}`, description, url }
   };
 }
 

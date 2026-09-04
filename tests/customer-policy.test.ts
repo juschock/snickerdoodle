@@ -45,7 +45,7 @@ describe('commercial customer policy', () => {
 
     expect(terms.indexOf('commercialReady ?')).toBeLessThan(terms.indexOf('one-time {KIT_PRICE} USD payment'));
     expect(faqPage).toContain('const displayedFaqs = commercialReady ? faqs : holdFaqs;');
-    expect(faqPage).toContain('Private intake and payment are unavailable while commercial readiness is on hold.');
+    expect(faqPage).toContain('Private intake and payment will remain unavailable until orders open.');
     expect(home).toContain('{commercialReady ? (');
     expect(home).toContain('<CommercialHold />');
   });

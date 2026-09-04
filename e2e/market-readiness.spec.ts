@@ -5,6 +5,7 @@ import { COMMERCIAL_PRODUCT_META_DESCRIPTION } from '../lib/site';
 
 const syntheticOwnerId = '50000000-0000-4000-8000-000000000005';
 const syntheticFactorId = '60000000-0000-4000-8000-000000000006';
+const secondarySyntheticFactorId = '61000000-0000-4000-8000-000000000006';
 
 function syntheticJwt(aal: 'aal1' | 'aal2') {
   const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -38,14 +39,33 @@ function syntheticOwner(aal: 'aal1' | 'aal2') {
     updated_at: timestamp,
     factors: [{
       id: syntheticFactorId,
-      friendly_name: 'Synthetic browser factor',
+      friendly_name: 'Primary browser factor',
       factor_type: 'totp',
       status: 'verified',
+      created_at: timestamp,
+      updated_at: timestamp
+    }, {
+      id: secondarySyntheticFactorId,
+      friendly_name: 'Secondary browser factor',
+      factor_type: 'totp',
+      status: 'verified',
+      created_at: timestamp,
+      updated_at: timestamp
+    }, {
+      id: '62000000-0000-4000-8000-000000000006',
+      friendly_name: 'Unverified browser factor',
+      factor_type: 'totp',
+      status: 'unverified',
       created_at: timestamp,
       updated_at: timestamp
     }],
     aal
   };
+}
+
+function syntheticSingleFactorOwner(aal: 'aal1' | 'aal2') {
+  const owner = syntheticOwner(aal);
+  return { ...owner, factors: owner.factors.slice(0, 1) };
 }
 
 const playwrightAccessToken = createBriefAccessToken({
@@ -126,7 +146,7 @@ test('synthetic private intake reaches the non-authoritative checkout return thr
   await page.getByRole('button', { name: /continue to secure checkout/i }).click();
 
   await expect(page).toHaveURL(/\/snickerdoodle\/checkout\/success\?session_id=cs_synthetic_browser$/);
-  await expect(page.getByRole('heading', { level: 1, name: /checkout return was received/i })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /confirming your payment/i })).toBeVisible();
   expect(submitted).toMatchObject({
     organizationName: 'Fictional RC Organization',
     campaignName: 'Synthetic RC Campaign',
@@ -241,10 +261,10 @@ test('public content, health, and not-found routes respond correctly', async ({ 
   }
 
   await page.goto('/snickerdoodle/checkout/success?session_id=cs_must_not_be_looked_up');
-  await expect(page.getByRole('heading', { level: 1, name: /checkout return was received/i })).toBeVisible();
-  await expect(page.getByText(/after the signed payment event is reconciled/i)).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /we’re confirming your payment/i })).toBeVisible();
+  await expect(page.getByText(/this return page does not confirm payment/i)).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
-  await expect(page.getByRole('button', { name: /review sample packages/i }))
+  await expect(page.getByRole('button', { name: /review campaign templates/i }))
     .toHaveAttribute('href', '/snickerdoodle/samples');
   await expect(page.getByRole('button', { name: /back to snickerdoodle/i }))
     .toHaveAttribute('href', '/snickerdoodle');
@@ -259,12 +279,12 @@ test('public content, health, and not-found routes respond correctly', async ({ 
     .toHaveAttribute('href', '/snickerdoodle');
 
   await page.goto('/snickerdoodle/samples');
-  await expect(page.getByRole('heading', { level: 1, name: /campaign package looks like/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /view sample/i })).toHaveCount(3);
-  await expect(page.getByText(/fictional examples/i)).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /fictional .* campaign package templates/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /view template/i })).toHaveCount(3);
+  await expect(page.getByText(/these fictional templates illustrate/i)).toBeVisible();
 
   await page.goto('/snickerdoodle/samples/year-end-appeal');
-  await expect(page.getByText(/fictional demonstration/i)).toBeVisible();
+  await expect(page.getByText('Fictional campaign template:', { exact: true })).toBeVisible();
   await expect(page.getByText(/Hope Harbor/i)).toHaveCount(0);
   await expect(page.getByText(/TikTok/i)).toHaveCount(0);
 
@@ -313,9 +333,90 @@ test('mobile navigation and survey layout work without horizontal overflow', asy
   expect(surveyOverflow).toBe(false);
 });
 
+test('one verified owner factor remains automatically selected', async ({ page }) => {
+  const aal1Token = syntheticJwt('aal1');
+  const aal2Token = syntheticJwt('aal2');
+  let challenged = false;
+
+  await page.route('**/auth/v1/**', async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const common = { contentType: 'application/json', headers: { 'Cache-Control': 'no-store' } };
+
+    if (url.pathname.endsWith('/auth/v1/token') && url.searchParams.get('grant_type') === 'password') {
+      await route.fulfill({
+        ...common,
+        status: 200,
+        body: JSON.stringify({
+          access_token: aal1Token,
+          token_type: 'bearer',
+          expires_in: 3_600,
+          refresh_token: 'synthetic-single-factor-refresh-aal1',
+          user: syntheticSingleFactorOwner('aal1')
+        })
+      });
+      return;
+    }
+
+    if (url.pathname.endsWith('/auth/v1/user')) {
+      const aal = request.headers().authorization === `Bearer ${aal2Token}` ? 'aal2' : 'aal1';
+      await route.fulfill({
+        ...common,
+        status: 200,
+        body: JSON.stringify(syntheticSingleFactorOwner(aal))
+      });
+      return;
+    }
+
+    if (url.pathname.endsWith(`/auth/v1/factors/${syntheticFactorId}/challenge`)) {
+      challenged = true;
+      await route.fulfill({
+        ...common,
+        status: 200,
+        body: JSON.stringify({
+          id: '71000000-0000-4000-8000-000000000007',
+          type: 'totp',
+          expires_at: 1_788_108_400
+        })
+      });
+      return;
+    }
+
+    if (url.pathname.endsWith(`/auth/v1/factors/${syntheticFactorId}/verify`)) {
+      await route.fulfill({
+        ...common,
+        status: 200,
+        body: JSON.stringify({
+          access_token: aal2Token,
+          token_type: 'bearer',
+          expires_in: 3_600,
+          refresh_token: 'synthetic-single-factor-refresh-aal2',
+          user: syntheticSingleFactorOwner('aal2')
+        })
+      });
+      return;
+    }
+
+    await route.abort('failed');
+  });
+
+  await page.goto('/snickerdoodle/manager/queue');
+  await expect(page.getByLabel('Owner email')).toBeVisible();
+  await page.getByLabel('Owner email').fill('owner@example.invalid');
+  await page.getByLabel('Password').fill('synthetic-password');
+  await page.getByRole('button', { name: 'Continue securely' }).click();
+  await expect(page.getByRole('group', { name: 'Authenticator' })).toHaveCount(0);
+  await page.getByLabel('Authenticator code').fill('123456');
+  await expect(page.getByRole('button', { name: 'Verify second factor' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Verify second factor' }).click();
+  expect(challenged).toBe(true);
+  await expect(page.getByRole('button', { name: 'Load secure queue' })).toBeVisible();
+});
+
 test('owner manager queue is noindex and requires password plus verified TOTP before paid-brief access', async ({ page }) => {
   const aal1Token = syntheticJwt('aal1');
   const aal2Token = syntheticJwt('aal2');
+  let challengedFactorId = '';
   const analyticsRequests: string[] = [];
   const pageErrors: string[] = [];
   page.on('request', (requestEvent) => {
@@ -355,7 +456,9 @@ test('owner manager queue is noindex and requires password plus verified TOTP be
       return;
     }
 
-    if (url.pathname.endsWith(`/auth/v1/factors/${syntheticFactorId}/challenge`)) {
+    if (/\/auth\/v1\/factors\/[^/]+\/challenge$/.test(url.pathname)) {
+      challengedFactorId = url.pathname.split('/').at(-2) ?? '';
+      expect(challengedFactorId).toBe(secondarySyntheticFactorId);
       expect(authorization).toBe(`Bearer ${aal1Token}`);
       await route.fulfill({
         ...common,
@@ -369,7 +472,8 @@ test('owner manager queue is noindex and requires password plus verified TOTP be
       return;
     }
 
-    if (url.pathname.endsWith(`/auth/v1/factors/${syntheticFactorId}/verify`)) {
+    if (/\/auth\/v1\/factors\/[^/]+\/verify$/.test(url.pathname)) {
+      expect(url.pathname.split('/').at(-2)).toBe(secondarySyntheticFactorId);
       const body = request.postDataJSON() as { challenge_id?: string; code?: string };
       expect(authorization).toBe(`Bearer ${aal1Token}`);
       expect(body).toMatchObject({
@@ -461,9 +565,16 @@ test('owner manager queue is noindex and requires password plus verified TOTP be
   await page.getByLabel('Owner email').fill('owner@example.invalid');
   await page.getByLabel('Password').fill('synthetic-password');
   await page.getByRole('button', { name: 'Continue securely' }).click();
+  await expect(page.getByRole('group', { name: 'Authenticator' })).toBeVisible();
+  await expect(page.getByLabel('Primary browser factor (1)')).toBeVisible();
+  await expect(page.getByLabel('Secondary browser factor (2)')).toBeVisible();
+  await expect(page.getByLabel(/Unverified browser factor/)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Verify second factor' })).toBeDisabled();
+  await page.getByLabel('Secondary browser factor (2)').check();
   await expect(page.getByLabel('Authenticator code')).toBeVisible();
   await page.getByLabel('Authenticator code').fill('123456');
   await page.getByRole('button', { name: 'Verify second factor' }).click();
+  expect(challengedFactorId).toBe(secondarySyntheticFactorId);
   await expect(page.getByRole('button', { name: 'Load secure queue' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Load secure queue' }).click();
@@ -478,6 +589,8 @@ test('owner manager queue is noindex and requires password plus verified TOTP be
   await expect(page.locator('body')).not.toContainText('synthetic-refresh-token');
   await expect(page.locator('body')).not.toContainText(aal1Token);
   await expect(page.locator('body')).not.toContainText(aal2Token);
+  await expect(page.locator('body')).not.toContainText(syntheticFactorId);
+  await expect(page.locator('body')).not.toContainText(secondarySyntheticFactorId);
   expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length })))
     .toEqual({ local: 0, session: 0 });
   expect(analyticsRequests, 'provider analytics must remain absent on the restricted manager surface').toEqual([]);

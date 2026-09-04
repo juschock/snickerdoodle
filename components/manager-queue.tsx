@@ -108,9 +108,26 @@ export function selectFulfillmentRetry(
 
 type AuthStep = 'password' | 'mfa' | 'enrollment' | 'ready';
 
+export type OwnerVerifiedFactor = {
+  id: string;
+  label: string;
+};
+
 export type OwnerSecondFactorPreparation =
-  | { step: 'mfa'; factorId: string }
+  | { step: 'mfa'; factors: OwnerVerifiedFactor[] }
   | { step: 'enrollment'; factorId: string; qrCode: string; manualSecret: string };
+
+export function selectOwnerFactorId(
+  factors: OwnerVerifiedFactor[],
+  selectedFactorIndex: number | null
+) {
+  if (
+    selectedFactorIndex === null ||
+    !Number.isSafeInteger(selectedFactorIndex) ||
+    selectedFactorIndex < 0
+  ) return null;
+  return factors[selectedFactorIndex]?.id ?? null;
+}
 
 export async function prepareOwnerSecondFactor(
   client: SupabaseClient
@@ -118,8 +135,21 @@ export async function prepareOwnerSecondFactor(
   const factors = await client.auth.mfa.listFactors();
   if (factors.error) throw new Error('Could not inspect registered second factors.');
 
-  const verifiedTotp = factors.data?.totp.find((factor) => factor.status === 'verified');
-  if (verifiedTotp) return { step: 'mfa', factorId: verifiedTotp.id };
+  const verifiedTotp = (factors.data?.totp ?? [])
+    .filter((factor) => factor.status === 'verified')
+    .map((factor, index) => {
+      if (typeof factor.id !== 'string' || !/^[0-9a-f-]{36}$/i.test(factor.id)) {
+        throw new Error('Could not inspect registered second factors.');
+      }
+      const friendlyName = typeof factor.friendly_name === 'string'
+        ? factor.friendly_name.replace(/\s+/g, ' ').trim().slice(0, 80)
+        : '';
+      return {
+        id: factor.id,
+        label: friendlyName ? `${friendlyName} (${index + 1})` : `Authenticator ${index + 1}`
+      };
+    });
+  if (verifiedTotp.length > 0) return { step: 'mfa', factors: verifiedTotp };
 
   const enrollment = await client.auth.mfa.enroll({
     factorType: 'totp',
@@ -231,6 +261,8 @@ export function ManagerQueue({
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
   const [factorId, setFactorId] = useState<string | null>(null);
+  const [verifiedFactors, setVerifiedFactors] = useState<OwnerVerifiedFactor[]>([]);
+  const [selectedFactorIndex, setSelectedFactorIndex] = useState<number | null>(null);
   const [enrollmentQrCode, setEnrollmentQrCode] = useState<string | null>(null);
   const [enrollmentManualSecret, setEnrollmentManualSecret] = useState<string | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -256,6 +288,8 @@ export function ManagerQueue({
     }
     setTotpCode('');
     setFactorId(null);
+    setVerifiedFactors([]);
+    setSelectedFactorIndex(null);
     setEnrollmentQrCode(null);
     setEnrollmentManualSecret(null);
     setSession(nextSession);
@@ -286,10 +320,16 @@ export function ManagerQueue({
         await authClient.auth.signOut({ scope: 'local' });
         throw factorError;
       }
-      setFactorId(secondFactor.factorId);
       if (secondFactor.step === 'enrollment') {
+        setFactorId(secondFactor.factorId);
+        setVerifiedFactors([]);
+        setSelectedFactorIndex(null);
         setEnrollmentQrCode(secondFactor.qrCode);
         setEnrollmentManualSecret(secondFactor.manualSecret);
+      } else {
+        setFactorId(null);
+        setVerifiedFactors(secondFactor.factors);
+        setSelectedFactorIndex(secondFactor.factors.length === 1 ? 0 : null);
       }
       setAuthStep(secondFactor.step);
     } catch (authError) {
@@ -301,11 +341,17 @@ export function ManagerQueue({
 
   async function verifyMfa(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!authClient || !factorId) return;
+    const selectedFactorId = authStep === 'mfa'
+      ? selectOwnerFactorId(verifiedFactors, selectedFactorIndex)
+      : factorId;
+    if (!authClient || !selectedFactorId) return;
     setError(null);
     setLoading(true);
     try {
-      const verification = await authClient.auth.mfa.challengeAndVerify({ factorId, code: totpCode });
+      const verification = await authClient.auth.mfa.challengeAndVerify({
+        factorId: selectedFactorId,
+        code: totpCode
+      });
       setTotpCode('');
       if (verification.error) throw new Error('Second-factor verification was rejected.');
       await acceptAal2Session(await currentSession(authClient));
@@ -527,6 +573,8 @@ export function ManagerQueue({
     setSession(null);
     setTotpCode('');
     setFactorId(null);
+    setVerifiedFactors([]);
+    setSelectedFactorIndex(null);
     setEnrollmentQrCode(null);
     setEnrollmentManualSecret(null);
     setReceipts([]);
@@ -590,6 +638,30 @@ export function ManagerQueue({
 
       {authClient && authStep === 'mfa' ? (
         <form className="mt-8 max-w-sm" onSubmit={verifyMfa}>
+          {verifiedFactors.length > 1 ? (
+            <fieldset className="mb-5">
+              <legend className="text-sm font-medium text-foreground">Authenticator</legend>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Choose the authenticator that will generate this code.
+              </p>
+              <div className="mt-3 grid gap-2">
+                {verifiedFactors.map((factor, index) => (
+                  <label key={factor.id} className="flex cursor-pointer items-center gap-3 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground">
+                    <input
+                      type="radio"
+                      name="owner-authenticator"
+                      value={index}
+                      checked={selectedFactorIndex === index}
+                      onChange={() => setSelectedFactorIndex(index)}
+                      required
+                      className="size-4 accent-primary"
+                    />
+                    <span>{factor.label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
           <label className="text-sm font-medium text-foreground">
             Authenticator code
             <input type="text" inputMode="numeric" autoComplete="one-time-code" required pattern="[0-9]{6}"
@@ -597,7 +669,9 @@ export function ManagerQueue({
               onChange={(event) => setTotpCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
               className="mt-2 h-10 w-full rounded-lg border border-input bg-background px-3 font-mono text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/30" />
           </label>
-          <Button type="submit" size="lg" disabled={loading || totpCode.length !== 6} className="mt-4">
+          <Button type="submit" size="lg" disabled={
+            loading || totpCode.length !== 6 || selectedFactorIndex === null
+          } className="mt-4">
             {loading ? 'Verifying…' : 'Verify second factor'}
           </Button>
         </form>

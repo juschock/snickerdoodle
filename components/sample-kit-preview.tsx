@@ -28,7 +28,7 @@ export function SampleKitPreview({ kit }: { kit: SampleKit }) {
         </div>
 
         <div className="mt-6 max-w-3xl rounded-xl border border-primary/30 bg-card px-5 py-4 text-sm leading-relaxed text-muted-foreground">
-          <strong className="text-foreground">Fictional demonstration:</strong> every organization, event, person,
+          <strong className="text-foreground">Fictional campaign template:</strong> every organization, event, person,
           offer, schedule, and outcome shown below is illustrative—not a real client or verified result. This is not an
           offer or a promise of service capacity. Do not use the sample as-is.
         </div>

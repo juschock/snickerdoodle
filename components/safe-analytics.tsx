@@ -1,18 +1,20 @@
 'use client';
 
 import { Analytics, type BeforeSendEvent } from '@vercel/analytics/next';
+import { usePathname } from 'next/navigation';
 import { PUBLIC_PREFIX, SITE_ORIGIN } from '@/lib/site';
 
-const PRIVATE_BRIEF_ROOTS = ['/brief', `${PUBLIC_PREFIX}/brief`];
+const PRIVATE_PATH_ROOTS = ['/brief', '/checkout', '/manager']
+  .flatMap((root) => [root, `${PUBLIC_PREFIX}${root}`]);
 
-function isPrivateBriefPath(pathname: string): boolean {
-  return PRIVATE_BRIEF_ROOTS.some((root) => pathname === root || pathname.startsWith(`${root}/`));
+export function isPrivateAnalyticsPath(pathname: string): boolean {
+  return PRIVATE_PATH_ROOTS.some((root) => pathname === root || pathname.startsWith(`${root}/`));
 }
 
 export function filterAnalyticsEvent(event: BeforeSendEvent): BeforeSendEvent | null {
   const url = new URL(event.url, SITE_ORIGIN);
   if (
-    isPrivateBriefPath(url.pathname) ||
+    isPrivateAnalyticsPath(url.pathname) ||
     url.searchParams.has('access') ||
     new URLSearchParams(url.hash.slice(1)).has('access')
   ) {
@@ -24,5 +26,7 @@ export function filterAnalyticsEvent(event: BeforeSendEvent): BeforeSendEvent | 
 }
 
 export function SafeAnalytics() {
+  const pathname = usePathname();
+  if (isPrivateAnalyticsPath(pathname)) return null;
   return <Analytics beforeSend={filterAnalyticsEvent} />;
 }

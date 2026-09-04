@@ -40,11 +40,11 @@ export default async function BriefReceivedPage() {
         <div className="mx-auto w-full max-w-2xl px-4 py-16 text-center sm:px-6">
           <CheckCircle2 className="mx-auto size-12 text-primary" aria-hidden="true" />
           <h1 className="mt-5 text-balance font-heading text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            {checkoutAvailable ? 'Check your secure checkout status' : 'Your campaign survey was received'}
+            {checkoutAvailable ? 'Thanks — we’re confirming your payment' : 'Your campaign survey was received'}
           </h1>
           <p className="mx-auto mt-4 max-w-xl leading-relaxed text-muted-foreground">
             {checkoutAvailable
-              ? 'This page does not confirm payment. If you completed Stripe’s hosted checkout, Stripe will email its receipt and Racoben will separately confirm the paid order after the signed payment event is reconciled. If you did not complete checkout, return to your private intake link.'
+              ? 'This page does not confirm payment. Stripe will email a receipt if payment completed, and Racoben will separately confirm your paid order and delivery schedule. If you did not finish checkout, return to your private intake link.'
               : 'No order was created and no payment was collected. Racoben will review the campaign facts and reply through the email address you provided before any work begins.'}
           </p>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">

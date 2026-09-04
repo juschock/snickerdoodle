@@ -37,7 +37,7 @@ describe('checkout return readiness presentation', () => {
     {
       commercialReady: false,
       headerLabel: 'View fictional samples',
-      footerCopy: 'Product-readiness review is in progress.'
+      footerCopy: 'Snickerdoodle is not accepting orders yet.'
     },
     {
       commercialReady: true,
@@ -57,8 +57,8 @@ describe('checkout return readiness presentation', () => {
         expect(html).toContain(footerCopy);
       }
 
-      expect(success).toContain('your checkout return was received');
-      expect(success).toContain('after the signed payment event is reconciled');
+      expect(success).toContain('we’re confirming your payment');
+      expect(success).toContain('This return page does not confirm payment.');
       expect(cancel).toContain('Stripe did not report a completed payment');
       expect(cancel).toContain('no paid order or delivery obligation was created');
     }

@@ -18,4 +18,14 @@ describe('payment status page', () => {
     expect(received).toContain('This page does not confirm payment.');
     expect(received).not.toContain('Payment is unavailable in this release.');
   });
+
+  it('uses clear return-page language without exposing reconciliation internals', () => {
+    const received = readFileSync('app/brief/received/page.tsx', 'utf8');
+    const success = readFileSync('app/checkout/success/page.tsx', 'utf8');
+
+    expect(received).toContain('This page does not confirm payment.');
+    expect(success).toContain('This return page does not confirm payment.');
+    expect(`${received}\n${success}`).not.toContain('signed payment event');
+    expect(`${received}\n${success}`).not.toContain('reconciled');
+  });
 });

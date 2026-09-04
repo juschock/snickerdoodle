@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterAnalyticsEvent } from '@/components/safe-analytics';
+import { filterAnalyticsEvent, isPrivateAnalyticsPath } from '@/components/safe-analytics';
 import { readAnalyticsEnabled } from '@/lib/analytics-runtime';
 
 describe('analytics privacy boundary', () => {
@@ -19,7 +19,18 @@ describe('analytics privacy boundary', () => {
     })).toBe(true);
   });
 
-  it('drops private brief events and any event carrying an access bearer', () => {
+  it('drops private brief, checkout, manager, and bearer-carrying events', () => {
+    for (const path of [
+      '/brief',
+      '/checkout/success',
+      '/manager/queue',
+      '/snickerdoodle/brief',
+      '/snickerdoodle/checkout/cancel',
+      '/snickerdoodle/manager/queue'
+    ]) expect(isPrivateAnalyticsPath(path)).toBe(true);
+    expect(isPrivateAnalyticsPath('/snickerdoodle/briefing')).toBe(false);
+    expect(isPrivateAnalyticsPath('/snickerdoodle/managerial')).toBe(false);
+
     expect(filterAnalyticsEvent({ type: 'pageview', url: 'https://racoben.com/snickerdoodle/brief' })).toBeNull();
     expect(filterAnalyticsEvent({
       type: 'pageview',
@@ -28,6 +39,22 @@ describe('analytics privacy boundary', () => {
     expect(filterAnalyticsEvent({
       type: 'pageview',
       url: 'https://racoben.com/brief/received'
+    })).toBeNull();
+    expect(filterAnalyticsEvent({
+      type: 'pageview',
+      url: 'https://racoben.com/snickerdoodle/checkout/success?session_id=private'
+    })).toBeNull();
+    expect(filterAnalyticsEvent({
+      type: 'pageview',
+      url: 'https://racoben.com/checkout/cancel'
+    })).toBeNull();
+    expect(filterAnalyticsEvent({
+      type: 'pageview',
+      url: 'https://racoben.com/snickerdoodle/manager/queue'
+    })).toBeNull();
+    expect(filterAnalyticsEvent({
+      type: 'pageview',
+      url: 'https://racoben.com/manager/queue'
     })).toBeNull();
     expect(filterAnalyticsEvent({
       type: 'pageview',
@@ -44,6 +71,10 @@ describe('analytics privacy boundary', () => {
       type: 'pageview',
       url: 'https://racoben.com/snickerdoodle/briefing'
     })).toEqual({ type: 'pageview', url: 'https://racoben.com/snickerdoodle/briefing' });
+    expect(filterAnalyticsEvent({
+      type: 'pageview',
+      url: 'https://racoben.com/snickerdoodle/managerial'
+    })).toEqual({ type: 'pageview', url: 'https://racoben.com/snickerdoodle/managerial' });
     expect(filterAnalyticsEvent({
       type: 'pageview',
       url: 'https://racoben.com/snickerdoodle/samples?utm_source=test#section'

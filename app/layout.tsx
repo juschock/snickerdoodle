@@ -14,6 +14,10 @@ const fraunces = Fraunces({
   weight: ['400', '500', '600', '700']
 });
 
+// Read deployment readiness at request time so metadata and page content cannot
+// freeze into different availability modes during the build.
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(): Promise<Metadata> {
   const commercialReady = await readPageCommercialReadiness();
   const { tagline, productDescription } = getProductMetadataMode(commercialReady);

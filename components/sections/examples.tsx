@@ -68,7 +68,7 @@ export function Examples() {
             href="/samples"
             className="text-sm font-medium text-primary underline-offset-4 hover:underline"
           >
-            View full sample campaign packages →
+            Explore sample campaign templates →
           </Link>
         </p>
       </div>

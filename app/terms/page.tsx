@@ -89,8 +89,8 @@ export default async function TermsPage() {
                 <section aria-labelledby="terms-status" className="space-y-3">
                   <h2 id="terms-status" className="font-heading text-xl font-semibold text-foreground">Current product status</h2>
                   <p>
-                    {PRODUCT_NAME} is in product-readiness review. It is not currently offering or accepting campaign work,
-                    orders, payments, private intake, capacity reservations, or fulfillment commitments.
+                    {PRODUCT_NAME} is not currently offering or accepting campaign work, orders, payments, private intake,
+                    capacity reservations, or fulfillment commitments.
                   </p>
                   <p>Emailing a product question does not create an order, reserve capacity, or authorize work.</p>
                 </section>

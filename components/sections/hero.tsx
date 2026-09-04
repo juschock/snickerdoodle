@@ -41,7 +41,7 @@ export function Hero() {
               variant="outline"
               className="h-12 px-7 text-base"
               nativeButton={false}
-              render={<Link href="/samples">View a Full Sample</Link>}
+              render={<Link href="/samples">Explore Sample Templates</Link>}
             />
           </div>
 

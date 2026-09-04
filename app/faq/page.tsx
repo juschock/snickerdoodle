@@ -19,11 +19,11 @@ import {
 const holdFaqs = [
   {
     q: `Is ${PRODUCT_NAME} accepting orders?`,
-    a: 'No. The product remains in readiness review, and no service offer, capacity reservation, or fulfillment commitment is currently available.'
+    a: `${PRODUCT_NAME} is not currently accepting orders, reserving capacity, or making fulfillment commitments.`
   },
   {
     q: 'Can I submit a private survey or make a payment?',
-    a: 'No. Private intake and payment are unavailable while commercial readiness is on hold.'
+    a: 'No. Private intake and payment will remain unavailable until orders open.'
   },
   {
     q: 'What are the public samples?',

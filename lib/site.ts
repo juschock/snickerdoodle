@@ -41,7 +41,7 @@ export const PRODUCT_HOLD_DISCLAIMER = `${PRODUCT_NAME} is not currently offerin
 export const HOLD_PRODUCT_META_DESCRIPTION = `Explore clearly labeled fictional ${PRODUCT_NAME} campaign samples and check the product's current access status.`;
 export const COMMERCIAL_PRODUCT_META_DESCRIPTION =
   'Human-reviewed campaign execution packages for nonprofits, community organizations, local businesses, and events.';
-export const HOLD_FAQ_META_DESCRIPTION = `Current product-readiness status and fictional sample information for ${PRODUCT_NAME}.`;
+export const HOLD_FAQ_META_DESCRIPTION = `Current availability and fictional sample information for ${PRODUCT_NAME}.`;
 export const COMMERCIAL_FAQ_META_DESCRIPTION =
   'Answers about Snickerdoodle campaign packages, pricing, checkout, fulfillment, and how the service works.';
 

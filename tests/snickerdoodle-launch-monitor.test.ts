@@ -31,14 +31,26 @@ describe("Snickerdoodle launch monitor", () => {
     expect(result.stdout.trim().split("\n")).toHaveLength(1);
   });
 
-  it("invokes Vercel without a shell and from the fixed canonical checkout", () => {
-    expect(source).toContain('spawnSync("vercel", args, {');
+  it("invokes an exact pinned Vercel CLI without a shell and from the fixed canonical checkout", () => {
+    expect(source).toContain('const VERCEL_CLI_PACKAGE = "vercel@59.11.2";');
+    expect(source).toContain('spawnSync("npx", ["--yes", VERCEL_CLI_PACKAGE, ...args], {');
+    expect(source).not.toContain("vercel@latest");
     expect(source).toContain("shell: false");
     expect(source).not.toContain("shell: true");
     expect(source).toContain(
       '"/Users/joshuauschock/Documents/ChatGPT/Racoben 2/Snickerdoodle"',
     );
     expect(source).toContain("cwd: VERCEL_CWD");
+  });
+
+  it("preserves true no-error-log semantics", () => {
+    expect(source).toContain(
+      '["logs", deployment, "--level", "error", "--since", "10m"]',
+    );
+    expect(source).toContain(
+      "!containsRealLogEvent(result.stdout, result.stderr)",
+    );
+    expect(source).not.toContain('["inspect", "--logs", deployment]');
   });
 
   it("pins the exact public origins", () => {

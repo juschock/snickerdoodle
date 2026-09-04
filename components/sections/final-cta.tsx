@@ -24,7 +24,7 @@ export function FinalCta() {
             size="lg"
             nativeButton={false}
             className="h-11 border border-primary-foreground/30 bg-transparent px-6 text-base text-primary-foreground hover:bg-primary-foreground/10"
-            render={<Link href="/samples">View a Full Sample</Link>}
+            render={<Link href="/samples">Explore Sample Templates</Link>}
           />
         </div>
       </div>
