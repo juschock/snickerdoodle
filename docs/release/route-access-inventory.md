@@ -11,6 +11,7 @@ All routes are under `/snickerdoodle` in the production build. The bare `/` is a
 | `/snickerdoodle/brief/received` | Private continuation | Non-authoritative receipt; checkout CTA appears only when the exact payment runtime is available |
 | `/snickerdoodle/checkout/success`, `/snickerdoodle/checkout/cancel` | Public return | No payment truth from query/redirect; both are noindex and no-store |
 | `/snickerdoodle/manager/queue` | Staff | Supabase password session plus verified TOTP/AAL2 owner; no static secret fallback |
+| `/snickerdoodle/auth/recovery` | Private recovery | Same-origin Supabase password recovery only; callback material is scrubbed immediately, the session stays in memory, and a fresh password sign-in is required after local sign-out |
 | `/snickerdoodle/api/health` | Public operational | Metadata-only liveness, no-store; does not claim provider readiness |
 | `/snickerdoodle/api/brief-access`, `/snickerdoodle/api/brief`, `/snickerdoodle/api/checkout` | Private capability/API | Exact origin, bounded input, signed capability; fail closed when commercial/payment config is incomplete |
 | `/snickerdoodle/api/stripe/webhook` | Provider API | Bounded raw body and verified Stripe signature before the atomic payment RPC; independently fail closed |

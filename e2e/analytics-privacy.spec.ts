@@ -43,7 +43,8 @@ test('enabled analytics records public navigation and suppresses private route f
   for (const path of [
     '/snickerdoodle/checkout/success?session_id=synthetic-private-value',
     '/snickerdoodle/manager/queue',
-    '/snickerdoodle/brief'
+    '/snickerdoodle/brief',
+    '/snickerdoodle/auth/recovery'
   ]) {
     await page.evaluate((nextPath) => window.history.pushState(null, '', nextPath), path);
     await expect(page).toHaveURL(new RegExp(path.split('?')[0].replaceAll('/', '\\/')));
@@ -54,7 +55,8 @@ test('enabled analytics records public navigation and suppresses private route f
   for (const path of [
     '/snickerdoodle/brief',
     '/snickerdoodle/checkout/cancel',
-    '/snickerdoodle/manager/queue'
+    '/snickerdoodle/manager/queue',
+    '/snickerdoodle/auth/recovery'
   ]) {
     await page.goto(path);
     await page.waitForTimeout(100);

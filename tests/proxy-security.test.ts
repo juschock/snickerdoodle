@@ -9,6 +9,7 @@ describe('edge request boundary', () => {
     '/snickerdoodle/brief/received',
     '/snickerdoodle/checkout/success',
     '/snickerdoodle/manager/queue',
+    '/snickerdoodle/auth/recovery',
     '/snickerdoodle/api/manager/queue',
     '/snickerdoodle/api/manager/health',
     '/snickerdoodle/api/manager/fulfillment',

@@ -28,6 +28,7 @@ describe('public detritus hardening', () => {
       '/snickerdoodle/brief',
       '/snickerdoodle/checkout',
       '/snickerdoodle/manager',
+      '/snickerdoodle/auth',
       '/snickerdoodle/api'
     ]));
     expect(disallow).not.toContain('/snickerdoodle');

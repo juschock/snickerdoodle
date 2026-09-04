@@ -4,7 +4,7 @@ import { Analytics, type BeforeSendEvent } from '@vercel/analytics/next';
 import { usePathname } from 'next/navigation';
 import { PUBLIC_PREFIX, SITE_ORIGIN } from '@/lib/site';
 
-const PRIVATE_PATH_ROOTS = ['/brief', '/checkout', '/manager']
+const PRIVATE_PATH_ROOTS = ['/brief', '/checkout', '/manager', '/auth']
   .flatMap((root) => [root, `${PUBLIC_PREFIX}${root}`]);
 
 export function isPrivateAnalyticsPath(pathname: string): boolean {

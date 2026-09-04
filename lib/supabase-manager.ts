@@ -50,6 +50,22 @@ export function createSupabaseOwnerAuthClient(url: string, anonKey: string) {
   });
 }
 
+export function createSupabaseOwnerRecoveryClient(url: string, anonKey: string) {
+  const config = readPublicSupabaseConfig(url, anonKey);
+  if (!config) throw new Error('Owner password recovery is not configured.');
+
+  return createClient(config.url, config.anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: (callbackUrl, params) =>
+        callbackUrl.pathname === '/snickerdoodle/auth/recovery' &&
+        params.type === 'recovery',
+      flowType: 'implicit'
+    }
+  });
+}
+
 export function getSupabaseManagerClient(accessToken: string) {
   const url = process.env.SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

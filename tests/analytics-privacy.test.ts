@@ -19,14 +19,16 @@ describe('analytics privacy boundary', () => {
     })).toBe(true);
   });
 
-  it('drops private brief, checkout, manager, and bearer-carrying events', () => {
+  it('drops private brief, checkout, manager, auth, and bearer-carrying events', () => {
     for (const path of [
       '/brief',
       '/checkout/success',
       '/manager/queue',
+      '/auth/recovery',
       '/snickerdoodle/brief',
       '/snickerdoodle/checkout/cancel',
-      '/snickerdoodle/manager/queue'
+      '/snickerdoodle/manager/queue',
+      '/snickerdoodle/auth/recovery'
     ]) expect(isPrivateAnalyticsPath(path)).toBe(true);
     expect(isPrivateAnalyticsPath('/snickerdoodle/briefing')).toBe(false);
     expect(isPrivateAnalyticsPath('/snickerdoodle/managerial')).toBe(false);
@@ -55,6 +57,10 @@ describe('analytics privacy boundary', () => {
     expect(filterAnalyticsEvent({
       type: 'pageview',
       url: 'https://racoben.com/manager/queue'
+    })).toBeNull();
+    expect(filterAnalyticsEvent({
+      type: 'pageview',
+      url: 'https://racoben.com/snickerdoodle/auth/recovery'
     })).toBeNull();
     expect(filterAnalyticsEvent({
       type: 'pageview',

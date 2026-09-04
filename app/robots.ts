@@ -10,6 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         '/snickerdoodle/brief',
         '/snickerdoodle/checkout',
         '/snickerdoodle/manager',
+        '/snickerdoodle/auth',
         '/snickerdoodle/api'
       ]
     },

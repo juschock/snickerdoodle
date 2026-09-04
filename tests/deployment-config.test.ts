@@ -20,6 +20,7 @@ describe('deployment routing configuration', () => {
     expect(configSource).toContain("source: '/api/checkout'");
     expect(configSource).toContain("source: '/api/manager/:path*'");
     expect(configSource).toContain("source: '/api/stripe/webhook'");
+    expect(configSource).toContain("source: '/auth/:path*'");
     expect(headerSource).toContain("{ key: 'Cache-Control', value: 'private, no-store, max-age=0' }");
     expect(headerSource).toContain("{ key: 'CDN-Cache-Control', value: 'no-store' }");
     expect(headerSource).toContain("{ key: 'Vercel-CDN-Cache-Control', value: 'no-store' }");

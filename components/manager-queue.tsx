@@ -129,6 +129,25 @@ export function selectOwnerFactorId(
   return factors[selectedFactorIndex]?.id ?? null;
 }
 
+export function getOwnerRecoveryRedirect(origin: string) {
+  let parsed: URL;
+  try {
+    parsed = new URL(origin);
+  } catch {
+    throw new Error('Invalid recovery origin.');
+  }
+
+  const isLoopback = parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost';
+  if (
+    parsed.origin !== origin ||
+    (parsed.protocol !== 'https:' && !(isLoopback && parsed.protocol === 'http:'))
+  ) {
+    throw new Error('Invalid recovery origin.');
+  }
+
+  return `${parsed.origin}/snickerdoodle/auth/recovery`;
+}
+
 export async function prepareOwnerSecondFactor(
   client: SupabaseClient
 ): Promise<OwnerSecondFactorPreparation> {
@@ -279,6 +298,9 @@ export function ManagerQueue({
   const [fulfillmentPending, setFulfillmentPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [recoveryPending, setRecoveryPending] = useState(false);
+  const [recoveryRequested, setRecoveryRequested] = useState(false);
+  const [recoveryNotice, setRecoveryNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function acceptAal2Session(nextSession: Session) {
@@ -336,6 +358,32 @@ export function ManagerQueue({
       setError(authError instanceof Error ? authError.message : 'Owner sign-in failed.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function requestPasswordReset() {
+    if (
+      !authClient ||
+      recoveryPending ||
+      recoveryRequested ||
+      email.trim().length === 0
+    ) return;
+
+    setError(null);
+    setPassword('');
+    setRecoveryNotice(null);
+    setRecoveryPending(true);
+
+    try {
+      await authClient.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: getOwnerRecoveryRedirect(window.location.origin)
+      });
+    } catch {
+      // Deliberately indistinguishable from provider acceptance.
+    } finally {
+      setRecoveryRequested(true);
+      setRecoveryNotice('If that address can receive a reset email, check its inbox and use the newest link.');
+      setRecoveryPending(false);
     }
   }
 
@@ -589,6 +637,9 @@ export function ManagerQueue({
     setFulfillmentPending(false);
     setLoaded(false);
     setAuthStep('password');
+    setRecoveryPending(false);
+    setRecoveryRequested(false);
+    setRecoveryNotice(null);
     if (authClient) await authClient.auth.signOut({ scope: 'local' });
   }
 
@@ -605,8 +656,8 @@ export function ManagerQueue({
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Sign in with the owner account and complete authenticator verification. Access is limited to the active owner
-          after both steps. Passwords, authenticator codes, and session tokens are held in memory only and are never
-          written to browser storage, cookies, URLs, logs, or customer records.
+          after both steps. During normal owner sign-in, passwords, authenticator codes, and session tokens are held in
+          memory only and are not written by this workspace to browser storage, cookies, logs, or customer records.
         </p>
       </div>
 
@@ -621,7 +672,11 @@ export function ManagerQueue({
           <label className="text-sm font-medium text-foreground">
             Owner email
             <input type="email" autoComplete="username" required maxLength={320} value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setRecoveryRequested(false);
+                setRecoveryNotice(null);
+              }}
               className="mt-2 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/30" />
           </label>
           <label className="text-sm font-medium text-foreground">
@@ -630,9 +685,30 @@ export function ManagerQueue({
               value={password} onChange={(event) => setPassword(event.target.value)}
               className="mt-2 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/30" />
           </label>
-          <Button type="submit" size="lg" disabled={loading} className="sm:col-span-2 sm:w-fit">
-            {loading ? 'Signing in…' : 'Continue securely'}
-          </Button>
+          <div className="flex flex-wrap gap-3 sm:col-span-2">
+            <Button type="submit" size="lg" disabled={loading || recoveryPending}>
+              {loading ? 'Signing in…' : 'Continue securely'}
+            </Button>
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              disabled={
+                loading ||
+                recoveryPending ||
+                recoveryRequested ||
+                email.trim().length === 0
+              }
+              onClick={requestPasswordReset}
+            >
+              {recoveryPending ? 'Sending reset…' : 'Send password reset'}
+            </Button>
+          </div>
+          {recoveryNotice ? (
+            <p className="text-sm leading-relaxed text-muted-foreground sm:col-span-2" aria-live="polite">
+              {recoveryNotice}
+            </p>
+          ) : null}
         </form>
       ) : null}
 

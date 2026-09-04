@@ -41,6 +41,10 @@ const nextConfig = {
         headers: privateResponseHeaders
       },
       {
+        source: '/auth/:path*',
+        headers: privateResponseHeaders
+      },
+      {
         source: '/checkout/:path*',
         headers: privateResponseHeaders
       }
