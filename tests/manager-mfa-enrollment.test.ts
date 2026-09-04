@@ -144,7 +144,7 @@ describe('owner TOTP enrollment routing', () => {
       .toBeLessThan(signOutSource.indexOf("authClient.auth.signOut({ scope: 'local' })"));
     expect(signOutSource.indexOf('setEnrollmentManualSecret(null)'))
       .toBeLessThan(signOutSource.indexOf("authClient.auth.signOut({ scope: 'local' })"));
-    expect(source).toContain("if (!session) throw new Error('A current AAL2 owner session is required.')");
+    expect(source).toContain("if (!session) throw new Error('A fully verified owner session is required.')");
     expect(source).not.toMatch(/localStorage|sessionStorage|document\.cookie|console\.|service_role|ServiceRole|admin\.auth|\.unenroll\(/);
   });
 });

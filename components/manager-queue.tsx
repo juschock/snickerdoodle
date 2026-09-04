@@ -363,7 +363,7 @@ export function ManagerQueue({
   }
 
   async function authorizedGet(path: string) {
-    if (!session) throw new Error('A current AAL2 owner session is required.');
+    if (!session) throw new Error('A fully verified owner session is required.');
     const response = await fetch(path, {
       method: 'GET',
       cache: 'no-store',
@@ -373,14 +373,14 @@ export function ManagerQueue({
     const payload: unknown = await response.json();
     if (!response.ok) {
       throw new Error(response.status === 401 || response.status === 403
-        ? 'The owner session expired or no longer satisfies AAL2. Sign in again.'
+        ? 'The owner session expired or needs authenticator verification again. Sign in again.'
         : 'The manager workspace is temporarily unavailable.');
     }
     return payload;
   }
 
   async function authorizedPost(path: string, body: Record<string, unknown>) {
-    if (!session) throw new Error('A current AAL2 owner session is required.');
+    if (!session) throw new Error('A fully verified owner session is required.');
     const response = await fetch(path, {
       method: 'POST',
       cache: 'no-store',
@@ -394,7 +394,7 @@ export function ManagerQueue({
     const payload: unknown = await response.json();
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        throw new Error('The owner session expired or no longer satisfies AAL2. Sign in again.');
+        throw new Error('The owner session expired or needs authenticator verification again. Sign in again.');
       }
       if (response.status === 400) throw new Error('Enter a valid delivery email.');
       throw new Error('Private invite generation is temporarily unavailable.');
@@ -542,7 +542,7 @@ export function ManagerQueue({
       const payload: unknown = await response.json();
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
-          throw new Error('The owner session expired or no longer satisfies AAL2. Sign in again.');
+          throw new Error('The owner session expired or needs authenticator verification again. Sign in again.');
         }
         throw new Error('The fulfillment update was not applied. Retry this action safely or refresh the order.');
       }
@@ -604,8 +604,8 @@ export function ManagerQueue({
           Intake, assignment, and payment operations
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Sign in through Supabase Auth and complete a verified second factor. Access is limited to an active owner
-          with a live AAL2 session. Passwords, TOTP codes, and session tokens are held in memory only and are never
+          Sign in with the owner account and complete authenticator verification. Access is limited to the active owner
+          after both steps. Passwords, authenticator codes, and session tokens are held in memory only and are never
           written to browser storage, cookies, URLs, logs, or customer records.
         </p>
       </div>
