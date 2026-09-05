@@ -77,8 +77,10 @@ select pg_temp.assert_true(
     'read_engagement_workspace',
     'read_intake_manager_queue',
     'read_owner_paid_brief',
+    'read_owner_reconciliation_alerts',
     'read_privacy_export',
     'read_service_lead_engagement',
+    'resolve_owner_expired_checkout_alert',
     'transition_order_fulfillment',
     'verify_privacy_request',
     'write_engagement_work_item'
@@ -131,6 +133,7 @@ select pg_temp.assert_true(
         'intake_manager_queue_access_receipts',
         'owner_paid_brief_access_receipts',
         'order_fulfillment_idempotency',
+        'payment_alert_resolution_receipts',
         'privacy_requests',
         'privacy_request_actions',
         'privacy_audit_receipts'

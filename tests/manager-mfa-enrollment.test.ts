@@ -30,7 +30,7 @@ const validQrCode = sdkSvgQrCode(128);
 
 type FactorFixture = {
   id: string;
-  factor_type: 'totp' | 'phone';
+  factor_type: 'totp' | 'phone' | 'webauthn';
   status: 'verified' | 'unverified';
   friendly_name?: string;
 };
@@ -94,6 +94,9 @@ function mfaClient({
         ),
         totp: current.filter(
           (factor) => factor.factor_type === 'totp' && factor.status === 'verified'
+        ),
+        webauthn: current.filter(
+          (factor) => factor.factor_type === 'webauthn' && factor.status === 'verified'
         )
       },
       error: null
@@ -210,6 +213,31 @@ describe('owner TOTP enrollment routing', () => {
     expect(enroll).not.toHaveBeenCalled();
   });
 
+  it.each(['phone', 'webauthn'] as const)(
+    'fails closed without mutation when a verified %s factor exists',
+    async (factorType) => {
+      const verifiedOther: FactorFixture = {
+        id: verifiedFactorId,
+        factor_type: factorType,
+        status: 'verified',
+        friendly_name: 'Other verified factor'
+      };
+      const stale = totpFactor(staleFactorId, 'unverified', ownerFriendlyName);
+      const preparation = mfaClient({ factors: [verifiedOther, stale] });
+      const retry = mfaClient({ factorSnapshots: [[verifiedOther, stale]] });
+
+      await expect(prepareOwnerSecondFactor(preparation.client))
+        .rejects.toThrow('Could not inspect registered second factors.');
+      expect(preparation.unenroll).not.toHaveBeenCalled();
+      expect(preparation.enroll).not.toHaveBeenCalled();
+
+      await expect(retryIncompleteOwnerSecondFactor(retry.client, staleFactorId))
+        .rejects.toThrow('Could not inspect registered second factors.');
+      expect(retry.unenroll).not.toHaveBeenCalled();
+      expect(retry.enroll).not.toHaveBeenCalled();
+    }
+  );
+
   it('fails closed when the incomplete factor changes before explicit cleanup', async () => {
     const { client, enroll, unenroll } = mfaClient({
       factorSnapshots: [[totpFactor(otherFactorId, 'unverified', ownerFriendlyName)]]
@@ -221,7 +249,7 @@ describe('owner TOTP enrollment routing', () => {
     expect(enroll).not.toHaveBeenCalled();
   });
 
-  it('does not remove unrelated unverified factors', async () => {
+  it('fails closed instead of enrolling around unrelated unverified factors', async () => {
     const unrelatedTotp = totpFactor(staleFactorId, 'unverified', 'Personal authenticator');
     const unrelatedPhone: FactorFixture = {
       id: otherFactorId,
@@ -238,12 +266,27 @@ describe('owner TOTP enrollment routing', () => {
       }
     });
 
-    await expect(prepareOwnerSecondFactor(client)).resolves.toMatchObject({
-      step: 'enrollment',
-      factorId: enrollmentFactorId
-    });
+    await expect(prepareOwnerSecondFactor(client))
+      .rejects.toThrow('Could not inspect registered second factors.');
     expect(unenroll).not.toHaveBeenCalled();
-    expect(enroll).toHaveBeenCalledTimes(1);
+    expect(enroll).not.toHaveBeenCalled();
+  });
+
+  it('requires the intended incomplete TOTP to be the sole factor before cleanup', async () => {
+    const stale = totpFactor(staleFactorId, 'unverified', ownerFriendlyName);
+    const unrelated = totpFactor(otherFactorId, 'unverified', 'Personal authenticator');
+    const preparation = mfaClient({ factors: [stale, unrelated] });
+    const retry = mfaClient({ factorSnapshots: [[stale, unrelated]] });
+
+    await expect(prepareOwnerSecondFactor(preparation.client))
+      .rejects.toThrow('Could not inspect registered second factors.');
+    expect(preparation.unenroll).not.toHaveBeenCalled();
+    expect(preparation.enroll).not.toHaveBeenCalled();
+
+    await expect(retryIncompleteOwnerSecondFactor(retry.client, staleFactorId))
+      .rejects.toThrow('Incomplete authenticator state changed. Sign in again.');
+    expect(retry.unenroll).not.toHaveBeenCalled();
+    expect(retry.enroll).not.toHaveBeenCalled();
   });
 
   it('does not enroll if explicit cleanup fails or remains incomplete', async () => {
@@ -253,6 +296,9 @@ describe('owner TOTP enrollment routing', () => {
       unenrollmentError: new Error('provider detail')
     });
     const staleAfterCleanup = mfaClient({ factorSnapshots: [[stale], [stale]] });
+    const unrelatedAfterCleanup = mfaClient({
+      factorSnapshots: [[stale], [totpFactor(otherFactorId, 'unverified', 'Personal authenticator')]]
+    });
 
     await expect(retryIncompleteOwnerSecondFactor(cleanupFailure.client, staleFactorId))
       .rejects.toThrow('Could not remove the incomplete authenticator setup.');
@@ -261,6 +307,10 @@ describe('owner TOTP enrollment routing', () => {
       .rejects.toThrow('Could not remove the incomplete authenticator setup.');
     expect(staleAfterCleanup.unenroll).toHaveBeenCalledTimes(1);
     expect(staleAfterCleanup.enroll).not.toHaveBeenCalled();
+    await expect(retryIncompleteOwnerSecondFactor(unrelatedAfterCleanup.client, staleFactorId))
+      .rejects.toThrow('Could not remove the incomplete authenticator setup.');
+    expect(unrelatedAfterCleanup.unenroll).toHaveBeenCalledTimes(1);
+    expect(unrelatedAfterCleanup.enroll).not.toHaveBeenCalled();
   });
 
   it('accepts a large SDK-returned QR string above the former 100 KB limit', async () => {

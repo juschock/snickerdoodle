@@ -8,6 +8,8 @@ umask 077
 export LC_ALL=C
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 pg_bin="${SNICK_PG17_BIN:-/opt/homebrew/opt/postgresql@17/bin}"
+owner_expiry_only="${SNICK_OWNER_EXPIRY_ONLY:-false}"
+types_output="${SNICK_DB_TYPES_OUTPUT:-}"
 tmp_dir="$(mktemp -d "${TMPDIR:-/private/tmp}/snickerdoodle-sn05.XXXXXX")"
 port="$((56000 + ($$ % 700)))"
 data_dir="$tmp_dir/data"
@@ -35,6 +37,28 @@ done
 if [[ "$("$pg_bin/postgres" --version)" != postgres\ \(PostgreSQL\)\ 17.* ]]; then
   echo "PostgreSQL 17 is required" >&2
   exit 65
+fi
+if [[ "$owner_expiry_only" != true && "$owner_expiry_only" != false ]]; then
+  echo "SNICK_OWNER_EXPIRY_ONLY must be true or false" >&2
+  exit 64
+fi
+if [[ -n "$types_output" ]]; then
+  case "$types_output" in
+    /private/tmp/*|/tmp/*) ;;
+    *)
+      echo "SNICK_DB_TYPES_OUTPUT must be an absolute path under /private/tmp or /tmp" >&2
+      exit 64
+      ;;
+  esac
+  if [[ "$types_output" == *'/../'* || "$types_output" == */.. || \
+        -L "$types_output" || -d "$types_output" ]]; then
+    echo "SNICK_DB_TYPES_OUTPUT is not a safe regular-file target" >&2
+    exit 64
+  fi
+  if ! command -v supabase >/dev/null 2>&1; then
+    echo "Supabase CLI is required to generate database types" >&2
+    exit 65
+  fi
 fi
 
 while read -r expected relative; do
@@ -154,12 +178,19 @@ where id = '65000000-0000-4000-8000-000000000001';
 SQL
   fi
 done
-if [[ "$migration_count" != '22' ]]; then
-  echo "Expected 22 migrations, replayed $migration_count" >&2
+if [[ "$migration_count" != '23' ]]; then
+  echo "Expected 23 migrations, replayed $migration_count" >&2
   exit 65
 fi
 
-if [[ "${SNICK_PRIVACY_REPLAY_ONLY:-false}" != true ]]; then
+if [[ -n "$types_output" ]]; then
+  supabase gen types --db-url "$db_url" --schema private --schema public \
+    >"$types_output"
+  chmod 600 "$types_output"
+fi
+
+if [[ "$owner_expiry_only" != true && \
+      "${SNICK_PRIVACY_REPLAY_ONLY:-false}" != true ]]; then
   "$pg_bin/psql" -X -q "$db_url" -v ON_ERROR_STOP=1 \
     -f "$repo_root/scripts/db/privacy-detector-supersession-acceptance.sql"
   "$pg_bin/psql" -X -q "$db_url" -v ON_ERROR_STOP=1 \
@@ -180,6 +211,12 @@ if [[ "${SNICK_PRIVACY_REPLAY_ONLY:-false}" != true ]]; then
     bash "$repo_root/scripts/db/payment-state-machine-concurrency.sh"
   PAYMENT_DB_URL="$db_url" \
     bash "$repo_root/scripts/db/payment-terminal-race-concurrency.sh"
+fi
+
+if [[ "${SNICK_PRIVACY_REPLAY_ONLY:-false}" != true || \
+      "$owner_expiry_only" == true ]]; then
+  PSQL_BIN="$pg_bin/psql" PAYMENT_DB_URL="$db_url" \
+    bash "$repo_root/scripts/db/owner-expiry-reconciliation-acceptance.sh"
 fi
 
 printf '%s\n' "SNICK_PRIVACY_REPLAY_PASS postgres=17 migrations=$migration_count"

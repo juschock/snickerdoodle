@@ -53,11 +53,17 @@ describe('SN06 backup, restore, and launch recovery', () => {
     expect(rehearsal).toContain('payment-state-machine-acceptance.sql');
     expect(rehearsal).toContain('payment-state-machine-concurrency.sh');
     expect(rehearsal).toContain('payment-terminal-race-concurrency.sh');
+    expect(rehearsal).toContain('owner-expiry-reconciliation-acceptance.sh');
+    expect(rehearsal).toContain('replay_migrations "$source_url" 23');
   });
 
   it('migrates a prior snapshot forward and reapplies newer privacy tombstones', () => {
     expect(rehearsal).toContain('replay_migrations "$prior_url" 20');
     expect(rehearsal).toContain('implement_privacy_lifecycle_and_retention.sql');
+    expect(rehearsal).toContain('release_rejected_checkout_session_setup.sql');
+    expect(rehearsal).toContain('20260904214819_owner_expiry_reconciliation.sql');
+    expect(rehearsal).toContain("('20260904214819', null, 'owner_expiry_reconciliation')");
+    expect(rehearsal).toContain('SNICK_SN06_RECOVERY_PASS postgres=17 migrations=23');
     expect(rehearsal).toContain('sn06-replay-privacy-tombstone.sql');
     expect(tombstone).toContain('resurrected@sn06.example.invalid');
     expect(tombstone).toContain('SNICK_SN06_PRIVACY_TOMBSTONE_REPLAY_PASS');

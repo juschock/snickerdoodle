@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useRef, useState } from 'react';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,17 @@ type OperationsHealth = {
   paid_stripe_orders_without_intent: number;
   paid_stripe_orders_without_event: number;
   processed_stripe_events_without_paid_order: number;
+  open_reconciliation_alerts: number;
   attention_reasons: string[];
+};
+
+type OwnerReconciliationAlert = {
+  alert_id: string;
+  event_type: string;
+  alert_code: string;
+  occurrence_count: number;
+  last_observed_at: string;
+  can_resolve_expiry: boolean;
 };
 
 export type FulfillmentAction = {
@@ -195,6 +205,9 @@ async function readOwnerFactorState(client: SupabaseClient) {
   const allTotp = allFactors.filter(
     (factor) => factor.factor_type === 'totp'
   );
+  const hasAnyVerifiedFactor = allFactors.some(
+    (factor) => factor.status === 'verified'
+  );
   const verifiedTotp = allTotp.filter(
     (factor) => factor.status === 'verified'
   );
@@ -215,21 +228,23 @@ async function readOwnerFactorState(client: SupabaseClient) {
     };
   });
 
-  const incompleteNamed = allTotp.filter(
-    (factor) =>
-      factor.status === 'unverified' &&
-      factor.friendly_name === OWNER_TOTP_FRIENDLY_NAME
-  );
-  if (incompleteNamed.length > 1) {
-    throw new Error('Could not inspect registered second factors.');
-  }
-
-  const incompleteFactorId = incompleteNamed[0]?.id ?? null;
+  const soleFactor = allFactors.length === 1 ? allFactors[0] : null;
+  const incompleteFactorId =
+    soleFactor?.factor_type === 'totp' &&
+    soleFactor.status === 'unverified' &&
+    soleFactor.friendly_name === OWNER_TOTP_FRIENDLY_NAME
+      ? soleFactor.id
+      : null;
   if (incompleteFactorId !== null && !validFactorId(incompleteFactorId)) {
     throw new Error('Could not inspect registered second factors.');
   }
 
-  return { verifiedFactors, incompleteFactorId };
+  return {
+    verifiedFactors,
+    hasAnyVerifiedFactor,
+    incompleteFactorId,
+    totalFactors: allFactors.length
+  };
 }
 
 function readEnrollmentArtifacts(data: unknown) {
@@ -268,7 +283,8 @@ async function enrollOwnerSecondFactor(
   if (validFactorId(createdId)) {
     const state = await readOwnerFactorState(client);
     if (
-      state.verifiedFactors.length === 0 &&
+      !state.hasAnyVerifiedFactor &&
+      state.totalFactors === 1 &&
       state.incompleteFactorId === createdId
     ) {
       return { step: 'cleanup', factorId: createdId };
@@ -301,11 +317,17 @@ export async function prepareOwnerSecondFactor(
   client: SupabaseClient
 ): Promise<OwnerSecondFactorPreparation> {
   const state = await readOwnerFactorState(client);
-  if (state.verifiedFactors.length > 0) {
-    return { step: 'mfa', factors: state.verifiedFactors };
+  if (state.hasAnyVerifiedFactor) {
+    if (state.verifiedFactors.length > 0) {
+      return { step: 'mfa', factors: state.verifiedFactors };
+    }
+    throw new Error('Could not inspect registered second factors.');
   }
   if (state.incompleteFactorId) {
     return { step: 'cleanup', factorId: state.incompleteFactorId };
+  }
+  if (state.totalFactors !== 0) {
+    throw new Error('Could not inspect registered second factors.');
   }
   return enrollOwnerSecondFactor(client);
 }
@@ -321,10 +343,16 @@ export async function retryIncompleteOwnerSecondFactor(
   // Re-read at action time. If a verified factor appeared, prefer it and
   // remove nothing.
   const before = await readOwnerFactorState(client);
-  if (before.verifiedFactors.length > 0) {
-    return { step: 'mfa', factors: before.verifiedFactors };
+  if (before.hasAnyVerifiedFactor) {
+    if (before.verifiedFactors.length > 0) {
+      return { step: 'mfa', factors: before.verifiedFactors };
+    }
+    throw new Error('Could not inspect registered second factors.');
   }
-  if (before.incompleteFactorId !== factorId) {
+  if (
+    before.totalFactors !== 1 ||
+    before.incompleteFactorId !== factorId
+  ) {
     throw new Error('Incomplete authenticator state changed. Sign in again.');
   }
 
@@ -334,10 +362,13 @@ export async function retryIncompleteOwnerSecondFactor(
   }
 
   const after = await readOwnerFactorState(client);
-  if (after.verifiedFactors.length > 0) {
-    return { step: 'mfa', factors: after.verifiedFactors };
+  if (after.hasAnyVerifiedFactor) {
+    if (after.verifiedFactors.length > 0) {
+      return { step: 'mfa', factors: after.verifiedFactors };
+    }
+    throw new Error('Could not remove the incomplete authenticator setup.');
   }
-  if (after.incompleteFactorId) {
+  if (after.totalFactors !== 0) {
     throw new Error('Could not remove the incomplete authenticator setup.');
   }
 
@@ -375,7 +406,7 @@ function isOperationsHealth(value: unknown): value is OperationsHealth {
     'webhook_receipts_24h', 'failed_webhook_receipts_24h', 'stuck_webhook_receipts',
     'stale_unpaid_checkout_intents', 'paid_checkout_intents_without_order',
     'paid_stripe_orders_without_intent', 'paid_stripe_orders_without_event',
-    'processed_stripe_events_without_paid_order'
+    'processed_stripe_events_without_paid_order', 'open_reconciliation_alerts'
   ].every((key) => Number.isSafeInteger(health[key]) && Number(health[key]) >= 0);
   const timestamps = ['latest_webhook_received_at', 'latest_webhook_completed_at']
     .every((key) => health[key] === null || (
@@ -386,6 +417,35 @@ function isOperationsHealth(value: unknown): value is OperationsHealth {
     counts && timestamps &&
     Array.isArray(health.attention_reasons) &&
     health.attention_reasons.every((reason) => typeof reason === 'string');
+}
+
+function isOwnerReconciliationAlert(
+  value: unknown
+): value is OwnerReconciliationAlert {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const alert = value as Record<string, unknown>;
+  const keys = Object.keys(alert).sort();
+  if (keys.join('|') !== [
+    'alert_code',
+    'alert_id',
+    'can_resolve_expiry',
+    'event_type',
+    'last_observed_at',
+    'occurrence_count'
+  ].join('|')) return false;
+
+  return typeof alert.alert_id === 'string' &&
+    FACTOR_ID_PATTERN.test(alert.alert_id) &&
+    typeof alert.event_type === 'string' &&
+    alert.event_type.length >= 3 &&
+    alert.event_type.length <= 255 &&
+    typeof alert.alert_code === 'string' &&
+    /^[a-z][a-z0-9_]{2,99}$/.test(alert.alert_code) &&
+    Number.isSafeInteger(alert.occurrence_count) &&
+    Number(alert.occurrence_count) > 0 &&
+    typeof alert.last_observed_at === 'string' &&
+    Number.isFinite(Date.parse(alert.last_observed_at)) &&
+    typeof alert.can_resolve_expiry === 'boolean';
 }
 
 function readPrivateInviteLink(value: unknown) {
@@ -447,6 +507,15 @@ export function ManagerQueue({
   const [selectedIntake, setSelectedIntake] = useState<PaidIntake | null>(null);
   const [nextCursor, setNextCursor] = useState<QueueCursor | null>(null);
   const [operationsHealth, setOperationsHealth] = useState<OperationsHealth | null>(null);
+  const [reconciliationAlerts, setReconciliationAlerts] =
+    useState<OwnerReconciliationAlert[]>([]);
+  const [reconciliationAlertsLoaded, setReconciliationAlertsLoaded] =
+    useState(false);
+  const [reconciliationNotice, setReconciliationNotice] =
+    useState<string | null>(null);
+  const [resolvingAlertId, setResolvingAlertId] = useState<string | null>(null);
+  const reconciliationIdempotencyKeys =
+    useRef<Map<string, string>>(new Map());
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [inviteNotice, setInviteNotice] = useState<string | null>(null);
@@ -639,18 +708,157 @@ export function ManagerQueue({
     return payload;
   }
 
-  async function loadOperationsHealth() {
-    setError(null);
+  async function loadOperationsHealth(preserveError = false) {
+    if (!preserveError) setError(null);
     setLoading(true);
     try {
       const payload = await authorizedGet('/snickerdoodle/api/manager/health');
       const health = (payload as { health?: unknown }).health;
       if (!isOperationsHealth(health)) throw new Error('Payment operations returned an invalid response.');
       setOperationsHealth(health);
+      return true;
     } catch (healthError) {
       setOperationsHealth(null);
       setError(healthError instanceof Error ? healthError.message : 'Payment operations health is unavailable.');
+      return false;
     } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadReconciliationAlerts(preserveFeedback = false) {
+    if (!preserveFeedback) {
+      setError(null);
+      setReconciliationNotice(null);
+    }
+    setLoading(true);
+    try {
+      const payload = await authorizedGet(
+        '/snickerdoodle/api/manager/alerts'
+      );
+      const alerts = (payload as { alerts?: unknown }).alerts;
+      if (
+        !Array.isArray(alerts) ||
+        !alerts.every(isOwnerReconciliationAlert)
+      ) {
+        throw new Error(
+          'Reconciliation review returned an invalid response.'
+        );
+      }
+      setReconciliationAlerts(alerts);
+      setReconciliationAlertsLoaded(true);
+      return true;
+    } catch (alertError) {
+      setReconciliationAlerts([]);
+      setReconciliationAlertsLoaded(false);
+      setError(
+        alertError instanceof Error
+          ? alertError.message
+          : 'Reconciliation review is unavailable.'
+      );
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resolveReconciliationAlert(
+    alert: OwnerReconciliationAlert
+  ) {
+    if (
+      !session ||
+      !alert.can_resolve_expiry ||
+      resolvingAlertId !== null
+    ) return;
+
+    if (!window.confirm(
+      'Resolve this reviewed unpaid Checkout expiry? ' +
+      'This closes only the reconciliation alert. ' +
+      'It does not change payment, order, reservation, or fulfillment state.'
+    )) return;
+
+    const alertOccurrenceKey = `${alert.alert_id}:${alert.occurrence_count}`;
+    let idempotencyKey =
+      reconciliationIdempotencyKeys.current.get(alertOccurrenceKey);
+    if (!idempotencyKey) {
+      idempotencyKey = crypto.randomUUID();
+      reconciliationIdempotencyKeys.current.set(
+        alertOccurrenceKey,
+        idempotencyKey
+      );
+    }
+
+    setError(null);
+    setReconciliationNotice(null);
+    setResolvingAlertId(alert.alert_id);
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        '/snickerdoodle/api/manager/reconciliation',
+        {
+          method: 'POST',
+          cache: 'no-store',
+          credentials: 'same-origin',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            alert_id: alert.alert_id,
+            expected_occurrence_count: alert.occurrence_count,
+            idempotency_key: idempotencyKey
+          })
+        }
+      );
+
+      const payload: unknown = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(
+            'The owner session expired or needs authenticator verification again. Sign in again.'
+          );
+        }
+        if (response.status === 409) {
+          reconciliationIdempotencyKeys.current.delete(alertOccurrenceKey);
+          setReconciliationAlertsLoaded(false);
+          throw new Error(
+            'This alert changed after review. Reload open alerts before deciding again.'
+          );
+        }
+        throw new Error(
+          'The reconciliation resolution was not applied.'
+        );
+      }
+
+      if (
+        !payload ||
+        typeof payload !== 'object' ||
+        Object.keys(payload).length !== 1 ||
+        (payload as { status?: unknown }).status !== 'resolved'
+      ) {
+        throw new Error(
+          'The reconciliation resolution returned an invalid response.'
+        );
+      }
+
+      reconciliationIdempotencyKeys.current.delete(alertOccurrenceKey);
+      const alertsRefreshed = await loadReconciliationAlerts(true);
+      const healthRefreshed = await loadOperationsHealth(true);
+      setReconciliationNotice(
+        alertsRefreshed && healthRefreshed
+          ? 'The reviewed unpaid-expiry alert was resolved. Payment truth was not changed.'
+          : 'The reviewed unpaid-expiry alert was resolved, but the workspace refresh was incomplete. Review open alerts again before taking another action.'
+      );
+    } catch (resolutionError) {
+      setError(
+        resolutionError instanceof Error
+          ? resolutionError.message
+          : 'The reconciliation resolution did not complete.'
+      );
+    } finally {
+      setResolvingAlertId(null);
       setLoading(false);
     }
   }
@@ -819,6 +1027,11 @@ export function ManagerQueue({
     setNextCursor(null);
     setSelectedIntake(null);
     setOperationsHealth(null);
+    setReconciliationAlerts([]);
+    setReconciliationAlertsLoaded(false);
+    setReconciliationNotice(null);
+    setResolvingAlertId(null);
+    reconciliationIdempotencyKeys.current.clear();
     setInviteEmail('');
     setInviteLink(null);
     setInviteNotice(null);
@@ -1020,7 +1233,7 @@ export function ManagerQueue({
                   <h2 id="operations-health-heading" className="font-heading text-xl font-semibold">Payment operations health</h2>
                   <p className="mt-1 text-sm text-muted-foreground">Aggregate reconciliation and webhook counters only.</p>
                 </div>
-                <Button type="button" variant="outline" disabled={loading} onClick={loadOperationsHealth}>
+                <Button type="button" variant="outline" disabled={loading} onClick={() => void loadOperationsHealth()}>
                   Check health
                 </Button>
               </div>
@@ -1038,6 +1251,7 @@ export function ManagerQueue({
                     <div><dt className="text-muted-foreground">Paid orders missing intent</dt><dd className="text-lg font-semibold">{operationsHealth.paid_stripe_orders_without_intent}</dd></div>
                     <div><dt className="text-muted-foreground">Paid order/event gaps</dt><dd className="text-lg font-semibold">{operationsHealth.paid_stripe_orders_without_event}</dd></div>
                     <div><dt className="text-muted-foreground">Events missing paid order</dt><dd className="text-lg font-semibold">{operationsHealth.processed_stripe_events_without_paid_order}</dd></div>
+                    <div><dt className="text-muted-foreground">Open reconciliation alerts</dt><dd className="text-lg font-semibold">{operationsHealth.open_reconciliation_alerts}</dd></div>
                   </dl>
                   {operationsHealth.stale_unpaid_checkout_intents > 0 ? (
                     <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
@@ -1087,6 +1301,115 @@ export function ManagerQueue({
               {inviteNotice ? <p className="mt-3 text-xs leading-relaxed text-muted-foreground" aria-live="polite">{inviteNotice}</p> : null}
             </section>
           </div>
+
+          <section
+            aria-labelledby="reconciliation-alerts-heading"
+            className="mt-5 rounded-xl border border-border bg-secondary/20 p-5"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2
+                  id="reconciliation-alerts-heading"
+                  className="font-heading text-xl font-semibold"
+                >
+                  Payment reconciliation alerts
+                </h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  Review metadata only. Eligible unpaid Checkout expiries can
+                  be acknowledged here after the database revalidates their
+                  exact current state.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading || resolvingAlertId !== null}
+                onClick={() => void loadReconciliationAlerts()}
+              >
+                Review open alerts
+              </Button>
+            </div>
+
+            {reconciliationAlertsLoaded &&
+            reconciliationAlerts.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">
+                No reconciliation alerts are open.
+              </p>
+            ) : null}
+
+            {reconciliationAlerts.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {reconciliationAlerts.map((alert) => (
+                  <div
+                    key={alert.alert_id}
+                    className="rounded-lg border border-border bg-background p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <dl className="grid gap-1 text-sm">
+                        <div>
+                          <dt className="inline font-medium">Event: </dt>
+                          <dd className="inline">{alert.event_type}</dd>
+                        </div>
+                        <div>
+                          <dt className="inline font-medium">Alert: </dt>
+                          <dd className="inline font-mono text-xs">
+                            {alert.alert_code}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="inline font-medium">
+                            Occurrences reviewed:{' '}
+                          </dt>
+                          <dd className="inline">
+                            {alert.occurrence_count}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="inline font-medium">
+                            Last observed:{' '}
+                          </dt>
+                          <dd className="inline">
+                            {new Date(
+                              alert.last_observed_at
+                            ).toLocaleString()}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      {alert.can_resolve_expiry ? (
+                        <Button
+                          type="button"
+                          disabled={
+                            loading ||
+                            resolvingAlertId === alert.alert_id
+                          }
+                          onClick={() =>
+                            resolveReconciliationAlert(alert)}
+                        >
+                          {resolvingAlertId === alert.alert_id
+                            ? 'Resolving…'
+                            : 'Resolve verified unpaid expiry'}
+                        </Button>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Manual investigation required
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {reconciliationNotice ? (
+              <p
+                className="mt-4 text-sm font-medium text-foreground"
+                aria-live="polite"
+              >
+                {reconciliationNotice}
+              </p>
+            ) : null}
+          </section>
         </div>
       ) : null}
 

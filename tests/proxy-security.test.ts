@@ -12,6 +12,8 @@ describe('edge request boundary', () => {
     '/snickerdoodle/auth/recovery',
     '/snickerdoodle/api/manager/queue',
     '/snickerdoodle/api/manager/health',
+    '/snickerdoodle/api/manager/alerts',
+    '/snickerdoodle/api/manager/reconciliation',
     '/snickerdoodle/api/manager/fulfillment',
     '/snickerdoodle/api/manager/invites',
     '/snickerdoodle/api/brief',
@@ -19,7 +21,11 @@ describe('edge request boundary', () => {
     '/snickerdoodle/api/stripe/webhook'
   ])('marks %s private and non-cacheable', (pathname) => {
     const response = proxy(new NextRequest(`https://racoben.com${pathname}`, {
-      method: pathname === '/snickerdoodle/api/manager/queue' || pathname === '/snickerdoodle/api/manager/health'
+      method: [
+        '/snickerdoodle/api/manager/queue',
+        '/snickerdoodle/api/manager/health',
+        '/snickerdoodle/api/manager/alerts'
+      ].includes(pathname)
         ? 'GET'
         : pathname.includes('/api/') ? 'POST' : 'GET'
     }));
@@ -40,8 +46,12 @@ describe('edge request boundary', () => {
     await expect(response.json()).resolves.toEqual({ error: 'Method not allowed.' });
   });
 
-  it('rejects non-GET methods before the owner queue API runs', async () => {
-    const response = proxy(new NextRequest('https://racoben.com/snickerdoodle/api/manager/queue', {
+  it.each([
+    '/snickerdoodle/api/manager/queue',
+    '/snickerdoodle/api/manager/health',
+    '/snickerdoodle/api/manager/alerts'
+  ])('rejects non-GET methods before %s runs', async (pathname) => {
+    const response = proxy(new NextRequest(`https://racoben.com${pathname}`, {
       method: 'POST'
     }));
 
@@ -49,6 +59,28 @@ describe('edge request boundary', () => {
     expect(response.headers.get('allow')).toBe('GET');
     expect(response.headers.get('cache-control')).toBe('private, no-store, max-age=0');
     await expect(response.json()).resolves.toEqual({ error: 'Method not allowed.' });
+  });
+
+  it('method-gates and bounds owner reconciliation before the route runs', async () => {
+    const wrongMethod = proxy(new NextRequest(
+      'https://racoben.com/snickerdoodle/api/manager/reconciliation'
+    ));
+    const oversized = proxy(new NextRequest(
+      'https://racoben.com/snickerdoodle/api/manager/reconciliation',
+      {
+        method: 'POST',
+        headers: { 'content-length': String(2 * 1024 + 1) }
+      }
+    ));
+
+    expect(wrongMethod.status).toBe(405);
+    expect(wrongMethod.headers.get('allow')).toBe('POST');
+    expect(oversized.status).toBe(413);
+    expect(oversized.headers.get('cache-control'))
+      .toBe('private, no-store, max-age=0');
+    await expect(oversized.json()).resolves.toEqual({
+      error: 'Payload too large.'
+    });
   });
 
   it('rejects oversized owner invite bodies before the route runs', async () => {

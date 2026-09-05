@@ -29,7 +29,7 @@ describe('SN05 privacy lifecycle', () => {
       '0c33ce412271492bfc4833818fd3a32e2d3cfd530eb42249ee1b2243918d8362'
     );
     expect(createHash('sha256').update(replay).digest('hex')).toBe(
-      '94df0ca5b2b52dc89fa2af56cc2bd61be46e36fbda761c4211fe0b89ea7e2beb'
+      'bd7ac498b61f016934a5cfef11ade95d5e0ca5e715fb244b7ce960c310437866'
     );
   });
 
@@ -112,6 +112,13 @@ describe('SN05 privacy lifecycle', () => {
     expect(acceptance).toContain('SNICK_PRIVACY_LIFECYCLE_ACCEPTANCE_PASS');
     expect(replay).toContain('scripts/db/payment-state-machine-acceptance.sql');
     expect(replay).toContain('scripts/db/privileged-rpc-access-acceptance.sql');
+    expect(replay).toContain('SNICK_OWNER_EXPIRY_ONLY');
+    expect(replay).toContain('SNICK_DB_TYPES_OUTPUT');
+    expect(replay).toContain(
+      'supabase gen types --db-url "$db_url" --schema private --schema public'
+    );
+    expect(replay).toContain('scripts/db/owner-expiry-reconciliation-acceptance.sh');
+    expect(replay).toContain('Expected 23 migrations');
     expect(replay).toContain('SNICK_PRIVACY_REPLAY_PASS postgres=17 migrations=$migration_count');
   });
 });

@@ -60,10 +60,14 @@ describe('SN Sprint 04 privileged access hardening', () => {
       '`engagement_assignments`',
       '`engagement_work_items`',
       '`stripe_events`, `stripe_webhook_receipts`',
+      '`private.payment_reconciliation_alerts`',
       'manager queue and access receipts',
     ]) {
       expect(matrix).toContain(object);
     }
-    expect(matrix).toContain('There are 35 `SECURITY DEFINER` routines');
+    expect(matrix).toContain('There are 37 `SECURITY DEFINER` routines');
+    expect(matrix).toContain('Authenticated elevated surface (exactly thirteen routines)');
+    expect(matrix).toContain('`read_owner_reconciliation_alerts`');
+    expect(matrix).toContain('`resolve_owner_expired_checkout_alert`');
   });
 });

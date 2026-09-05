@@ -17,7 +17,7 @@ INGRESS_EXPECTED_ALIAS=<required-non-secret-origin-only>
 SUPABASE_PROJECT_REF=<required>
 STRIPE_MODE=test
 STRIPE_SANDBOX_ACCOUNT_ID=<required>
-MIGRATION_COUNT=22
+MIGRATION_COUNT=23
 MIGRATION_LEDGER_SHA256=<required>
 MIGRATION_BYTES_UNCHANGED=<true|false>
 READINESS_VERIFIER_RESULT=<exact-PASS-line-or-FAIL>
@@ -52,7 +52,7 @@ The invariant `false` values above are deliberate. This receipt cannot be used t
 | Public sandbox ingress alias | `<required; origin only, no query or fragment>` |
 | Supabase project reference and region | `<required; no credential>` |
 | Stripe test-mode account, product, and price IDs | `<required; no secret>` |
-| Twenty-two-migration ledger hash | `<required>` |
+| Twenty-three-migration ledger hash | `<required>` |
 | Git status before and after proof | `<required>` |
 
 Confirm that app, ingress, Stripe, and Supabase identities all name the intended sandbox system. A deployment URL alone is not release identity.
@@ -137,7 +137,7 @@ Exercise one synthetic scenario from `docs/operations/payment-incident-response.
 - [ ] No preview bypass, query secret, path exception, or public human-app route was used.
 - [ ] The webhook ingress was the only intentionally public sandbox surface.
 - [ ] All webhook business processing used raw-body signature verification and the existing fixed RPC boundary.
-- [ ] No migration, grant, policy, RPC, or database privilege changed; all 22 migration bytes match the ledger.
+- [ ] No migration, grant, policy, RPC, or database privilege changed; all 23 migration bytes match the ledger.
 - [ ] No duplicate payment, access, queue, or fulfillment effect occurred.
 - [ ] No cross-customer disclosure or wrong-provider write occurred.
 - [ ] No live Stripe object, secret, charge, refund, or webhook changed.

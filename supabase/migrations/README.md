@@ -143,3 +143,35 @@ for Stripe SDK `StripeInvalidRequestError`; connection and other ambiguous
 failures continue to require reconciliation. The disposable PostgreSQL 17
 corpus proves release, clean retry, bound-session refusal, and unchanged
 customer/payment/auth/privacy isolation before any hosted application.
+
+## Owner expiry reconciliation candidate, not applied remotely
+
+`20260904214819_owner_expiry_reconciliation.sql` has local digest
+`04bea41fde5e9d83518a38f49e5b66e5415018543fd869fa4952d4f18270cefe`. It makes
+every open payment-reconciliation alert fail the owner health gate, adds an
+immutable private acknowledgement receipt, and exposes an exact six-field
+metadata projection plus a narrowly bound expired-Checkout resolution RPC. The
+read and resolution paths require a live AAL2 owner session. Resolution is
+limited to an open `checkout.session.expired` alert whose intent remains
+expired and unordered, whose exact reservation was released for that event,
+whose webhook receipt completed the recoverable-failure transition, and whose
+provider identifiers remain coherent. It changes only the alert state and its
+immutable acknowledgement receipt; it does not infer payment or mutate order,
+reservation, fulfillment, or provider state.
+
+The full 23-file migration chain was replayed to a disposable loopback-only
+PostgreSQL 17 cluster. The focused owner-expiry acceptance passed AAL1 denial,
+AAL2 metadata read, health gating, identity and transition mismatch denial,
+occurrence-race denial, rollback recovery, idempotent valid resolution,
+immutable-receipt enforcement, alert ordering, unrelated-alert preservation,
+and final health recovery. `lib/database.types.ts` was generated from that
+exact disposable schema for `private` and `public` with
+`@supabase/postgres-meta@0.91.1`, matching the postgres-meta image version
+embedded in the installed Supabase CLI 2.31.8. This is local schema and type
+provenance only.
+
+The migration has **not** been applied to hosted Supabase and is not present in
+the hosted migration ledger. Any SQL byte change alters the digest and
+invalidates this local evidence. Hosted application, hosted type regeneration,
+owner AAL2 proof, deployment, alias promotion, and public-production credit
+remain separate gates.

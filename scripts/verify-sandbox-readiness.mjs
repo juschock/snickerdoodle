@@ -215,6 +215,18 @@ async function verifyLocalManagerBoundary() {
     assertCheck(fulfillment.status === 401, 'manager.fulfillment_missing_bearer_401');
     assertPrivateSecurityHeaders(fulfillment, 'manager.fulfillment');
 
+    const alerts = await safeFetch(`${server.origin}/snickerdoodle/api/manager/alerts`);
+    assertCheck(alerts.status === 401, 'manager.alerts_missing_bearer_401');
+    assertPrivateSecurityHeaders(alerts, 'manager.alerts');
+
+    const reconciliation = await safeFetch(`${server.origin}/snickerdoodle/api/manager/reconciliation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    assertCheck(reconciliation.status === 401, 'manager.reconciliation_missing_bearer_401');
+    assertPrivateSecurityHeaders(reconciliation, 'manager.reconciliation');
+
     const healthWrongMethod = await safeFetch(`${server.origin}/snickerdoodle/api/manager/health`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -233,6 +245,20 @@ async function verifyLocalManagerBoundary() {
     assertCheck(fulfillmentWrongMethod.status === 405, 'manager.fulfillment_wrong_method_405');
     assertCheck(fulfillmentWrongMethod.headers.get('allow') === 'POST', 'manager.fulfillment_allow_post');
     assertPrivateSecurityHeaders(fulfillmentWrongMethod, 'manager.fulfillment_wrong_method');
+
+    const alertsWrongMethod = await safeFetch(`${server.origin}/snickerdoodle/api/manager/alerts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    assertCheck(alertsWrongMethod.status === 405, 'manager.alerts_wrong_method_405');
+    assertCheck(alertsWrongMethod.headers.get('allow') === 'GET', 'manager.alerts_allow_get');
+    assertPrivateSecurityHeaders(alertsWrongMethod, 'manager.alerts_wrong_method');
+
+    const reconciliationWrongMethod = await safeFetch(`${server.origin}/snickerdoodle/api/manager/reconciliation`);
+    assertCheck(reconciliationWrongMethod.status === 405, 'manager.reconciliation_wrong_method_405');
+    assertCheck(reconciliationWrongMethod.headers.get('allow') === 'POST', 'manager.reconciliation_allow_post');
+    assertPrivateSecurityHeaders(reconciliationWrongMethod, 'manager.reconciliation_wrong_method');
   } finally {
     await stopLocalBuild(server.child, server.exit);
   }

@@ -236,7 +236,7 @@ setup_cluster_roles "$source_port"
 setup_cluster_roles "$target_port"
 
 setup_database_prerequisites "$source_url"
-replay_migrations "$source_url" 22
+replay_migrations "$source_url" 23
 "$pg_bin/psql" -X -q "$source_url" -v ON_ERROR_STOP=1 \
   -f "$repo_root/scripts/db/privacy-lifecycle-acceptance.sql"
 source_inventory="$(inventory "$source_url")"
@@ -345,6 +345,8 @@ PSQL_BIN="$pg_bin/psql" PAYMENT_DB_URL="$target_url" \
   bash "$repo_root/scripts/db/payment-state-machine-concurrency.sh"
 PSQL_BIN="$pg_bin/psql" PAYMENT_DB_URL="$target_url" \
   bash "$repo_root/scripts/db/payment-terminal-race-concurrency.sh"
+PSQL_BIN="$pg_bin/psql" PAYMENT_DB_URL="$target_url" \
+  bash "$repo_root/scripts/db/owner-expiry-reconciliation-acceptance.sh"
 verify_ms=$(($(now_ms) - verify_start))
 current_final_fingerprint="$(inventory "$target_url")"
 
@@ -366,11 +368,14 @@ prior_restore_start="$(now_ms)"
   -f "$repo_root/supabase/migrations/20260902064553_implement_privacy_lifecycle_and_retention.sql"
 "$pg_bin/psql" -X -q "$target_url" -v ON_ERROR_STOP=1 \
   -f "$repo_root/supabase/migrations/20260903030728_release_rejected_checkout_session_setup.sql"
+"$pg_bin/psql" -X -q "$target_url" -v ON_ERROR_STOP=1 \
+  -f "$repo_root/supabase/migrations/20260904214819_owner_expiry_reconciliation.sql"
 "$pg_bin/psql" -X -q "$target_url" -v ON_ERROR_STOP=1 <<'SQL'
 insert into supabase_migrations.schema_migrations(version, statements, name)
 values
   ('20260902064553', null, 'implement_privacy_lifecycle_and_retention'),
-  ('20260903030728', null, 'release_rejected_checkout_session_setup');
+  ('20260903030728', null, 'release_rejected_checkout_session_setup'),
+  ('20260904214819', null, 'owner_expiry_reconciliation');
 SQL
 "$pg_bin/pg_dump" --format=custom --file="$prior_forward_dump" "$target_url"
 chmod 600 "$prior_forward_dump"
@@ -386,8 +391,8 @@ fi
 prior_forward_ms=$(($(now_ms) - prior_restore_start))
 
 if [[ "$("$pg_bin/psql" -X -qAt "$target_url" -c \
-  'select count(*) from supabase_migrations.schema_migrations')" != '22' ]]; then
-  echo 'Restored migration ledger is not at 22' >&2
+  'select count(*) from supabase_migrations.schema_migrations')" != '23' ]]; then
+  echo 'Restored migration ledger is not at 23' >&2
   exit 1
 fi
 final_db_fingerprint="$(inventory "$target_url")"
@@ -399,7 +404,7 @@ if git -C "$repo_root" ls-files --error-unmatch "$current_dump" >/dev/null 2>&1;
   exit 1
 fi
 
-echo "SNICK_SN06_RECOVERY_PASS postgres=17 migrations=22"
+echo "SNICK_SN06_RECOVERY_PASS postgres=17 migrations=23"
 echo "SNICK_SN07_WHOLE_PRODUCT_RC_PASS journeys=success_failure_refund_dispute_privacy_auth_recovery concurrency=2_10_100"
 echo "SN06_BACKUP_SHA256=$backup_hash"
 echo "SN06_BACKUP_MODE=600"

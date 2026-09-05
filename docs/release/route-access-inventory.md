@@ -16,6 +16,8 @@ All routes are under `/snickerdoodle` in the production build. The bare `/` is a
 | `/snickerdoodle/api/brief-access`, `/snickerdoodle/api/brief`, `/snickerdoodle/api/checkout` | Private capability/API | Exact origin, bounded input, signed capability; fail closed when commercial/payment config is incomplete |
 | `/snickerdoodle/api/stripe/webhook` | Provider API | Bounded raw body and verified Stripe signature before the atomic payment RPC; independently fail closed |
 | `/snickerdoodle/api/manager/queue`, `/snickerdoodle/api/manager/intakes/[intentId]`, `/snickerdoodle/api/manager/health` | Owner API | Authenticated active AAL2 owner; manager reads use aggregate or audited RPCs; no-store/noindex |
+| `/snickerdoodle/api/manager/alerts` | Owner API | GET only; authenticated active AAL2 owner; returns exactly six metadata-only open-alert fields with no provider payload or customer content |
+| `/snickerdoodle/api/manager/reconciliation` | Owner API | POST only; authenticated active AAL2 owner; exact-origin bounded strict JSON; resolves only a freshly reviewed eligible unpaid expiry through the idempotent reconciliation RPC |
 | `/snickerdoodle/api/manager/invites` | Owner API | Authenticated active AAL2 owner; bounded exact-origin request creates an email-bound v2 capability in a URL fragment without persistence |
 | `/snickerdoodle/api/manager/fulfillment` | Owner API | Authenticated active AAL2 owner; bounded exact-origin request applies one allowlisted paid-order lifecycle transition through the existing idempotent fulfillment RPC |
 | `robots.txt`, `sitemap.xml`, `icon.svg` | Public metadata | Private/manager/checkout/API routes are not advertised |

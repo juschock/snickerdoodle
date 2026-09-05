@@ -56,6 +56,7 @@ function healthRow(overrides: Record<string, unknown> = {}) {
     paid_stripe_orders_without_intent: 0,
     paid_stripe_orders_without_event: 0,
     processed_stripe_events_without_paid_order: 0,
+    open_reconciliation_alerts: 0,
     ...overrides
   };
 }
@@ -200,5 +201,30 @@ describe('owner payment operations health endpoint', () => {
     expect(body.health.stale_unpaid_checkout_intents).toBe(2);
     expect(JSON.stringify(body)).not.toMatch(/delivery_email|brief_json|payload|secret|token/i);
     expect(managerMocks.rpc).toHaveBeenCalledWith('payment_operations_health');
+  });
+
+  it('cannot report healthy while any reconciliation alert remains open', async () => {
+    managerMocks.rpc.mockResolvedValue({
+      data: [healthRow({
+        is_healthy: false,
+        open_reconciliation_alerts: 1
+      })],
+      error: null
+    });
+
+    const response = await healthGet(new Request(
+      'https://racoben.com/snickerdoodle/api/manager/health',
+      { headers: { authorization: bearer } }
+    ));
+
+    expect(response.status).toBe(200);
+    const body = await response.json() as {
+      health: Record<string, unknown>;
+    };
+    expect(body.health.status).toBe('attention_required');
+    expect(body.health.open_reconciliation_alerts).toBe(1);
+    expect(body.health.attention_reasons).toContain(
+      'open_reconciliation_alerts'
+    );
   });
 });

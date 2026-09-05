@@ -20,6 +20,7 @@ type PaymentOperationsHealth = {
   paid_stripe_orders_without_intent: number;
   paid_stripe_orders_without_event: number;
   processed_stripe_events_without_paid_order: number;
+  open_reconciliation_alerts: number;
 };
 
 const countKeys = [
@@ -30,7 +31,8 @@ const countKeys = [
   'paid_checkout_intents_without_order',
   'paid_stripe_orders_without_intent',
   'paid_stripe_orders_without_event',
-  'processed_stripe_events_without_paid_order'
+  'processed_stripe_events_without_paid_order',
+  'open_reconciliation_alerts'
 ] as const satisfies readonly (keyof PaymentOperationsHealth)[];
 
 const attentionKeys = [
@@ -40,7 +42,8 @@ const attentionKeys = [
   'paid_checkout_intents_without_order',
   'paid_stripe_orders_without_intent',
   'paid_stripe_orders_without_event',
-  'processed_stripe_events_without_paid_order'
+  'processed_stripe_events_without_paid_order',
+  'open_reconciliation_alerts'
 ] as const satisfies readonly (keyof PaymentOperationsHealth)[];
 
 function noStoreJson(body: Record<string, unknown>, status: number) {
@@ -114,6 +117,7 @@ export async function GET(request: Request) {
         paid_stripe_orders_without_intent: health.paid_stripe_orders_without_intent,
         paid_stripe_orders_without_event: health.paid_stripe_orders_without_event,
         processed_stripe_events_without_paid_order: health.processed_stripe_events_without_paid_order,
+        open_reconciliation_alerts: health.open_reconciliation_alerts,
         attention_reasons: attentionReasons
       }
     }, 200);
