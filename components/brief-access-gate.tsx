@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { BriefForm } from '@/components/brief-form';
+import { FitCheckFallback } from '@/components/fit-check-fallback';
 import { Button } from '@/components/ui/button';
 import { FIT_CHECK_CTA, FIT_CHECK_MAILTO, PUBLIC_PREFIX } from '@/lib/site';
 
@@ -69,6 +70,7 @@ export function BriefAccessGate({ hasAccess }: { hasAccess: boolean }) {
         request a fresh private link.
       </p>
       <Button className="mt-6" nativeButton={false} render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>} />
+      <FitCheckFallback className="mx-auto mt-2 max-w-64 text-center" />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
+import { FitCheckFallback } from '@/components/fit-check-fallback';
 import { Button } from '@/components/ui/button';
 import { readPageCommercialReadiness } from '@/lib/commercial-runtime';
 import { faqs } from '@/lib/content';
@@ -82,7 +83,10 @@ export default async function FaqPage() {
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             {commercialReady ? (
-              <Button size="lg" nativeButton={false} render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>} />
+              <div className="flex flex-col items-center gap-1">
+                <Button size="lg" nativeButton={false} render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>} />
+                <FitCheckFallback className="max-w-64 text-center" />
+              </div>
             ) : (
               <Button size="lg" nativeButton={false} render={<Link href="/samples">View fictional samples</Link>} />
             )}

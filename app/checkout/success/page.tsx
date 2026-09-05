@@ -20,12 +20,12 @@ export default async function CheckoutSuccessPage() {
       <SiteHeader commercialReady={commercialReady} />
       <main id="main-content" className="flex flex-1 items-center bg-secondary/30 px-4 py-16">
         <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8 text-center sm:p-10">
-          <h1 className="font-heading text-3xl font-semibold">Thanks — we’re confirming your payment</h1>
+          <h1 className="font-heading text-3xl font-semibold">Checkout return received</h1>
           <p className="mt-4 text-muted-foreground">
-            This return page does not confirm payment. Stripe will email a receipt if payment completed. Racoben will
-            separately confirm your paid order and delivery schedule at{' '}
-            <a className="underline" href={`mailto:${INTAKE_EMAIL}`}>{INTAKE_EMAIL}</a>. Please do not submit the same
-            campaign again unless we ask you to.
+            This page does not confirm payment or create a paid order. Racoben will separately confirm any paid order
+            and delivery schedule by email. If you are unsure whether payment completed or do not receive that
+            confirmation, email <a className="underline" href={`mailto:${INTAKE_EMAIL}`}>{INTAKE_EMAIL}</a> before
+            trying checkout again. Please do not submit the same campaign again unless Racoben asks you to.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Button nativeButton={false} render={<Link href="/samples">Review campaign templates</Link>} />

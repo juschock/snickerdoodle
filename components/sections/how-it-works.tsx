@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import { FitCheckFallback } from "@/components/fit-check-fallback"
 import { FIT_CHECK_CTA, FIT_CHECK_MAILTO } from "@/lib/site"
 
 const steps = [
@@ -38,7 +39,10 @@ export function HowItWorks() {
               One survey in. A complete campaign execution package out.
             </h2>
           </div>
-          <Button size="lg" nativeButton={false} render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>} />
+          <div className="flex flex-col items-start gap-1 md:items-end">
+            <Button size="lg" nativeButton={false} render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>} />
+            <FitCheckFallback className="max-w-64 md:text-right" />
+          </div>
         </div>
 
         <ol className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { FitCheckFallback } from "@/components/fit-check-fallback"
 import { FIT_CHECK_CTA, FIT_CHECK_MAILTO } from "@/lib/site"
 
 export function FinalCta() {
@@ -13,13 +14,16 @@ export function FinalCta() {
           Tell us the campaign, deadline, audience, and primary action. We&apos;ll confirm whether the fixed-scope package fits before asking for a survey.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button
-            size="lg"
-            variant="secondary"
-            className="h-11 px-6 text-base"
-            nativeButton={false}
-            render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>}
-          />
+          <div className="flex flex-col items-center gap-1">
+            <Button
+              size="lg"
+              variant="secondary"
+              className="h-11 px-6 text-base"
+              nativeButton={false}
+              render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>}
+            />
+            <FitCheckFallback className="max-w-64 text-primary-foreground" />
+          </div>
           <Button
             size="lg"
             nativeButton={false}

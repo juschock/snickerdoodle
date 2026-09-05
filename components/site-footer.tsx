@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { FitCheckFallback } from "@/components/fit-check-fallback"
 import { SnickerdoodleMark } from "@/components/snickerdoodle-mark"
 import { FIT_CHECK_CTA, FIT_CHECK_MAILTO, INTAKE_EMAIL, PRODUCT_EXCLUSIONS_DISCLAIMER, PRODUCT_HOLD_DISCLAIMER, PRODUCT_NAME, PRODUCT_QUESTIONS_MAILTO } from "@/lib/site"
 
@@ -66,6 +67,7 @@ export function SiteFooter({ commercialReady }: { commercialReady: boolean }) {
             >
               {commercialReady ? FIT_CHECK_CTA : "Ask a product question"}
             </a>
+            {commercialReady ? <FitCheckFallback className="max-w-56" /> : null}
             {commercialReady ? (
               <Link
                 href="/#what-you-get"

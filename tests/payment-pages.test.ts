@@ -24,7 +24,7 @@ describe('payment status page', () => {
     const success = readFileSync('app/checkout/success/page.tsx', 'utf8');
 
     expect(received).toContain('This page does not confirm payment.');
-    expect(success).toContain('This return page does not confirm payment.');
+    expect(success).toContain('This page does not confirm payment or create a paid order.');
     expect(`${received}\n${success}`).not.toContain('signed payment event');
     expect(`${received}\n${success}`).not.toContain('reconciled');
   });

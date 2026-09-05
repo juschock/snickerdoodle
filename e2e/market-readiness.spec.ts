@@ -112,6 +112,21 @@ test('homepage leads with a fit check and keeps the survey unlisted', async ({ p
   await expect(fitCheck).toHaveAttribute('href', /^mailto:snickerdoodle@racoben\.com\?/);
   await expect(page.locator('a[href="/snickerdoodle/brief"], a[href="/brief"]')).toHaveCount(0);
 
+  const header = page.locator('header');
+  const headerFallback = header.locator('p:visible').filter({ hasText: 'Email doesn’t open? Write to' });
+  await expect(headerFallback).toBeVisible();
+  const [headerBox, fallbackBox, fallbackFontSize] = await Promise.all([
+    header.boundingBox(),
+    headerFallback.boundingBox(),
+    headerFallback.evaluate((element) => Number.parseFloat(window.getComputedStyle(element).fontSize))
+  ]);
+  expect(headerBox).not.toBeNull();
+  expect(fallbackBox).not.toBeNull();
+  expect(fallbackFontSize).toBeGreaterThanOrEqual(12);
+  expect((fallbackBox?.y ?? 0) + (fallbackBox?.height ?? 0)).toBeLessThanOrEqual(
+    (headerBox?.y ?? 0) + (headerBox?.height ?? 0)
+  );
+
   const privateResponse = await page.goto(`/snickerdoodle/brief#access=${encodeURIComponent(playwrightAccessToken)}`);
   await expect(page.getByRole('heading', { level: 1, name: /campaign survey/i })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: /campaign survey basics/i })).toBeVisible();
@@ -163,7 +178,7 @@ test('synthetic private intake reaches the non-authoritative checkout return thr
   await page.getByRole('button', { name: /continue to secure checkout/i }).click();
 
   await expect(page).toHaveURL(/\/snickerdoodle\/checkout\/success\?session_id=cs_synthetic_browser$/);
-  await expect(page.getByRole('heading', { level: 1, name: /confirming your payment/i })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /checkout return received/i })).toBeVisible();
   expect(submitted).toMatchObject({
     organizationName: 'Fictional RC Organization',
     campaignName: 'Synthetic RC Campaign',
@@ -278,8 +293,8 @@ test('public content, health, and not-found routes respond correctly', async ({ 
   }
 
   await page.goto('/snickerdoodle/checkout/success?session_id=cs_must_not_be_looked_up');
-  await expect(page.getByRole('heading', { level: 1, name: /we’re confirming your payment/i })).toBeVisible();
-  await expect(page.getByText(/this return page does not confirm payment/i)).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /checkout return received/i })).toBeVisible();
+  await expect(page.getByText(/this page does not confirm payment or create a paid order/i)).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
   await expect(page.getByRole('button', { name: /review campaign templates/i }))
     .toHaveAttribute('href', '/snickerdoodle/samples');
@@ -287,8 +302,9 @@ test('public content, health, and not-found routes respond correctly', async ({ 
     .toHaveAttribute('href', '/snickerdoodle');
 
   await page.goto('/snickerdoodle/checkout/cancel');
-  await expect(page.getByRole('heading', { level: 1, name: /checkout canceled/i })).toBeVisible();
-  await expect(page.getByText(/no paid order or delivery obligation was created/i)).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /checkout status not confirmed/i })).toBeVisible();
+  await expect(page.getByText(/this page does not confirm whether payment completed or whether an order exists/i)).toBeVisible();
+  await expect(page.getByText(/if you know you canceled before paying, use your private intake link/i)).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
   await expect(page.getByRole('button', { name: /view fictional samples/i }).last())
     .toHaveAttribute('href', '/snickerdoodle/samples');
@@ -328,6 +344,88 @@ test('primary pages have no automatically detectable accessibility violations', 
     await page.goto(path);
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
     expect(results.violations, `${path}: ${JSON.stringify(results.violations, null, 2)}`).toEqual([]);
+  }
+});
+
+test('header stays contained and uses one navigation mode at tablet and desktop widths', async ({ page }) => {
+  const expectDocumentAndHeaderContained = async () => {
+    const containment = await page.evaluate(() => {
+      const header = document.querySelector('header');
+      const headerBox = header?.getBoundingClientRect();
+
+      return {
+        documentContained: document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        headerContained: Boolean(
+          header
+          && headerBox
+          && header.scrollWidth <= header.clientWidth
+          && headerBox.left >= 0
+          && headerBox.right <= window.innerWidth
+        )
+      };
+    });
+
+    expect(containment).toEqual({ documentContained: true, headerContained: true });
+  };
+
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto('/snickerdoodle');
+
+  const tabletPrimaryNav = page.getByRole('navigation', { name: 'Primary' });
+  const tabletMobileNav = page.getByRole('navigation', { name: 'Mobile' });
+  const openMenu = page.getByRole('button', { name: 'Open menu' });
+  await expect(tabletPrimaryNav).toBeHidden();
+  await expect(tabletMobileNav).toBeHidden();
+  await expect(openMenu).toBeVisible();
+  await expect(openMenu).toHaveAttribute('aria-expanded', 'false');
+  await expectDocumentAndHeaderContained();
+
+  await openMenu.click();
+  await expect(tabletMobileNav).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Close menu' })).toHaveAttribute('aria-expanded', 'true');
+  await expect(tabletMobileNav.getByRole('button', { name: 'Request a Fit Check' })).toBeVisible();
+  await expect(tabletMobileNav.getByText('Email doesn’t open? Write to', { exact: false })).toBeVisible();
+  await expectDocumentAndHeaderContained();
+
+  await page.getByRole('button', { name: 'Close menu' }).click();
+  await expect(tabletMobileNav).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Open menu' })).toHaveAttribute('aria-expanded', 'false');
+
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.goto('/snickerdoodle');
+
+  const desktopHeader = page.locator('header');
+  const desktopPrimaryNav = page.getByRole('navigation', { name: 'Primary' });
+  const desktopCta = desktopHeader.getByRole('button', { name: 'Request a Fit Check' });
+  const desktopFallback = desktopHeader.locator('p:visible').filter({ hasText: 'Email doesn’t open? Write to' });
+  await expect(desktopPrimaryNav).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Mobile' })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Open menu' })).toBeHidden();
+  await expect(desktopCta).toBeVisible();
+  await expect(desktopFallback).toBeVisible();
+  await expectDocumentAndHeaderContained();
+
+  const navWhiteSpace = await desktopPrimaryNav.locator('a').evaluateAll((links) =>
+    links.map((link) => window.getComputedStyle(link).whiteSpace)
+  );
+  expect(navWhiteSpace).toEqual(navWhiteSpace.map(() => 'nowrap'));
+
+  const [headerBox, ctaBox, fallbackBox] = await Promise.all([
+    desktopHeader.boundingBox(),
+    desktopCta.boundingBox(),
+    desktopFallback.boundingBox()
+  ]);
+  expect(headerBox).not.toBeNull();
+  for (const box of [ctaBox, fallbackBox]) {
+    expect(box).not.toBeNull();
+    expect(box?.x ?? -1).toBeGreaterThanOrEqual(headerBox?.x ?? 0);
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(
+      (headerBox?.x ?? 0) + (headerBox?.width ?? 0)
+    );
+    expect(box?.y ?? -1).toBeGreaterThanOrEqual(headerBox?.y ?? 0);
+    expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(
+      (headerBox?.y ?? 0) + (headerBox?.height ?? 0)
+    );
   }
 });
 

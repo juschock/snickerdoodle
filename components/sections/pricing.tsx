@@ -1,5 +1,6 @@
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { FitCheckFallback } from "@/components/fit-check-fallback"
 import { FIT_CHECK_CTA, FIT_CHECK_MAILTO, PRODUCT_EXCLUSIONS_DISCLAIMER } from "@/lib/site"
 
 const includes = [
@@ -58,6 +59,7 @@ export function Pricing() {
                 nativeButton={false}
                 render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>}
               />
+              <FitCheckFallback className="mt-2 text-center" />
 
               <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
                 {PRODUCT_EXCLUSIONS_DISCLAIMER}

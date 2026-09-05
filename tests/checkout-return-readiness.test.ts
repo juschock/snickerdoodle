@@ -57,10 +57,18 @@ describe('checkout return readiness presentation', () => {
         expect(html).toContain(footerCopy);
       }
 
-      expect(success).toContain('we’re confirming your payment');
-      expect(success).toContain('This return page does not confirm payment.');
-      expect(cancel).toContain('Stripe did not report a completed payment');
-      expect(cancel).toContain('no paid order or delivery obligation was created');
+      expect(success).toContain('Checkout return received');
+      expect(success).toContain('This page does not confirm payment or create a paid order.');
+      expect(cancel).toContain('Checkout status not confirmed');
+      expect(cancel).toContain('This page does not confirm whether payment completed or whether an order exists.');
+
+      if (commercialReady) {
+        expect(cancel).toContain('If you know you canceled before paying, use your private intake link');
+        expect(cancel).not.toContain('Checkout is not currently available.');
+      } else {
+        expect(cancel).toContain('Checkout is not currently available.');
+        expect(cancel).not.toContain('use your private intake link');
+      }
     }
   );
 
@@ -77,5 +85,28 @@ describe('checkout return readiness presentation', () => {
     expect(footerSource).toContain('{ commercialReady }: { commercialReady: boolean }');
     expect(headerSource).not.toContain('commercialReady = false');
     expect(footerSource).not.toContain('commercialReady = false');
+  });
+
+  it('provides a visible copy-and-paste email fallback beside every Fit Check action', () => {
+    const fitCheckCallers = [
+      'app/faq/page.tsx',
+      'components/brief-access-gate.tsx',
+      'components/sections/final-cta.tsx',
+      'components/sections/hero.tsx',
+      'components/sections/how-it-works.tsx',
+      'components/sections/pricing.tsx',
+      'components/site-footer.tsx',
+      'components/site-header.tsx'
+    ];
+
+    for (const path of fitCheckCallers) {
+      const source = readFileSync(path, 'utf8');
+      expect(source).toContain('FIT_CHECK_MAILTO');
+      expect(source).toContain('FitCheckFallback');
+    }
+
+    const fallback = readFileSync('components/fit-check-fallback.tsx', 'utf8');
+    expect(fallback).toContain('Email doesn’t open? Write to');
+    expect(fallback).toContain('{INTAKE_EMAIL}');
   });
 });

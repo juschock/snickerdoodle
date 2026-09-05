@@ -27,6 +27,12 @@ test('default build exposes only truthful product-status and fictional-sample pa
     const body = await page.locator('body').innerText();
     expect(body).not.toMatch(/\$99|request a fit check|normally delivered within 48|complete, human-reviewed/i);
   }
+
+  await page.goto('/snickerdoodle/checkout/cancel');
+  await expect(page.getByRole('heading', { level: 1, name: /checkout status not confirmed/i })).toBeVisible();
+  await expect(page.getByText(/this page does not confirm whether payment completed or whether an order exists/i)).toBeVisible();
+  await expect(page.getByText(/checkout is not currently available/i)).toBeVisible();
+  await expect(page.getByText(/use your private intake link/i)).toHaveCount(0);
 });
 
 test('direct intake, APIs, and invite capability fail closed before data handling', async ({ page, request }) => {

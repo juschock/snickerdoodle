@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Clock, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FitCheckFallback } from '@/components/fit-check-fallback';
 import {
   HERO_PROMISE,
   FIT_CHECK_CTA,
@@ -30,12 +31,15 @@ export function Hero() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button
-              size="lg"
-              className="h-12 px-7 text-base"
-              nativeButton={false}
-              render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>}
-            />
+            <div className="flex flex-col items-start gap-1">
+              <Button
+                size="lg"
+                className="h-12 px-7 text-base"
+                nativeButton={false}
+                render={<a href={FIT_CHECK_MAILTO}>{FIT_CHECK_CTA}</a>}
+              />
+              <FitCheckFallback className="max-w-64" />
+            </div>
             <Button
               size="lg"
               variant="outline"
