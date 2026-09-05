@@ -2,7 +2,7 @@ name: security
 
 on:
   push:
-    branches: [main]
+    branches: [main, codex/snickerdoodle-release-closure]
   pull_request:
     branches: [main]
   schedule:
